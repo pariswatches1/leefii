@@ -1,0 +1,262 @@
+// Leefii Database Schema
+// Prisma ORM for PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// CORE TABLES
+// ==========================================
+
+model State {
+  id           String   @id @default(cuid())
+  name         String   @unique // "Florida"
+  slug         String   @unique // "florida"
+  abbreviation String   @unique // "FL"
+  isLegal      Boolean  @default(true)
+  medicalOnly  Boolean  @default(false)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Content
+  description  String?  @db.Text
+  lawSummary   String?  @db.Text
+  
+  // Relations
+  cities       City[]
+  dispensaries Dispensary[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([slug])
+}
+
+model City {
+  id        String @id @default(cuid())
+  name      String // "Miami"
+  slug      String // "miami"
+  
+  // Location
+  stateId   String
+  state     State  @relation(fields: [stateId], references: [id])
+  county    String?
+  latitude  Float?
+  longitude Float?
+  
+  // Stats
+  population      Int?
+  dispensaryCount Int     @default(0)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Content
+  description String? @db.Text
+  
+  // Relations
+  dispensaries Dispensary[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([slug, stateId])
+  @@index([slug])
+  @@index([stateId])
+}
+
+model Dispensary {
+  id   String @id @default(cuid())
+  name String // "Trulieve Miami"
+  slug String @unique // "trulieve-miami"
+  
+  // Chain info (if part of a chain)
+  chainName String? // "Trulieve"
+  
+  // Location
+  stateId String
+  state   State  @relation(fields: [stateId], references: [id])
+  cityId  String
+  city    City   @relation(fields: [cityId], references: [id])
+  
+  // Address
+  address    String  // "8300 NW 53rd St"
+  address2   String? // "Suite 100"
+  zipCode    String  // "33166"
+  
+  // Coordinates
+  latitude  Float
+  longitude Float
+  
+  // Contact
+  phone   String  // "(786) 773-4672"
+  email   String?
+  website String?
+  
+  // Features
+  hasDelivery   Boolean @default(false)
+  hasStorefront Boolean @default(true)
+  hasCurbside   Boolean @default(false)
+  isWheelchairAccessible Boolean @default(false)
+  acceptsCreditCard Boolean @default(false)
+  hasATM        Boolean @default(false)
+  
+  // License
+  licenseType   LicenseType @default(MEDICAL)
+  licenseNumber String?
+  isVerified    Boolean     @default(false)
+  
+  // Ratings (aggregated)
+  rating       Float @default(0) // 0-5
+  reviewsCount Int   @default(0)
+  
+  // SEO & Content
+  description     String? @db.Text
+  metaTitle       String?
+  metaDescription String?
+  
+  // Images
+  logoUrl   String?
+  imageUrl  String?
+  
+  // Status
+  isActive  Boolean @default(true)
+  isPremium Boolean @default(false) // Paid listing
+  
+  // Relations
+  hours    BusinessHours[]
+  events   AnalyticsEvent[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([slug])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([latitude, longitude])
+  @@index([isActive, isPremium])
+}
+
+model BusinessHours {
+  id           String     @id @default(cuid())
+  dispensaryId String
+  dispensary   Dispensary @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek DayOfWeek // MONDAY, TUESDAY, etc.
+  openTime  String    // "09:00"
+  closeTime String    // "21:00"
+  isClosed  Boolean   @default(false)
+  
+  @@unique([dispensaryId, dayOfWeek])
+  @@index([dispensaryId])
+}
+
+// ==========================================
+// ANALYTICS & TRACKING
+// ==========================================
+
+model AnalyticsEvent {
+  id           String     @id @default(cuid())
+  dispensaryId String?
+  dispensary   Dispensary? @relation(fields: [dispensaryId], references: [id], onDelete: SetNull)
+  
+  // Event details
+  eventType EventType // PAGE_VIEW, CALL_CLICK, DIRECTIONS_CLICK, WEBSITE_CLICK
+  
+  // Context
+  page       String?  // "/dispensaries/florida/miami"
+  referrer   String?
+  userAgent  String?
+  ipAddress  String?
+  
+  // Location (from IP)
+  city    String?
+  state   String?
+  country String?
+  
+  // Session
+  sessionId String?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([dispensaryId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([page])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String   // "/dispensaries/florida/miami"
+  
+  // Counts
+  viewCount Int      @default(0)
+  date      DateTime @db.Date // One row per path per day
+  
+  @@unique([path, date])
+  @@index([path])
+  @@index([date])
+}
+
+// ==========================================
+// ADMIN
+// ==========================================
+
+model AdminUser {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  name         String?
+  role         AdminRole @default(EDITOR)
+  
+  isActive  Boolean @default(true)
+  lastLogin DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum LicenseType {
+  MEDICAL
+  RECREATIONAL
+  BOTH
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum EventType {
+  PAGE_VIEW
+  CALL_CLICK
+  DIRECTIONS_CLICK
+  WEBSITE_CLICK
+  SEARCH
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
