@@ -27,10 +27,7 @@ export default async function CityPage({ params }: PageProps) {
   const dispensaries = await prisma.dispensary.findMany({
     where: {
       state: stateUpper,
-      city: {
-        equals: cityName,
-        mode: 'insensitive',
-      },
+      city: cityName,
     },
     include: {
       BusinessHours: true,
@@ -59,26 +56,6 @@ export default async function CityPage({ params }: PageProps) {
   };
 
   const fullStateName = stateNames[stateUpper] || stateUpper;
-
-  // Helper function to check if currently open
-  const isOpenNow = (businessHours: { dayOfWeek: string; openTime: string; closeTime: string }[] | undefined) => {
-    if (!businessHours || businessHours.length === 0) return null;
-    
-    const now = new Date();
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const today = days[now.getDay()];
-    
-    const todayHours = businessHours.find(h => h.dayOfWeek.toLowerCase() === today);
-    if (!todayHours) return false;
-    
-    const currentTime = now.getHours() * 100 + now.getMinutes();
-    const openTime = parseInt(todayHours.openTime.replace(':', ''));
-    const closeTime = parseInt(todayHours.closeTime.replace(':', ''));
-    
-    return currentTime >= openTime && currentTime <= closeTime;
-  };
-
-  const openNowCount = dispensaries.filter(d => isOpenNow(d.BusinessHours)).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -127,12 +104,6 @@ export default async function CityPage({ params }: PageProps) {
               <div className="text-2xl font-bold">{dispensaries.length}</div>
               <div className="text-green-100 text-sm">Dispensaries</div>
             </div>
-            {openNowCount > 0 && (
-              <div className="bg-white/20 rounded-lg px-4 py-2">
-                <div className="text-2xl font-bold">{openNowCount}</div>
-                <div className="text-green-100 text-sm">Open Now</div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -141,21 +112,12 @@ export default async function CityPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid gap-6">
           {dispensaries.map((dispensary) => {
-            const openStatus = isOpenNow(dispensary.BusinessHours);
-            
             return (
               <div key={dispensary.id} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h2 className="text-xl font-semibold text-gray-900">{dispensary.name}</h2>
-                      {openStatus !== null && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          openStatus ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {openStatus ? 'Open' : 'Closed'}
-                        </span>
-                      )}
                     </div>
                     <p className="text-gray-600 mb-2">{dispensary.address}</p>
                     {dispensary.phone && (
