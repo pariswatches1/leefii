@@ -132,6 +132,16 @@ export default async function CityPage({ params }: Props) {
                         >
                           Directions
                         </a>
+                        {dispensary.website && (
+                          <a
+                            href={dispensary.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                          >
+                            Website
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
