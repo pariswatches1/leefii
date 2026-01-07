@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 
 type Props = {
-  params: { state: string; city: string }
+  params: Promise<{ state: string; city: string }>
 }
 
 // Helper function to check if dispensary is open
@@ -27,9 +27,10 @@ function isOpenNow(hours: any[]): boolean {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const state = await prisma.state.findUnique({ where: { slug: params.state } })
+  const { state: stateSlug, city: citySlug } = await params
+  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
   const city = await prisma.city.findFirst({
-    where: { slug: params.city, state: { slug: params.state } },
+    where: { slug: citySlug, state: { slug: stateSlug } },
     include: { _count: { select: { dispensaries: true } } }
   })
 
@@ -49,11 +50,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CityPage({ params }: Props) {
-  const state = await prisma.state.findUnique({ where: { slug: params.state } })
+  const { state: stateSlug, city: citySlug } = await params
+  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
   if (!state) notFound()
 
   const city = await prisma.city.findFirst({
-    where: { slug: params.city, stateId: state.id }
+    where: { slug: citySlug, stateId: state.id }
   })
   if (!city) notFound()
 
@@ -165,9 +167,9 @@ export default async function CityPage({ params }: Props) {
                             {/* Features */}
                             <div className="mt-3 flex flex-wrap gap-2">
                               {open ? (
-                                <span className="badge-open">🟢 Open</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">🟢 Open</span>
                               ) : (
-                                <span className="badge-closed">🔴 Closed</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">🔴 Closed</span>
                               )}
                               {dispensary.hasDelivery && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -179,7 +181,7 @@ export default async function CityPage({ params }: Props) {
                                   🏥 Medical
                                 </span>
                               )}
-                              {dispensary.licenseType === 'RECREATIONAL' || dispensary.licenseType === 'BOTH' && (
+                              {(dispensary.licenseType === 'RECREATIONAL' || dispensary.licenseType === 'BOTH') && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                   🌿 Recreational
                                 </span>
@@ -204,22 +206,20 @@ export default async function CityPage({ params }: Props) {
                       
                       {/* Actions */}
                       <div className="flex gap-2 md:flex-col">
-                        <a
+                        
                           href={`tel:${dispensary.phone.replace(/[^0-9]/g, '')}`}
                           className="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-                          onClick={() => {/* Track call click */}}
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
                           Call
                         </a>
-                        <a
+                        
                           href={`https://maps.google.com/?q=${dispensary.latitude},${dispensary.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 md:flex-none inline-flex items-center justify-center px-4 py-2.5 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                          onClick={() => {/* Track directions click */}}
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -236,44 +236,9 @@ export default async function CityPage({ params }: Props) {
             <div className="text-center py-16 bg-gray-50 rounded-xl">
               <div className="text-5xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No dispensaries found</h3>
-              <p className="text-gray-600">We're adding more dispensaries to {city.name} soon.</p>
+              <p className="text-gray-600">We are adding more dispensaries to {city.name} soon.</p>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Law Info */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Cannabis Laws in {city.name}, {state.name}
-          </h2>
-          <div className="prose prose-gray max-w-none">
-            <p>
-              {state.lawSummary || `${state.name} has ${state.medicalOnly ? 'legalized medical marijuana' : 'legalized both medical and recreational marijuana'}. To purchase cannabis in ${city.name}, ${state.medicalOnly ? 'you must have a valid medical marijuana card.' : 'you must be 21+ for recreational or have a medical card.'}`}
-            </p>
-          </div>
-          
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-500">Medical</div>
-              <div className="font-semibold text-green-600">✅ Legal</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-500">Recreational</div>
-              <div className={`font-semibold ${state.medicalOnly ? 'text-red-600' : 'text-green-600'}`}>
-                {state.medicalOnly ? '❌ Not Legal' : '✅ Legal'}
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-500">Delivery</div>
-              <div className="font-semibold text-green-600">✅ Available</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-500">Home Grow</div>
-              <div className="font-semibold text-gray-500">Varies</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -298,36 +263,6 @@ export default async function CityPage({ params }: Props) {
           </div>
         </section>
       )}
-
-      {/* FAQ Schema */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
-            FAQ - Dispensaries in {city.name}
-          </h2>
-          <div className="space-y-4">
-            <div className="bg-white p-5 rounded-lg border border-gray-200">
-              <h3 className="font-semibold text-gray-900">How many dispensaries are in {city.name}?</h3>
-              <p className="mt-2 text-gray-600">There are currently {dispensaries.length} licensed dispensaries in {city.name}, {state.abbreviation}.</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg border border-gray-200">
-              <h3 className="font-semibold text-gray-900">Do I need a medical card to buy in {city.name}?</h3>
-              <p className="mt-2 text-gray-600">
-                {state.medicalOnly 
-                  ? `Yes, ${state.name} is medical-only. You need a valid medical marijuana card to purchase cannabis in ${city.name}.`
-                  : `For recreational purchases, you must be 21+. For medical purchases, you need a valid medical marijuana card.`
-                }
-              </p>
-            </div>
-            <div className="bg-white p-5 rounded-lg border border-gray-200">
-              <h3 className="font-semibold text-gray-900">Which {city.name} dispensaries offer delivery?</h3>
-              <p className="mt-2 text-gray-600">
-                {dispensaries.filter(d => d.hasDelivery).length} of {dispensaries.length} dispensaries in {city.name} offer delivery services. Look for the "Delivery" badge on listings above.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

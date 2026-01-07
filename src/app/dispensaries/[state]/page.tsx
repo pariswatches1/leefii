@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 
 type Props = {
-  params: { state: string }
+  params: Promise<{ state: string }>
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { state: stateSlug } = await params
   const state = await prisma.state.findUnique({
-    where: { slug: params.state },
+    where: { slug: stateSlug },
     include: { _count: { select: { dispensaries: true, cities: true } } }
   })
 
@@ -35,8 +36,9 @@ export async function generateStaticParams() {
 }
 
 export default async function StatePage({ params }: Props) {
+  const { state: stateSlug } = await params
   const state = await prisma.state.findUnique({
-    where: { slug: params.state },
+    where: { slug: stateSlug },
     include: {
       cities: {
         orderBy: { dispensaryCount: 'desc' },
