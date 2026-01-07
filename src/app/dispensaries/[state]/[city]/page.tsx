@@ -46,7 +46,7 @@ export default async function CityPage({ params }: Props) {
 
   const dispensaries = await prisma.dispensary.findMany({
     where: { cityId: city.id, isActive: true },
-    include: { hours: true },
+    include: { BusinessHours: true },
     orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }]
   })
 
@@ -98,7 +98,7 @@ export default async function CityPage({ params }: Props) {
           {dispensaries.length > 0 ? (
             <div className="space-y-4">
               {dispensaries.map((dispensary) => {
-                const open = isOpenNow(dispensary.hours)
+                const open = isOpenNow(dispensary.BusinessHours)
                 return (
                   <div key={dispensary.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">

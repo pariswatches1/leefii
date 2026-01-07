@@ -1,6 +1,3 @@
-// Leefii Database Schema
-// Prisma ORM for PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,135 +7,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// CORE TABLES
-// ==========================================
-
 model State {
-  id           String   @id @default(cuid())
-  name         String   @unique // "Florida"
-  slug         String   @unique // "florida"
-  abbreviation String   @unique // "FL"
-  isLegal      Boolean  @default(true)
-  medicalOnly  Boolean  @default(false)
-  
-  // SEO
+  id              String        @id @default(cuid())
+  name            String        @unique
+  slug            String        @unique
+  abbreviation    String        @unique
+  isLegal         Boolean       @default(true)
+  medicalOnly     Boolean       @default(false)
   metaTitle       String?
   metaDescription String?
-  
-  // Content
-  description  String?  @db.Text
-  lawSummary   String?  @db.Text
-  
-  // Relations
-  cities       City[]
-  dispensaries Dispensary[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  description     String?
+  lawSummary      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  cities          City[]
+  dispensaries    Dispensary[]
+
   @@index([slug])
 }
 
 model City {
-  id        String @id @default(cuid())
-  name      String // "Miami"
-  slug      String // "miami"
-  
-  // Location
-  stateId   String
-  state     State  @relation(fields: [stateId], references: [id])
-  county    String?
-  latitude  Float?
-  longitude Float?
-  
-  // Stats
+  id              String        @id @default(cuid())
+  name            String
+  slug            String
+  stateId         String
+  county          String?
+  latitude        Float?
+  longitude       Float?
   population      Int?
-  dispensaryCount Int     @default(0)
-  
-  // SEO
+  dispensaryCount Int           @default(0)
   metaTitle       String?
   metaDescription String?
-  
-  // Content
-  description String? @db.Text
-  
-  // Relations
-  dispensaries Dispensary[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  state           State         @relation(fields: [stateId], references: [id])
+  dispensaries    Dispensary[]
+
   @@unique([slug, stateId])
   @@index([slug])
   @@index([stateId])
 }
 
 model Dispensary {
-  id   String @id @default(cuid())
-  name String // "Trulieve Miami"
-  slug String @unique // "trulieve-miami"
-  
-  // Chain info (if part of a chain)
-  chainName String? // "Trulieve"
-  
-  // Location
-  stateId String
-  state   State  @relation(fields: [stateId], references: [id])
-  cityId  String
-  city    City   @relation(fields: [cityId], references: [id])
-  
-  // Address
-  address    String  // "8300 NW 53rd St"
-  address2   String? // "Suite 100"
-  zipCode    String  // "33166"
-  
-  // Coordinates
-  latitude  Float
-  longitude Float
-  
-  // Contact
-  phone   String  // "(786) 773-4672"
-  email   String?
-  website String?
-  
-  // Features
-  hasDelivery   Boolean @default(false)
-  hasStorefront Boolean @default(true)
-  hasCurbside   Boolean @default(false)
-  isWheelchairAccessible Boolean @default(false)
-  acceptsCreditCard Boolean @default(false)
-  hasATM        Boolean @default(false)
-  
-  // License
-  licenseType   LicenseType @default(MEDICAL)
-  licenseNumber String?
-  isVerified    Boolean     @default(false)
-  
-  // Ratings (aggregated)
-  rating       Float @default(0) // 0-5
-  reviewsCount Int   @default(0)
-  
-  // SEO & Content
-  description     String? @db.Text
-  metaTitle       String?
-  metaDescription String?
-  
-  // Images
-  logoUrl   String?
-  imageUrl  String?
-  
-  // Status
-  isActive  Boolean @default(true)
-  isPremium Boolean @default(false) // Paid listing
-  
-  // Relations
-  hours    BusinessHours[]
-  events   AnalyticsEvent[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id                     String             @id @default(cuid())
+  name                   String
+  slug                   String             @unique
+  chainName              String?
+  stateId                String
+  cityId                 String
+  address                String
+  address2               String?
+  zipCode                String
+  latitude               Float
+  longitude              Float
+  phone                  String?
+  email                  String?
+  website                String?
+  hasDelivery            Boolean            @default(false)
+  hasStorefront          Boolean            @default(true)
+  hasCurbside            Boolean            @default(false)
+  isWheelchairAccessible Boolean            @default(false)
+  acceptsCreditCard      Boolean            @default(false)
+  hasATM                 Boolean            @default(false)
+  licenseType            LicenseType        @default(MEDICAL)
+  licenseNumber          String?
+  isVerified             Boolean            @default(false)
+  rating                 Float?             @default(0)
+  reviewsCount           Int                @default(0)
+  description            String?
+  metaTitle              String?
+  metaDescription        String?
+  logoUrl                String?
+  imageUrl               String?
+  isActive               Boolean            @default(true)
+  isPremium              Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  analytics              AnalyticsEvent[]
+  BusinessHours          BusinessHours[]
+  city                   City               @relation(fields: [cityId], references: [id])
+  state                  State              @relation(fields: [stateId], references: [id])
+
   @@index([slug])
   @@index([cityId])
   @@index([stateId])
@@ -146,48 +96,21 @@ model Dispensary {
   @@index([isActive, isPremium])
 }
 
-model BusinessHours {
-  id           String     @id @default(cuid())
-  dispensaryId String
-  dispensary   Dispensary @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
-  
-  dayOfWeek DayOfWeek // MONDAY, TUESDAY, etc.
-  openTime  String    // "09:00"
-  closeTime String    // "21:00"
-  isClosed  Boolean   @default(false)
-  
-  @@unique([dispensaryId, dayOfWeek])
-  @@index([dispensaryId])
-}
-
-// ==========================================
-// ANALYTICS & TRACKING
-// ==========================================
-
 model AnalyticsEvent {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   dispensaryId String?
-  dispensary   Dispensary? @relation(fields: [dispensaryId], references: [id], onDelete: SetNull)
-  
-  // Event details
-  eventType EventType // PAGE_VIEW, CALL_CLICK, DIRECTIONS_CLICK, WEBSITE_CLICK
-  
-  // Context
-  page       String?  // "/dispensaries/florida/miami"
-  referrer   String?
-  userAgent  String?
-  ipAddress  String?
-  
-  // Location (from IP)
-  city    String?
-  state   String?
-  country String?
-  
-  // Session
-  sessionId String?
-  
-  createdAt DateTime @default(now())
-  
+  eventType    EventType?
+  page         String?
+  referrer     String?
+  userAgent    String?
+  ipAddress    String?
+  city         String?
+  state        String?
+  country      String?
+  sessionId    String?
+  createdAt    DateTime    @default(now())
+  dispensary   Dispensary? @relation(fields: [dispensaryId], references: [id])
+
   @@index([dispensaryId])
   @@index([eventType])
   @@index([createdAt])
@@ -196,35 +119,163 @@ model AnalyticsEvent {
 
 model PageView {
   id        String   @id @default(cuid())
-  path      String   // "/dispensaries/florida/miami"
-  
-  // Counts
+  path      String
   viewCount Int      @default(0)
-  date      DateTime @db.Date // One row per path per day
-  
+  date      DateTime @db.Date
+
   @@unique([path, date])
   @@index([path])
   @@index([date])
 }
 
-// ==========================================
-// ADMIN
-// ==========================================
-
 model AdminUser {
-  id           String  @id @default(cuid())
-  email        String  @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   name         String?
   role         AdminRole @default(EDITOR)
-  
-  isActive  Boolean @default(true)
-  lastLogin DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@index([email])
+}
+
+model BusinessHours {
+  id           String     @id
+  dispensaryId String
+  dayOfWeek    DayOfWeek
+  openTime     String
+  closeTime    String
+  isClosed     Boolean    @default(false)
+  dispensary   Dispensary @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
+
+  @@unique([dispensaryId, dayOfWeek])
+  @@index([dispensaryId])
+}
+
+// ==========================================
+// NEW MODELS - Strains, Blog, News, Deals
+// ==========================================
+
+model Strain {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  type        StrainType
+  thcMin      Float?
+  thcMax      Float?
+  cbdMin      Float?
+  cbdMax      Float?
+  effects     String[]
+  flavors     String[]
+  aromas      String[]
+  description String?
+  genetics    String?
+  origin      String?
+  breeder     String?
+  floweringTime String?
+  difficulty  String?
+  yieldIndoor String?
+  yieldOutdoor String?
+  rating      Float      @default(0)
+  reviewsCount Int       @default(0)
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  metaTitle   String?
+  metaDescription String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([slug])
+  @@index([type])
+  @@index([rating])
+  @@index([isActive])
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  imageUrl    String?
+  thumbnailUrl String?
+  authorName  String?
+  authorImage String?
+  category    String?
+  tags        String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  metaTitle   String?
+  metaDescription String?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+  @@index([category])
+}
+
+model NewsArticle {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  sourceUrl   String?
+  sourceName  String?
+  imageUrl    String?
+  category    String?
+  tags        String[]
+  states      String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  metaTitle   String?
+  metaDescription String?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+  @@index([category])
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  description    String?
+  discountType   String?
+  discountValue  Float?
+  code           String?
+  dispensaryName String?
+  dispensarySlug String?
+  chainName      String?
+  stateSlug      String?
+  citySlug       String?
+  startDate      DateTime?
+  endDate        DateTime?
+  isOngoing      Boolean   @default(false)
+  terms          String?
+  minPurchase    Float?
+  imageUrl       String?
+  isActive       Boolean   @default(true)
+  isFeatured     Boolean   @default(false)
+  viewCount      Int       @default(0)
+  clickCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([stateSlug])
+  @@index([endDate])
 }
 
 // ==========================================
@@ -259,4 +310,10 @@ enum AdminRole {
   SUPER_ADMIN
   ADMIN
   EDITOR
+}
+
+enum StrainType {
+  SATIVA
+  INDICA
+  HYBRID
 }
