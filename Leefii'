@@ -1,0 +1,15 @@
+At line:1 char:78
++ ... c\app\page.tsx').Replace('text-xl font-bold text-gray-900", 'text-3xl ...
++                                                                  ~
+Missing ')' in method call.
+At line:1 char:78
++ ... ge.tsx').Replace('text-xl font-bold text-gray-900", 'text-3xl font-ex ...
++                                                          ~~~~~~~~
+Unexpected token 'text-3xl' in expression or statement.
+At line:1 char:115
++ ... nt-extrabold text-gray-500">Leefii') | Set-Content 'src\app\page.tsx'
++                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The string is missing the terminator: ".
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : MissingEndParenthesisInMethodCall
+ 

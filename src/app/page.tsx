@@ -16,11 +16,11 @@ export default function Home() {
               {/* Logo */}
               <Link href="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-lime-600 rounded-xl flex items-center justify-center shadow-lg shadow-lime-600/20">
-                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-14 h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                   </svg>
                 </div>
-                <span className="text-xl font-bold text-gray-900">Leefii</span>
+                <span className="text-3xl font-extrabold text-gray-500">Leefii</span>
               </Link>
 
               {/* Navigation */}
@@ -80,10 +80,10 @@ export default function Home() {
 
             {/* Search Bar */}
             <div className="bg-white/40 backdrop-blur-lg rounded-2xl p-2 border border-white/50 mb-8 shadow-lg">
-              <form className="flex" action="/dispensaries" method="GET">
+              <form className="flex" action="/search" method="GET">
                 <input 
                   type="text"
-                  name="search"
+                  name="q"
                   placeholder="Search dispensaries, strains..." 
                   className="flex-1 px-4 py-3 bg-transparent text-gray-900 placeholder-gray-600 outline-none"
                 />
@@ -103,7 +103,7 @@ export default function Home() {
                 <div className="text-gray-700">Dispensaries</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-gray-900">1,999+</div>
+                <div className="text-3xl font-bold text-gray-900">5,632+</div>
                 <div className="text-gray-700">Strains</div>
               </div>
               <div>
@@ -185,3 +185,8 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
+
