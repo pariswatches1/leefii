@@ -94,9 +94,6 @@ export default async function DispensaryPage({ params }: Props) {
   // Get open status
   const { open, nextChange } = isOpenNow(dispensary.BusinessHours)
 
-  // Track page view (would be API call)
-  // trackEvent('PAGE_VIEW', dispensary.id)
-
   // Related dispensaries in same city
   const relatedDispensaries = await prisma.dispensary.findMany({
     where: { 
@@ -182,11 +179,11 @@ export default async function DispensaryPage({ params }: Props) {
                       <p className="text-gray-600">Part of {dispensary.chainName}</p>
                     )}
                   </div>
-                  {dispensary.rating > 0 && (
+                  {dispensary.rating != null && dispensary.rating > 0 && (
                     <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg">
                       <span className="text-yellow-500 text-xl mr-1">★</span>
                       <span className="text-xl font-bold text-gray-900">{dispensary.rating.toFixed(1)}</span>
-                      {dispensary.reviewsCount > 0 && (
+                      {dispensary.reviewsCount != null && dispensary.reviewsCount > 0 && (
                         <span className="text-sm text-gray-500 ml-2">({dispensary.reviewsCount} reviews)</span>
                       )}
                     </div>
@@ -226,7 +223,7 @@ export default async function DispensaryPage({ params }: Props) {
                         return (
                           <div 
                             key={h.dayOfWeek}
-                            className={`flex justify-between py-2 ${isToday ? 'font-semibold text-primary-600' : 'text-gray-600'}`}
+                            className={`flex justify-between py-2 ${isToday ? 'font-semibold text-green-600' : 'text-gray-600'}`}
                           >
                             <span>{DAY_NAMES[h.dayOfWeek]}{isToday && ' (Today)'}</span>
                             <span>
@@ -250,7 +247,7 @@ export default async function DispensaryPage({ params }: Props) {
                     href={`https://maps.google.com/?q=${dispensary.latitude},${dispensary.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary-600 hover:text-primary-700 font-medium"
+                    className="text-green-600 hover:text-green-700 font-medium"
                   >
                     View on Google Maps →
                   </a>
@@ -274,7 +271,7 @@ export default async function DispensaryPage({ params }: Props) {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 mb-1">Phone</div>
-                    <a href={`tel:${dispensary.phone.replace(/[^0-9]/g, '')}`} className="font-medium text-primary-600 hover:text-primary-700">
+                    <a href={`tel:${dispensary.phone?.replace(/[^0-9]/g, '')}`} className="font-medium text-green-600 hover:text-green-700">
                       {dispensary.phone}
                     </a>
                   </div>
@@ -285,7 +282,7 @@ export default async function DispensaryPage({ params }: Props) {
                         href={dispensary.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-primary-600 hover:text-primary-700"
+                        className="font-medium text-green-600 hover:text-green-700"
                       >
                         Visit Website →
                       </a>
@@ -296,8 +293,8 @@ export default async function DispensaryPage({ params }: Props) {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   <a
-                    href={`tel:${dispensary.phone.replace(/[^0-9]/g, '')}`}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors"
+                    href={`tel:${dispensary.phone?.replace(/[^0-9]/g, '')}`}
+                    className="w-full flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -381,13 +378,13 @@ export default async function DispensaryPage({ params }: Props) {
                   <Link
                     key={related.id}
                     href={`/dispensary/${related.slug}`}
-                    className="p-4 bg-white border border-gray-200 rounded-xl hover:border-primary-500 hover:shadow-lg transition-all"
+                    className="p-4 bg-white border border-gray-200 rounded-xl hover:border-green-500 hover:shadow-lg transition-all"
                   >
-                    <div className="font-semibold text-gray-900 hover:text-primary-600 mb-1">
+                    <div className="font-semibold text-gray-900 hover:text-green-600 mb-1">
                       {related.name}
                     </div>
                     <div className="text-sm text-gray-500">{related.address}</div>
-                    {related.rating > 0 && (
+                    {related.rating != null && related.rating > 0 && (
                       <div className="mt-2 text-sm">
                         <span className="text-yellow-500">★</span>
                         <span className="ml-1 text-gray-700">{related.rating.toFixed(1)}</span>
