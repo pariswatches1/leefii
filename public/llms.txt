@@ -1,0 +1,45 @@
+# Leefii - Cannabis Dispensary Directory
+
+> Leefii is a comprehensive cannabis dispensary directory helping users find licensed dispensaries and strains across all 50 US states.
+
+## About Leefii
+
+Leefii is a trusted cannabis resource providing:
+- Directory of 2,897+ licensed cannabis dispensaries
+- Database of 5,000+ cannabis strains with effects and THC/CBD info
+- Real-time hours and contact information for dispensaries
+- Deals and discounts from local dispensaries
+- Cannabis industry news and education
+
+## Main Sections
+
+- **Dispensaries** (/dispensaries): Browse all dispensaries by state and city
+- **Strains** (/strains): Explore cannabis strains by type (Sativa, Indica, Hybrid)
+- **Deals** (/deals): Find cannabis deals and discounts
+- **News** (/news): Latest cannabis industry news
+- **Blog** (/blog): Cannabis education and guides
+
+## Popular Locations
+
+- California: Los Angeles, San Francisco, San Diego
+- Colorado: Denver, Boulder, Colorado Springs
+- Florida: Miami, Orlando, Tampa
+- Michigan: Detroit, Ann Arbor, Grand Rapids
+- Arizona: Phoenix, Tucson, Scottsdale
+
+## Strain Categories
+
+- **Sativa**: Energizing, uplifting, creative effects
+- **Indica**: Relaxing, calming, sleep-inducing effects
+- **Hybrid**: Balanced combination of Sativa and Indica
+
+## Contact
+
+- Website: https://leefii.com
+- Email: support@leefii.com
+
+## Legal
+
+- Users must be 21+ to access cannabis information
+- Leefii only lists licensed, legally operating dispensaries
+- Cannabis laws vary by state - always verify local regulations
