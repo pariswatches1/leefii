@@ -1,17 +1,65 @@
-import type { Metadata } from 'next'
 import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import Link from 'next/link'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://leefii.com'),
   title: {
-    default: 'Leefii - Find Cannabis Dispensaries Near You',
-    template: '%s | Leefii',
+    default: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
+    template: '%s | Leefii'
   },
-  description: 'Find licensed cannabis dispensaries near you. Compare hours, locations, and call directly. The fastest way to find dispensaries in your city.',
-  keywords: ['dispensary', 'cannabis', 'marijuana', 'weed', 'dispensary near me', 'medical marijuana', 'strains', 'sativa', 'indica', 'hybrid'],
+  description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states, explore 5,000+ strains, read reviews, and find the best deals.',
+  keywords: [
+    'cannabis dispensary',
+    'marijuana dispensary',
+    'weed dispensary near me',
+    'cannabis strains',
+    'marijuana strains',
+    'dispensary finder',
+    'cannabis deals',
+    'medical marijuana',
+    'recreational cannabis',
+    'CBD',
+    'THC',
+    'dispensary directory',
+    'cannabis news',
+    'weed shop',
+    'pot shop near me'
+  ],
   authors: [{ name: 'Leefii' }],
   creator: 'Leefii',
   publisher: 'Leefii',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://leefii.com',
+    siteName: 'Leefii',
+    title: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
+    description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states, explore 5,000+ strains, and find the best deals.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Leefii - Cannabis Dispensary Directory',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
+    description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states and explore 5,000+ strains.',
+    images: ['/og-image.png'],
+    creator: '@leefii',
+  },
   robots: {
     index: true,
     follow: true,
@@ -23,34 +71,50 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://leefii.com',
-    siteName: 'Leefii',
-    title: 'Leefii - Find Cannabis Dispensaries Near You',
-    description: 'Find licensed cannabis dispensaries near you. Compare hours, locations, and call directly.',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Leefii - Find Dispensaries'
-      }
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Leefii - Find Cannabis Dispensaries Near You',
-    description: 'Find licensed cannabis dispensaries near you.',
-    images: ['/og-image.png'],
-    creator: '@leefii',
-  },
   verification: {
-    google: 'your-google-verification-code',
+    google: 'your-google-verification-code', // Replace with actual code
+    // yandex: 'your-yandex-verification-code',
+    // bing: 'your-bing-verification-code',
   },
   alternates: {
-    canonical: 'https://leefii.com'
+    canonical: 'https://leefii.com',
+  },
+  category: 'cannabis',
+}
+
+// JSON-LD Schema for the website
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Leefii',
+  description: 'Find licensed cannabis dispensaries near you. Browse dispensaries across 50 states, explore strains, and find the best deals.',
+  url: 'https://leefii.com',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://leefii.com/search?q={search_term_string}'
+    },
+    'query-input': 'required name=search_term_string'
+  }
+}
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Leefii',
+  url: 'https://leefii.com',
+  logo: 'https://leefii.com/logo.png',
+  description: 'Cannabis dispensary directory helping you find licensed dispensaries and strains.',
+  sameAs: [
+    'https://twitter.com/leefii',
+    'https://facebook.com/leefii',
+    'https://instagram.com/leefii'
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    email: 'support@leefii.com'
   }
 }
 
@@ -66,140 +130,133 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#22c55e" />
+        <meta name="theme-color" content="#16a34a" />
+        
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
       </head>
-      <body className="min-h-screen bg-white antialiased">
-        <Header />
-        <main className="min-h-[calc(100vh-140px)]">
-          {children}
-        </main>
-        <Footer />
+      <body className={inter.className}>
+        {/* Navigation */}
+        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              {/* Logo */}
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">L</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">Leefii</span>
+              </Link>
+
+              {/* Navigation Links */}
+              <div className="hidden md:flex items-center space-x-8">
+                <Link href="/dispensaries" className="text-gray-600 hover:text-green-600 transition">
+                  Dispensaries
+                </Link>
+                <Link href="/strains" className="text-gray-600 hover:text-green-600 transition">
+                  Strains
+                </Link>
+                <Link href="/deals" className="text-gray-600 hover:text-green-600 transition">
+                  Deals
+                </Link>
+                <Link href="/news" className="text-gray-600 hover:text-green-600 transition">
+                  News
+                </Link>
+                <Link href="/blog" className="text-gray-600 hover:text-green-600 transition">
+                  Blog
+                </Link>
+                <Link href="/about" className="text-gray-600 hover:text-green-600 transition">
+                  About
+                </Link>
+              </div>
+
+              {/* Search Icon */}
+              <div className="flex items-center">
+                <button className="p-2 text-gray-500 hover:text-green-600 transition" aria-label="Search">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main>{children}</main>
+
+        {/* Footer */}
+        <footer className="bg-gray-900 text-gray-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {/* Company */}
+              <div>
+                <h3 className="text-white font-semibold mb-4">Company</h3>
+                <ul className="space-y-2">
+                  <li><Link href="/about" className="hover:text-white transition">About</Link></li>
+                  <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
+                  <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
+                  <li><Link href="/terms" className="hover:text-white transition">Terms</Link></li>
+                </ul>
+              </div>
+
+              {/* Explore */}
+              <div>
+                <h3 className="text-white font-semibold mb-4">Explore</h3>
+                <ul className="space-y-2">
+                  <li><Link href="/dispensaries" className="hover:text-white transition">Dispensaries</Link></li>
+                  <li><Link href="/strains" className="hover:text-white transition">Strains</Link></li>
+                  <li><Link href="/deals" className="hover:text-white transition">Deals</Link></li>
+                  <li><Link href="/news" className="hover:text-white transition">News</Link></li>
+                </ul>
+              </div>
+
+              {/* Popular States */}
+              <div>
+                <h3 className="text-white font-semibold mb-4">Popular States</h3>
+                <ul className="space-y-2">
+                  <li><Link href="/dispensaries/california" className="hover:text-white transition">California</Link></li>
+                  <li><Link href="/dispensaries/colorado" className="hover:text-white transition">Colorado</Link></li>
+                  <li><Link href="/dispensaries/florida" className="hover:text-white transition">Florida</Link></li>
+                  <li><Link href="/dispensaries/michigan" className="hover:text-white transition">Michigan</Link></li>
+                </ul>
+              </div>
+
+              {/* Popular Cities */}
+              <div>
+                <h3 className="text-white font-semibold mb-4">Popular Cities</h3>
+                <ul className="space-y-2">
+                  <li><Link href="/dispensaries/california/los-angeles" className="hover:text-white transition">Los Angeles</Link></li>
+                  <li><Link href="/dispensaries/colorado/denver" className="hover:text-white transition">Denver</Link></li>
+                  <li><Link href="/dispensaries/california/san-francisco" className="hover:text-white transition">San Francisco</Link></li>
+                  <li><Link href="/dispensaries/arizona/phoenix" className="hover:text-white transition">Phoenix</Link></li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom */}
+            <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+              <div className="flex items-center space-x-2 mb-4 md:mb-0">
+                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">L</span>
+                </div>
+                <span className="text-white font-bold">Leefii</span>
+              </div>
+              <p className="text-sm text-center md:text-right">
+                © {new Date().getFullYear()} Leefii. All rights reserved.<br />
+                <span className="text-xs">Must be 21+ to use this site. Please consume responsibly.</span>
+              </p>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
-  )
-}
-
-// Header Component
-function Header() {
-  return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <a href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">Leefii</span>
-          </a>
-
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="/dispensaries" className="text-gray-600 hover:text-gray-900 font-medium">
-              Dispensaries
-            </a>
-            <a href="/strains" className="text-gray-600 hover:text-gray-900 font-medium">
-              Strains
-            </a>
-            <a href="/deals" className="text-gray-600 hover:text-gray-900 font-medium">
-              Deals
-            </a>
-            <a href="/news" className="text-gray-600 hover:text-gray-900 font-medium">
-              News
-            </a>
-            <a href="/blog" className="text-gray-600 hover:text-gray-900 font-medium">
-              Blog
-            </a>
-            <a href="/about" className="text-gray-600 hover:text-gray-900 font-medium">
-              About
-            </a>
-          </nav>
-
-          {/* Search */}
-          <div className="flex items-center">
-            <a
-              href="/search"
-              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-              aria-label="Search"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </a>
-            
-            {/* Mobile menu button */}
-            <button className="md:hidden ml-2 p-2 text-gray-500 hover:text-gray-700" aria-label="Menu">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-// Footer Component
-function Footer() {
-  return (
-    <footer className="bg-gray-50 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">L</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">Leefii</span>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Find licensed cannabis dispensaries near you.
-            </p>
-          </div>
-
-          {/* Popular States */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Popular States</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="/dispensaries/california" className="text-gray-600 hover:text-primary-600">California</a></li>
-              <li><a href="/dispensaries/florida" className="text-gray-600 hover:text-primary-600">Florida</a></li>
-              <li><a href="/dispensaries/colorado" className="text-gray-600 hover:text-primary-600">Colorado</a></li>
-              <li><a href="/dispensaries/michigan" className="text-gray-600 hover:text-primary-600">Michigan</a></li>
-            </ul>
-          </div>
-
-          {/* Explore */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Explore</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="/dispensaries" className="text-gray-600 hover:text-primary-600">Dispensaries</a></li>
-              <li><a href="/strains" className="text-gray-600 hover:text-primary-600">Strains</a></li>
-              <li><a href="/deals" className="text-gray-600 hover:text-primary-600">Deals</a></li>
-              <li><a href="/news" className="text-gray-600 hover:text-primary-600">News</a></li>
-              <li><a href="/blog" className="text-gray-600 hover:text-primary-600">Blog</a></li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="/about" className="text-gray-600 hover:text-primary-600">About</a></li>
-              <li><a href="/contact" className="text-gray-600 hover:text-primary-600">Contact</a></li>
-              <li><a href="/privacy" className="text-gray-600 hover:text-primary-600">Privacy</a></li>
-              <li><a href="/terms" className="text-gray-600 hover:text-primary-600">Terms</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-center text-gray-500 text-sm">
-            © {new Date().getFullYear()} Leefii. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
   )
 }
