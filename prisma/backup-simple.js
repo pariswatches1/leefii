@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const fs = require('fs'); const prisma = new PrismaClient(); async function backup() { const strains = await prisma.strain.findMany(); fs.writeFileSync('strains-backup.json', JSON.stringify(strains, null, 2)); console.log('Backed up ' + strains.length + ' strains'); await prisma.$disconnect(); } backup(); 
