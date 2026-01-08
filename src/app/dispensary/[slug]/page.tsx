@@ -78,7 +78,7 @@ export default async function DispensaryPage({ params }: Props) {
     include: {
       city: true,
       state: true,
-      hours: { orderBy: { dayOfWeek: 'asc' } }
+      BusinessHours: { orderBy: { dayOfWeek: 'asc' } }
     }
   })
 
@@ -87,12 +87,12 @@ export default async function DispensaryPage({ params }: Props) {
   }
 
   // Sort hours by day
-  const sortedHours = [...dispensary.hours].sort(
+  const sortedHours = [...dispensary.BusinessHours].sort(
     (a, b) => DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek)
   )
 
   // Get open status
-  const { open, nextChange } = isOpenNow(dispensary.hours)
+  const { open, nextChange } = isOpenNow(dispensary.BusinessHours)
 
   // Track page view (would be API call)
   // trackEvent('PAGE_VIEW', dispensary.id)
@@ -183,54 +183,27 @@ export default async function DispensaryPage({ params }: Props) {
                     )}
                   </div>
                   {dispensary.rating > 0 && (
-                    <div className="text-right">
-                      <div className="inline-flex items-center px-3 py-1.5 bg-yellow-50 rounded-lg">
-                        <span className="text-yellow-500 text-lg">★</span>
-                        <span className="ml-1 text-xl font-bold text-gray-900">{dispensary.rating.toFixed(1)}</span>
-                      </div>
+                    <div className="flex items-center bg-green-50 px-3 py-2 rounded-lg">
+                      <span className="text-yellow-500 text-xl mr-1">★</span>
+                      <span className="text-xl font-bold text-gray-900">{dispensary.rating.toFixed(1)}</span>
                       {dispensary.reviewsCount > 0 && (
-                        <div className="text-sm text-gray-500 mt-1">{dispensary.reviewsCount} reviews</div>
+                        <span className="text-sm text-gray-500 ml-2">({dispensary.reviewsCount} reviews)</span>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* Status & Features */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {open ? (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      🟢 Open · {nextChange}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                      🔴 {nextChange}
-                    </span>
+                {/* Status Badge */}
+                <div className="mt-4 flex items-center space-x-4">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {open ? 'Open Now' : 'Closed'}
+                  </span>
+                  {nextChange && (
+                    <span className="text-gray-600 text-sm">{nextChange}</span>
                   )}
-                  {dispensary.hasDelivery && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      🚚 Delivery
-                    </span>
-                  )}
-                  {dispensary.hasStorefront && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                      🏪 Storefront
-                    </span>
-                  )}
-                  {dispensary.licenseType === 'MEDICAL' && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                      🏥 Medical
-                    </span>
-                  )}
-                  {(dispensary.licenseType === 'RECREATIONAL' || dispensary.licenseType === 'BOTH') && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      🌿 Recreational
-                    </span>
-                  )}
-                  {dispensary.isVerified && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
-                      ✓ Verified
-                    </span>
-                  )}
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${dispensary.licenseType === 'MEDICAL' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                    {dispensary.licenseType === 'MEDICAL' ? 'Medical' : dispensary.licenseType === 'RECREATIONAL' ? 'Recreational' : 'Medical & Recreational'}
+                  </span>
                 </div>
               </div>
 
@@ -244,7 +217,7 @@ export default async function DispensaryPage({ params }: Props) {
 
               {/* Hours */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Hours</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Hours of Operation</h2>
                 <div className="bg-gray-50 rounded-xl p-5">
                   {sortedHours.length > 0 ? (
                     <div className="space-y-2">
