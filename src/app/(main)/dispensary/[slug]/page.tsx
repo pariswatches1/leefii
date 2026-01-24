@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
+import ShopNowButton from '@/components/ShopNowButton'
+import Reviews from '@/components/Reviews'
 
 type Props = {
   params: { slug: string }
@@ -253,6 +255,15 @@ export default async function DispensaryPage({ params }: Props) {
                   </a>
                 </div>
               </div>
+
+              {/* Reviews Section */}
+              <div className="mb-8">
+                <Reviews
+                  entityType="dispensary"
+                  entityId={dispensary.id}
+                  entityName={dispensary.name}
+                />
+              </div>
             </div>
 
             {/* Right Column - Contact Card */}
@@ -313,17 +324,14 @@ export default async function DispensaryPage({ params }: Props) {
                     Get Directions
                   </a>
                   {dispensary.website && (
-                    <a
-                      href={dispensary.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                    >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                      </svg>
-                      Visit Website
-                    </a>
+                    <ShopNowButton
+                      dispensaryId={dispensary.id}
+                      destinationUrl={dispensary.website}
+                      buttonText="Visit Website"
+                      variant="outline"
+                      fullWidth
+                      className="justify-center"
+                    />
                   )}
                 </div>
 

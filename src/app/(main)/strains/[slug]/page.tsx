@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import Reviews from '@/components/Reviews';
 
 type Props = {
   params: { slug: string };
@@ -177,6 +178,15 @@ export default async function StrainPage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Reviews */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <Reviews
+                entityType="strain"
+                entityId={strain.id}
+                entityName={strain.name}
+              />
+            </div>
           </div>
 
           {/* Sidebar */}
