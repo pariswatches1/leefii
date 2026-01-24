@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm audit:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix security vulnerabilities and code quality issues\n\n- Upgrade Next.js from 14.2.18 to 14.2.35 \\(fixes 9 CVEs\\)\n- Fix page content mismatch \\(about, contact, terms, privacy had wrong content\\)\n- Fix unescaped entities in JSX across 8 files\n- Convert Google Analytics to next/script for better performance\n- Convert blog images to Next.js Image component\n- Add ESLint configuration\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit:*)",
+      "Bash(node prisma/seed-blog-posts-30.js:*)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_hmjJdB18EKNG@ep-steep-pine-adv8j2oe-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require\" node:*)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_hmjJdB18EKNG@ep-steep-pine-adv8j2oe-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require\" node -e:*)"
+    ]
+  }
+}
