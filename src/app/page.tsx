@@ -40,9 +40,9 @@ export default function Home() {
                 <Link href="/blog" className="text-gray-800 hover:text-gray-900 transition font-medium">
                   Blog
                 </Link>
-                <button className="px-5 py-2 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition">
+                <Link href="/login" className="px-5 py-2 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition">
                   Sign In
-                </button>
+                </Link>
               </nav>
 
               {/* Mobile menu button */}
