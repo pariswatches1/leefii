@@ -8,7 +8,7 @@ export default async function AdminApplicationsPage() {
   const session = await auth();
 
   if (!session?.user || session.user.role !== 'ADMIN') {
-    redirect('/');
+    redirect('/login?callbackUrl=/admin/applications');
   }
 
   const applications = await prisma.sellerApplication.findMany({
@@ -48,10 +48,10 @@ export default async function AdminApplicationsPage() {
             </p>
           </div>
           <Link
-            href="/admin/sellers"
+            href="/"
             className="text-green-600 hover:underline"
           >
-            View Active Sellers →
+            ← Back to Home
           </Link>
         </div>
 

@@ -320,25 +320,25 @@ enum StrainType {
 }
 
 // ==========================================
-// MARKETPLACE MODELS - Users, Sellers, Products
+// USER & SELLER MODELS
 // ==========================================
 
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
   name          String?
-  passwordHash  String?
+  email         String    @unique
   emailVerified DateTime?
   image         String?
+  passwordHash  String?
   role          UserRole  @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sellerProfile     SellerProfile?
-  sellerApplication SellerApplication?
-  inquiries         Inquiry[]
-  sessions          Session[]
   accounts          Account[]
+  sessions          Session[]
+  sellerApplication SellerApplication?
+  sellerProfile     SellerProfile?
+  inquiries         Inquiry[]
 
   @@index([email])
 }
@@ -382,22 +382,22 @@ model VerificationToken {
 }
 
 model SellerApplication {
-  id           String            @id @default(cuid())
-  userId       String            @unique
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  businessName String
-  businessType BusinessType
+  id            String            @id @default(cuid())
+  userId        String            @unique
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName  String
+  businessType  BusinessType
   licenseNumber String?
   licenseState  String?
-  ein          String?
-  phone        String
-  website      String?
-  description  String
-  status       ApplicationStatus @default(PENDING)
-  adminNotes   String?
-  submittedAt  DateTime          @default(now())
-  reviewedAt   DateTime?
-  reviewedBy   String?
+  ein           String?
+  phone         String
+  website       String?
+  description   String
+  status        ApplicationStatus @default(PENDING)
+  adminNotes    String?
+  submittedAt   DateTime          @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?
 
   @@index([status])
   @@index([submittedAt])
@@ -450,16 +450,16 @@ model ProductCategory {
 }
 
 model Product {
-  id             String           @id @default(cuid())
+  id             String            @id @default(cuid())
   sellerId       String
-  seller         SellerProfile    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  seller         SellerProfile     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   categoryId     String?
-  category       ProductCategory? @relation(fields: [categoryId], references: [id])
+  category       ProductCategory?  @relation(fields: [categoryId], references: [id])
   name           String
   slug           String
   description    String
-  price          Decimal          @db.Decimal(10, 2)
-  compareAtPrice Decimal?         @db.Decimal(10, 2)
+  price          Decimal           @db.Decimal(10, 2)
+  compareAtPrice Decimal?          @db.Decimal(10, 2)
   images         String[]
   thcContent     String?
   cbdContent     String?
@@ -467,11 +467,11 @@ model Product {
   strainType     ProductStrainType?
   weight         String?
   brand          String?
-  isAvailable    Boolean          @default(true)
-  isFeatured     Boolean          @default(false)
-  viewCount      Int              @default(0)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  isAvailable    Boolean           @default(true)
+  isFeatured     Boolean           @default(false)
+  viewCount      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   inquiries Inquiry[]
 
