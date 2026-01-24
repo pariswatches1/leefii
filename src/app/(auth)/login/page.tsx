@@ -1,16 +1,32 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, Suspense, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // If already logged in, redirect appropriately
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      if (session.user.role === 'ADMIN') {
+        router.push('/admin/applications');
+      } else if (session.user.role === 'SELLER') {
+        router.push('/dashboard');
+      } else if (callbackUrl && callbackUrl !== '/') {
+        router.push(callbackUrl);
+      } else {
+        router.push('/');
+      }
+    }
+  }, [status, session, router, callbackUrl]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,12 +50,21 @@ function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
+      // The useEffect above will handle the redirect once session updates
       router.refresh();
     } catch {
       setError('Something went wrong. Please try again.');
       setLoading(false);
     }
+  }
+
+  // Show loading while checking session
+  if (status === 'loading') {
+    return (
+      <div className="bg-white py-8 px-4 shadow-sm rounded-2xl sm:px-10 text-center text-gray-500">
+        Loading...
+      </div>
+    );
   }
 
   return (
