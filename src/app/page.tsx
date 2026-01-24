@@ -99,7 +99,7 @@ export default function Home() {
             {/* Stats */}
             <div className="flex gap-8">
               <div>
-                <div className="text-3xl font-bold text-gray-900">2,897+</div>
+                <div className="text-3xl font-bold text-gray-900">6,891+</div>
                 <div className="text-gray-700">Dispensaries</div>
               </div>
               <div>
@@ -107,7 +107,7 @@ export default function Home() {
                 <div className="text-gray-700">Strains</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-gray-900">50</div>
+                <div className="text-3xl font-bold text-gray-900">51</div>
                 <div className="text-gray-700">States</div>
               </div>
             </div>
