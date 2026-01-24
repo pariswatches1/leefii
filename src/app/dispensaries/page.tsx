@@ -95,7 +95,7 @@ export default async function DispensariesPage() {
             <p>
               Cannabis laws vary significantly across the United States. Some states have legalized 
               both recreational and medical marijuana, while others only permit medical use. Leefii 
-              helps you find licensed dispensaries in legal states, ensuring you're shopping at 
+              helps you find licensed dispensaries in legal states, ensuring you&apos;re shopping at 
               verified, compliant locations.
             </p>
             <p>

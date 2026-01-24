@@ -30,10 +30,11 @@ export default async function BlogPage() {
               <Link key={post.id} href={`/blog/${post.slug}`} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group">
                 <div className="aspect-video relative overflow-hidden">
                   {post.imageUrl ? (
-                    <img
+                    <Image
                       src={post.imageUrl}
                       alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">

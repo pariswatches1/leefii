@@ -25,7 +25,7 @@ export default function DealsPage() {
           <div className="text-6xl mb-6">💰</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Deals Coming Soon!</h2>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            We're working hard to bring you the best cannabis deals from dispensaries across the country. Check back soon!
+            We&apos;re working hard to bring you the best cannabis deals from dispensaries across the country. Check back soon!
           </p>
           <Link
             href="/dispensaries"
