@@ -316,4 +316,238 @@ enum StrainType {
   SATIVA
   INDICA
   HYBRID
+  CBD
+}
+
+// ==========================================
+// MARKETPLACE MODELS - Users, Sellers, Products
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sellerProfile     SellerProfile?
+  sellerApplication SellerApplication?
+  inquiries         Inquiry[]
+  sessions          Session[]
+  accounts          Account[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SellerApplication {
+  id           String            @id @default(cuid())
+  userId       String            @unique
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName String
+  businessType BusinessType
+  licenseNumber String?
+  licenseState  String?
+  ein          String?
+  phone        String
+  website      String?
+  description  String
+  status       ApplicationStatus @default(PENDING)
+  adminNotes   String?
+  submittedAt  DateTime          @default(now())
+  reviewedAt   DateTime?
+  reviewedBy   String?
+
+  @@index([status])
+  @@index([submittedAt])
+}
+
+model SellerProfile {
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName     String
+  slug             String           @unique
+  logo             String?
+  banner           String?
+  description      String?
+  phone            String?
+  email            String?
+  website          String?
+  address          String?
+  city             String?
+  state            String?
+  zipCode          String?
+  licenseNumber    String?
+  subscriptionTier SubscriptionTier @default(BASIC)
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  products  Product[]
+  inquiries Inquiry[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([subscriptionTier])
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  slug        String            @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryHierarchy")
+  products    Product[]
+  sortOrder   Int               @default(0)
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Product {
+  id             String           @id @default(cuid())
+  sellerId       String
+  seller         SellerProfile    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       ProductCategory? @relation(fields: [categoryId], references: [id])
+  name           String
+  slug           String
+  description    String
+  price          Decimal          @db.Decimal(10, 2)
+  compareAtPrice Decimal?         @db.Decimal(10, 2)
+  images         String[]
+  thcContent     String?
+  cbdContent     String?
+  strain         String?
+  strainType     ProductStrainType?
+  weight         String?
+  brand          String?
+  isAvailable    Boolean          @default(true)
+  isFeatured     Boolean          @default(false)
+  viewCount      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  inquiries Inquiry[]
+
+  @@unique([sellerId, slug])
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isFeatured])
+  @@index([createdAt])
+}
+
+model Inquiry {
+  id          String        @id @default(cuid())
+  productId   String?
+  product     Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sellerId    String
+  seller      SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  email       String
+  phone       String?
+  message     String
+  status      InquiryStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+  respondedAt DateTime?
+
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// MARKETPLACE ENUMS
+// ==========================================
+
+enum UserRole {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum BusinessType {
+  DISPENSARY
+  DELIVERY
+  BRAND
+  MANUFACTURER
+  DISTRIBUTOR
+  CBD_RETAILER
+  ACCESSORIES
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum SubscriptionTier {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum ProductStrainType {
+  INDICA
+  SATIVA
+  HYBRID
+  CBD
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
 }

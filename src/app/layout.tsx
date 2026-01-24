@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import Script from 'next/script'
+import Providers from '@/components/Providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -144,6 +145,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <Providers>
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-M344LSL390"
@@ -170,9 +172,12 @@ export default function RootLayout({
               </Link>
 
               {/* Navigation Links */}
-              <div className="hidden md:flex items-center space-x-8">
+              <div className="hidden md:flex items-center space-x-6">
                 <Link href="/dispensaries" className="text-gray-600 hover:text-green-600 transition">
                   Dispensaries
+                </Link>
+                <Link href="/marketplace" className="text-gray-600 hover:text-green-600 transition">
+                  Marketplace
                 </Link>
                 <Link href="/strains" className="text-gray-600 hover:text-green-600 transition">
                   Strains
@@ -186,8 +191,8 @@ export default function RootLayout({
                 <Link href="/blog" className="text-gray-600 hover:text-green-600 transition">
                   Blog
                 </Link>
-                <Link href="/about" className="text-gray-600 hover:text-green-600 transition">
-                  About
+                <Link href="/sell" className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition">
+                  Sell on Leefii
                 </Link>
               </div>
 
@@ -221,9 +226,10 @@ export default function RootLayout({
                 <h3 className="text-white font-semibold mb-4">Explore</h3>
                 <ul className="space-y-2">
                   <li><Link href="/dispensaries" className="hover:text-white transition">Dispensaries</Link></li>
+                  <li><Link href="/marketplace" className="hover:text-white transition">Marketplace</Link></li>
                   <li><Link href="/strains" className="hover:text-white transition">Strains</Link></li>
                   <li><Link href="/deals" className="hover:text-white transition">Deals</Link></li>
-                  <li><Link href="/news" className="hover:text-white transition">News</Link></li>
+                  <li><Link href="/sell" className="hover:text-white transition">Sell on Leefii</Link></li>
                 </ul>
               </div>
 
@@ -265,6 +271,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        </Providers>
       </body>
     </html>
   )
