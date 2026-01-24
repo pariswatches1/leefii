@@ -1,7 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Link from 'next/link'
 import Script from 'next/script'
 import Providers from '@/components/Providers'
 
@@ -159,118 +158,7 @@ export default function RootLayout({
             gtag('config', 'G-M344LSL390');
           `}
         </Script>
-        {/* Navigation */}
-        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Logo */}
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">L</span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">Leefii</span>
-              </Link>
-
-              {/* Navigation Links */}
-              <div className="hidden md:flex items-center space-x-6">
-                <Link href="/dispensaries" className="text-gray-600 hover:text-green-600 transition">
-                  Dispensaries
-                </Link>
-                <Link href="/marketplace" className="text-gray-600 hover:text-green-600 transition">
-                  Marketplace
-                </Link>
-                <Link href="/strains" className="text-gray-600 hover:text-green-600 transition">
-                  Strains
-                </Link>
-                <Link href="/deals" className="text-gray-600 hover:text-green-600 transition">
-                  Deals
-                </Link>
-                <Link href="/news" className="text-gray-600 hover:text-green-600 transition">
-                  News
-                </Link>
-                <Link href="/blog" className="text-gray-600 hover:text-green-600 transition">
-                  Blog
-                </Link>
-                <Link href="/sell" className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition">
-                  Sell on Leefii
-                </Link>
-              </div>
-
-              {/* Search Icon */}
-              <div className="flex items-center">
-                <Link href="/search" className="p-2 text-gray-500 hover:text-green-600 transition" aria-label="Search">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg></Link></div></div></div></nav>
-
-        {/* Main Content */}
-        <main>{children}</main>
-
-        {/* Footer */}
-        <footer className="bg-gray-900 text-gray-400">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {/* Company */}
-              <div>
-                <h3 className="text-white font-semibold mb-4">Company</h3>
-                <ul className="space-y-2">
-                  <li><Link href="/about" className="hover:text-white transition">About</Link></li>
-                  <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
-                  <li><Link href="/privacy" className="hover:text-white transition">Privacy</Link></li>
-                  <li><Link href="/terms" className="hover:text-white transition">Terms</Link></li>
-                </ul>
-              </div>
-
-              {/* Explore */}
-              <div>
-                <h3 className="text-white font-semibold mb-4">Explore</h3>
-                <ul className="space-y-2">
-                  <li><Link href="/dispensaries" className="hover:text-white transition">Dispensaries</Link></li>
-                  <li><Link href="/marketplace" className="hover:text-white transition">Marketplace</Link></li>
-                  <li><Link href="/strains" className="hover:text-white transition">Strains</Link></li>
-                  <li><Link href="/deals" className="hover:text-white transition">Deals</Link></li>
-                  <li><Link href="/sell" className="hover:text-white transition">Sell on Leefii</Link></li>
-                </ul>
-              </div>
-
-              {/* Popular States */}
-              <div>
-                <h3 className="text-white font-semibold mb-4">Popular States</h3>
-                <ul className="space-y-2">
-                  <li><Link href="/dispensaries/california" className="hover:text-white transition">California</Link></li>
-                  <li><Link href="/dispensaries/colorado" className="hover:text-white transition">Colorado</Link></li>
-                  <li><Link href="/dispensaries/florida" className="hover:text-white transition">Florida</Link></li>
-                  <li><Link href="/dispensaries/michigan" className="hover:text-white transition">Michigan</Link></li>
-                </ul>
-              </div>
-
-              {/* Popular Cities */}
-              <div>
-                <h3 className="text-white font-semibold mb-4">Popular Cities</h3>
-                <ul className="space-y-2">
-                  <li><Link href="/dispensaries/california/los-angeles" className="hover:text-white transition">Los Angeles</Link></li>
-                  <li><Link href="/dispensaries/colorado/denver" className="hover:text-white transition">Denver</Link></li>
-                  <li><Link href="/dispensaries/california/san-francisco" className="hover:text-white transition">San Francisco</Link></li>
-                  <li><Link href="/dispensaries/arizona/phoenix" className="hover:text-white transition">Phoenix</Link></li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Bottom */}
-            <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-              <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">L</span>
-                </div>
-                <span className="text-white font-bold">Leefii</span>
-              </div>
-              <p className="text-sm text-center md:text-right">
-                © {new Date().getFullYear()} Leefii. All rights reserved.<br />
-                <span className="text-xs">Must be 21+ to use this site. Please consume responsibly.</span>
-              </p>
-            </div>
-          </div>
-        </footer>
+{children}
         </Providers>
       </body>
     </html>
