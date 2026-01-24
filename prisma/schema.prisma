@@ -339,6 +339,8 @@ model User {
   sellerApplication SellerApplication?
   sellerProfile     SellerProfile?
   inquiries         Inquiry[]
+  leadReferrals     LeadReferral[]
+  reviews           Review[]
 
   @@index([email])
 }
@@ -425,8 +427,10 @@ model SellerProfile {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  products  Product[]
-  inquiries Inquiry[]
+  products        Product[]
+  inquiries       Inquiry[]
+  leadReferrals   LeadReferral[]
+  payoutSettings  SellerPayoutSettings?
 
   @@index([slug])
   @@index([isActive])
@@ -473,7 +477,8 @@ model Product {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
-  inquiries Inquiry[]
+  inquiries     Inquiry[]
+  leadReferrals LeadReferral[]
 
   @@unique([sellerId, slug])
   @@index([sellerId])
@@ -550,4 +555,159 @@ enum InquiryStatus {
   CONTACTED
   CONVERTED
   CLOSED
+}
+
+// ==========================================
+// LEAD REFERRAL & MONETIZATION
+// ==========================================
+
+model LeadReferral {
+  id              String         @id @default(cuid())
+
+  // Lead source
+  userId          String?        // Logged-in user (optional)
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId       String         // Anonymous session tracking
+  ipAddress       String?
+  userAgent       String?
+
+  // What they clicked
+  productId       String?
+  product         Product?       @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sellerId        String?
+  seller          SellerProfile? @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  dispensaryId    String?        // For dispensary referrals
+
+  // Tracking
+  referrerUrl     String?        // Page they came from
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+
+  // Destination
+  destinationUrl  String         // Seller's website URL
+  trackingCode    String         @unique // Unique code for this lead
+
+  // Status
+  status          LeadStatus     @default(CLICKED)
+  clickedAt       DateTime       @default(now())
+  convertedAt     DateTime?
+  conversionValue Decimal?       @db.Decimal(10, 2)
+
+  // Payout
+  payoutStatus    PayoutStatus   @default(PENDING)
+  payoutAmount    Decimal?       @db.Decimal(10, 2)
+  payoutDate      DateTime?
+
+  @@index([sellerId])
+  @@index([productId])
+  @@index([dispensaryId])
+  @@index([status])
+  @@index([clickedAt])
+  @@index([trackingCode])
+}
+
+model SellerPayoutSettings {
+  id               String         @id @default(cuid())
+  sellerId         String         @unique
+  seller           SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  // Payout method
+  payoutMethod     PayoutMethod   @default(BANK_TRANSFER)
+  paypalEmail      String?
+  bankAccountLast4 String?
+  stripeAccountId  String?        // For Stripe Connect
+
+  // Commission settings (set by admin based on tier)
+  commissionType   CommissionType @default(PER_LEAD)
+  commissionRate   Decimal        @default(2.00) @db.Decimal(5, 2) // $2 per lead default
+  minimumPayout    Decimal        @default(50) @db.Decimal(10, 2)
+
+  // Tracking
+  totalLeads       Int            @default(0)
+  totalPaid        Decimal        @default(0) @db.Decimal(10, 2)
+  pendingPayout    Decimal        @default(0) @db.Decimal(10, 2)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+enum LeadStatus {
+  CLICKED         // User clicked through
+  LANDED          // Confirmed landing on seller site
+  CONVERTED       // Sale confirmed
+  EXPIRED         // 30-day window passed
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum PayoutMethod {
+  BANK_TRANSFER
+  PAYPAL
+  CHECK
+  STRIPE
+}
+
+enum CommissionType {
+  PER_LEAD        // Flat fee per click/lead
+  PERCENTAGE      // Percentage of sale
+  HYBRID          // Base + percentage
+}
+
+// ==========================================
+// USER REVIEWS
+// ==========================================
+
+model Review {
+  id            String       @id @default(cuid())
+
+  // Author
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What is being reviewed (one of these)
+  dispensaryId  String?
+  strainId      String?
+  productId     String?
+  sellerId      String?
+
+  // Review content
+  rating        Int          // 1-5 stars
+  title         String?
+  content       String
+
+  // Moderation
+  isApproved    Boolean      @default(false)
+  isVerified    Boolean      @default(false) // Verified purchase
+  helpfulCount  Int          @default(0)
+  reportCount   Int          @default(0)
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([dispensaryId])
+  @@index([strainId])
+  @@index([productId])
+  @@index([sellerId])
+  @@index([userId])
+  @@index([isApproved])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model ReviewHelpful {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  isHelpful Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
 }

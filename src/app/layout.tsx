@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import Providers from '@/components/Providers'
+import AgeVerification from '@/components/AgeVerification'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -144,7 +145,6 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <Providers>
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-M344LSL390"
@@ -158,7 +158,9 @@ export default function RootLayout({
             gtag('config', 'G-M344LSL390');
           `}
         </Script>
-{children}
+        <Providers>
+          <AgeVerification />
+          {children}
         </Providers>
       </body>
     </html>
