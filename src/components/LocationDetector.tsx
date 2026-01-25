@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 
 interface Location {
   city: string;
@@ -22,49 +22,49 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 
 const STORAGE_KEY = 'leefii_location';
 
-// Module-level flag to prevent duplicate fetches across re-renders
-let isFetching = false;
-let hasFetched = false;
+function getStoredLocation(): Location | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed.city === 'string' && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
+        return parsed;
+      }
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+  return null;
+}
 
 export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocationState] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Only run on client
-    if (typeof window === 'undefined') return;
+    // Only initialize once
+    if (initialized) return;
+    setInitialized(true);
 
     async function detectLocation() {
       // Check localStorage first
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.city && parsed.lat && parsed.lng) {
-            setLocationState(parsed);
-            setLoading(false);
-            hasFetched = true;
-            return;
-          }
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-
-      // Prevent duplicate fetches
-      if (isFetching || hasFetched) {
+      const stored = getStoredLocation();
+      if (stored) {
+        setLocationState(stored);
+        setLoading(false);
         return;
       }
-      isFetching = true;
 
-      // Use our server-side API for IP geolocation
+      // Fetch from API
       try {
         const response = await fetch('/api/geolocation');
         const data = await response.json();
 
-        if (response.ok && data.city && data.lat && data.lng) {
+        if (response.ok && data.city && typeof data.lat === 'number' && typeof data.lng === 'number') {
           const detectedLocation: Location = {
             city: data.city,
             state: data.state || '',
@@ -82,24 +82,21 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setError('Could not detect location');
       } finally {
         setLoading(false);
-        isFetching = false;
-        hasFetched = true;
       }
     }
 
     detectLocation();
-  }, []);
+  }, [initialized]);
 
-  const setLocation = (newLocation: Location) => {
+  const setLocation = useCallback((newLocation: Location) => {
     setLocationState(newLocation);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocation));
-  };
+  }, []);
 
-  const clearLocation = () => {
+  const clearLocation = useCallback(() => {
     setLocationState(null);
     localStorage.removeItem(STORAGE_KEY);
-    hasFetched = false; // Allow re-fetch after clear
-  };
+  }, []);
 
   return (
     <LocationContext.Provider value={{ location, loading, error, setLocation, clearLocation }}>
