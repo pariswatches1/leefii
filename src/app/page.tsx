@@ -15,12 +15,12 @@ export default function Home() {
             <div className="flex justify-between items-center">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-lime-600 rounded-xl flex items-center justify-center shadow-lg shadow-lime-600/20">
-                  <svg className="w-14 h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <div className="w-12 h-12 bg-lime-600 rounded-xl flex items-center justify-center shadow-lg shadow-lime-600/20">
+                  <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                   </svg>
                 </div>
-                <span className="text-3xl font-extrabold text-gray-500">Leefii</span>
+                <span className="text-3xl font-extrabold text-gray-800">Leefii</span>
               </Link>
 
               {/* Navigation */}
@@ -40,7 +40,7 @@ export default function Home() {
                 <Link href="/blog" className="text-gray-800 hover:text-gray-900 transition font-medium">
                   Blog
                 </Link>
-                <Link href="/sell" className="px-5 py-2 border-2 border-lime-700 text-lime-800 font-semibold rounded-full hover:bg-lime-700 hover:text-white transition">
+                <Link href="/sell" className="px-6 py-2.5 bg-lime-700 text-white text-base font-bold rounded-full hover:bg-lime-800 transition shadow-lg shadow-lime-700/30 border-2 border-lime-800">
                   Sell on Leefii
                 </Link>
                 <Link href="/login" className="px-5 py-2 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition">
