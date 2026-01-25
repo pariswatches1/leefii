@@ -22,15 +22,32 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 
 const STORAGE_KEY = 'leefii_location';
 
+function isValidLocation(data: unknown): data is Location {
+  if (!data || typeof data !== 'object') return false;
+  const loc = data as Record<string, unknown>;
+  return (
+    typeof loc.city === 'string' &&
+    loc.city !== '' &&
+    loc.city !== 'Unknown' &&
+    typeof loc.lat === 'number' &&
+    typeof loc.lng === 'number' &&
+    !isNaN(loc.lat) &&
+    !isNaN(loc.lng) &&
+    loc.lat !== 0 &&
+    loc.lng !== 0
+  );
+}
+
 function getStoredLocation(): Location | null {
   if (typeof window === 'undefined') return null;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (parsed && typeof parsed.city === 'string' && typeof parsed.lat === 'number' && typeof parsed.lng === 'number') {
+      if (isValidLocation(parsed)) {
         return parsed;
       }
+      // Invalid data - remove it
       localStorage.removeItem(STORAGE_KEY);
     }
   } catch {
