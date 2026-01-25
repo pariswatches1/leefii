@@ -33,7 +33,9 @@
       "Bash(node prisma/update-focus-blog-image.js:*)",
       "Bash(node prisma/list-blogs.js:*)",
       "Bash(node prisma/update-blog-image.js:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(del update-cannabutter.js .env)",
+      "Bash(node update-blog.js:*)"
     ]
   }
 }

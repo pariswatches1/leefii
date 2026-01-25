@@ -251,9 +251,13 @@ export default function StrainsClient({
                   href={`/strains/${strain.slug}`}
                   className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group"
                 >
-                  {/* Image placeholder */}
-                  <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-                    <span className="text-6xl">🌿</span>
+                  {/* Image */}
+                  <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 overflow-hidden">
+                    <img
+                      src="https://cdn.midjourney.com/69b327bd-36d7-4219-8bc6-ffd1da9dd44b/0_1.png"
+                      alt={strain.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                   
                   <div className="p-4">
