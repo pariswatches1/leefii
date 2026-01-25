@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 export async function GET() {
   try {
     // Get visitor's IP from headers
-    const headersList = headers();
+    const headersList = await headers();
     const forwardedFor = headersList.get('x-forwarded-for');
     const realIp = headersList.get('x-real-ip');
     const ip = forwardedFor?.split(',')[0]?.trim() || realIp || '';
@@ -17,11 +17,17 @@ export async function GET() {
     try {
       const response = await fetch(
         ip ? `https://ipapi.co/${ip}/json/` : 'https://ipapi.co/json/',
-        { next: { revalidate: 3600 } } // Cache for 1 hour
+        {
+          next: { revalidate: 3600 },
+          headers: {
+            'User-Agent': 'Leefii/1.0'
+          }
+        }
       );
       const data = await response.json();
 
-      if (data.city && data.latitude && data.longitude) {
+      // Check for rate limit or error responses
+      if (!data.error && data.city && data.latitude && data.longitude) {
         locationData = {
           city: data.city,
           state: data.region || '',
