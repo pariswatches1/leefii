@@ -96,6 +96,19 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Featured Image */}
+      {post.imageUrl && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl">
+            <img
+              src={post.imageUrl}
+              alt={post.title}
+              className="w-full h-64 sm:h-80 md:h-96 object-cover"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <article className="bg-white rounded-2xl shadow-sm p-8 sm:p-12">
