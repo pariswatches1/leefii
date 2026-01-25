@@ -29,7 +29,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function detectLocation() {
-      // Check localStorage first
+      // Check localStorage first (skip re-detection if already stored)
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
@@ -42,56 +42,25 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Try browser geolocation first
-      if ('geolocation' in navigator) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 5000,
-              maximumAge: 600000, // 10 minutes cache
-            });
-          });
+      // Use IP-based geolocation (no permission needed, works automatically)
+      try {
+        const ipResponse = await fetch('https://ip-api.com/json/?fields=city,region,regionName,zip,lat,lon');
+        const ipData = await ipResponse.json();
 
-          const { latitude, longitude } = position.coords;
-
-          // Reverse geocode to get city/state
-          const geoResponse = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
-          const geoData = await geoResponse.json();
-
+        if (ipData.city && ipData.lat && ipData.lon) {
           const detectedLocation: Location = {
-            city: geoData.address?.city || geoData.address?.town || geoData.address?.village || 'Unknown',
-            state: geoData.address?.state || '',
-            zip: geoData.address?.postcode,
-            lat: latitude,
-            lng: longitude,
+            city: ipData.city,
+            state: ipData.regionName || ipData.region || '',
+            zip: ipData.zip,
+            lat: ipData.lat,
+            lng: ipData.lon,
           };
 
           setLocationState(detectedLocation);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
-          setLoading(false);
-          return;
-        } catch {
-          // Geolocation failed or denied, fall through to IP-based
+        } else {
+          setError('Could not detect location');
         }
-      }
-
-      // Fallback to IP-based geolocation
-      try {
-        const ipResponse = await fetch('https://ip-api.com/json/?fields=city,region,zip,lat,lon');
-        const ipData = await ipResponse.json();
-
-        const detectedLocation: Location = {
-          city: ipData.city || 'Unknown',
-          state: ipData.region || '',
-          zip: ipData.zip,
-          lat: ipData.lat,
-          lng: ipData.lon,
-        };
-
-        setLocationState(detectedLocation);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
       } catch {
         setError('Could not detect location');
       } finally {
