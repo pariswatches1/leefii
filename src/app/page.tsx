@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import NearbyDispensaries from '@/components/NearbyDispensaries';
 
 export default function Home() {
   return (
@@ -158,6 +159,11 @@ export default function Home() {
               <div className="text-gray-700 text-sm">Updates</div>
             </Link>
           </div>
+        </div>
+
+        {/* Nearby Dispensaries Section */}
+        <div className="mt-12">
+          <NearbyDispensaries />
         </div>
       </main>
 
