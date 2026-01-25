@@ -38,10 +38,10 @@ export default function NearbyDispensaries() {
     }
 
     let cancelled = false;
+    const lat = location.lat;
+    const lng = location.lng;
 
     async function fetchNearby() {
-      const lat = location.lat;
-      const lng = location.lng;
 
       try {
         const response = await fetch(
