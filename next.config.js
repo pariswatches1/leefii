@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['images.unsplash.com', 'leefii.com', 'cdn.midjourney.com'],
+    domains: ['images.unsplash.com', 'leefii.com', 'cdn.midjourney.com', 'res.cloudinary.com'],
     unoptimized: true
   },
   async headers() {
