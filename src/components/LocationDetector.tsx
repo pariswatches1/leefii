@@ -42,18 +42,18 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Use IP-based geolocation (no permission needed, works automatically)
+      // Use our server-side API for IP geolocation (works in all browsers)
       try {
-        const ipResponse = await fetch('https://ip-api.com/json/?fields=city,region,regionName,zip,lat,lon');
-        const ipData = await ipResponse.json();
+        const response = await fetch('/api/geolocation');
+        const data = await response.json();
 
-        if (ipData.city && ipData.lat && ipData.lon) {
+        if (response.ok && data.city && data.lat && data.lng) {
           const detectedLocation: Location = {
-            city: ipData.city,
-            state: ipData.regionName || ipData.region || '',
-            zip: ipData.zip,
-            lat: ipData.lat,
-            lng: ipData.lon,
+            city: data.city,
+            state: data.state || '',
+            zip: data.zip,
+            lat: data.lat,
+            lng: data.lng,
           };
 
           setLocationState(detectedLocation);
