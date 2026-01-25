@@ -31,7 +31,9 @@
       "Bash(git pull:*)",
       "Bash(gh pr create:*)",
       "Bash(node prisma/update-focus-blog-image.js:*)",
-      "Bash(node prisma/list-blogs.js:*)"
+      "Bash(node prisma/list-blogs.js:*)",
+      "Bash(node prisma/update-blog-image.js:*)",
+      "Bash(curl:*)"
     ]
   }
 }
