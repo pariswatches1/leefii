@@ -40,7 +40,7 @@ export default function Home() {
                 <Link href="/blog" className="text-gray-800 hover:text-gray-900 transition font-medium">
                   Blog
                 </Link>
-                <Link href="/sell" className="px-6 py-2.5 bg-lime-700 text-white text-base font-bold rounded-full hover:bg-lime-800 transition shadow-lg shadow-lime-700/30 border-2 border-lime-800">
+                <Link href="/sell" className="px-7 py-3 bg-lime-700 text-white text-lg font-bold rounded-full hover:bg-lime-800 transition shadow-lg shadow-lime-700/30 border-2 border-lime-800">
                   Sell on Leefii
                 </Link>
                 <Link href="/login" className="px-5 py-2 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition">
