@@ -69,6 +69,9 @@ export default function Home() {
                 <Link href="/dispensaries" className="text-gray-800 hover:text-gray-900 transition font-medium">
                   Dispensaries
                 </Link>
+                <Link href="/delivery" className="text-gray-800 hover:text-gray-900 transition font-medium">
+                  Delivery
+                </Link>
                 <Link href="/doctors" className="text-gray-800 hover:text-gray-900 transition font-medium">
                   Doctors
                 </Link>
