@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Learn about cannabis with our educational blog.',
 };
 
-// Revalidate every 60 seconds to show new posts
-export const revalidate = 60;
+// Disable caching - always fetch fresh data
+export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
   const posts = await prisma.blogPost.findMany({
