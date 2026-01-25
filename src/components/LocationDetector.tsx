@@ -40,28 +40,31 @@ function getStoredLocation(): Location | null {
 }
 
 export function LocationProvider({ children }: { children: ReactNode }) {
-  const [location, setLocationState] = useState<Location | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize from localStorage synchronously to avoid flash
+  const [location, setLocationState] = useState<Location | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return getStoredLocation();
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return getStoredLocation() === null;
+  });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    // If we already have location from localStorage initialization, we're done
+    if (location) {
+      setLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
 
     async function detectLocation() {
-      // Check localStorage first
-      const stored = getStoredLocation();
-      if (stored) {
-        if (!cancelled) {
-          setLocationState(stored);
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Fetch from API
       try {
-        const response = await fetch('/api/geolocation');
-        if (cancelled) return;
+        const response = await fetch('/api/geolocation', {
+          signal: controller.signal
+        });
 
         const data = await response.json();
 
@@ -74,19 +77,19 @@ export function LocationProvider({ children }: { children: ReactNode }) {
             lng: data.lng,
           };
 
-          if (!cancelled) {
-            setLocationState(detectedLocation);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
-          }
-        } else if (!cancelled) {
+          setLocationState(detectedLocation);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
+        } else {
           setError('Could not detect location');
         }
-      } catch {
-        if (!cancelled) {
-          setError('Could not detect location');
+      } catch (err) {
+        // Don't set error if the fetch was aborted
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
         }
+        setError('Could not detect location');
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -95,9 +98,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     detectLocation();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, []);
+  }, [location]);
 
   const setLocation = useCallback((newLocation: Location) => {
     if (typeof newLocation.lat !== 'number' || typeof newLocation.lng !== 'number' ||
