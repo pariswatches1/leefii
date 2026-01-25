@@ -203,9 +203,9 @@ const blogPosts = [
     excerpt: "Discover cannabis strains that may enhance focus and productivity.",
     content: "Guide to cannabis strains for focus including energizing sativas, optimal terpene profiles, and microdosing strategies.",
     category: "Strain Guides",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
+    imageUrl: "https://cdn.midjourney.com/fa2478b7-0239-4a79-bf81-1191fb6ee78d/0_1.png",
     isPublished: true,
-    
+
     metaTitle: "Best Cannabis Strains for Focus & Productivity 2025",
     metaDescription: "Discover the best cannabis strains for focus."
   },
