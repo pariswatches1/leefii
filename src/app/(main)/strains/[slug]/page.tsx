@@ -77,8 +77,12 @@ export default async function StrainPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Image */}
-            <div className="w-full md:w-64 h-64 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <span className="text-8xl">🌿</span>
+            <div className="w-full md:w-64 h-64 bg-white/20 rounded-2xl overflow-hidden flex-shrink-0">
+              <img
+                src="https://cdn.midjourney.com/035ba086-fb16-4b40-ac16-64c3df2ffe1a/0_1.png"
+                alt={strain.name}
+                className="w-full h-full object-cover"
+              />
             </div>
             
             {/* Info */}
