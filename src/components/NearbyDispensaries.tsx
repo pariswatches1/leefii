@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLocation } from './LocationDetector';
 
@@ -19,23 +19,19 @@ interface Dispensary {
   distance: number;
 }
 
+// Module-level cache to persist across re-renders
+let cachedDispensaries: Dispensary[] | null = null;
+let cachedLocationKey: string | null = null;
+
 export default function NearbyDispensaries() {
   const { location, loading: locationLoading } = useLocation();
-  const [dispensaries, setDispensaries] = useState<Dispensary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dispensaries, setDispensaries] = useState<Dispensary[]>(cachedDispensaries || []);
+  const [loading, setLoading] = useState(!cachedDispensaries);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const fetchedRef = useRef(false);
-  const lastLocationRef = useRef<string | null>(null);
-
-  // Mark as mounted on client
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
-    // Don't run on server or before mount
-    if (!mounted) return;
+    // Only run on client
+    if (typeof window === 'undefined') return;
 
     async function fetchNearby() {
       if (!location) {
@@ -43,23 +39,26 @@ export default function NearbyDispensaries() {
         return;
       }
 
-      // Create a key based on location to prevent duplicate fetches
       const locationKey = `${location.lat}-${location.lng}`;
 
-      // Skip if we've already fetched for this location
-      if (lastLocationRef.current === locationKey && dispensaries.length > 0) {
+      // Use cache if available for this location
+      if (cachedLocationKey === locationKey && cachedDispensaries && cachedDispensaries.length > 0) {
+        setDispensaries(cachedDispensaries);
+        setLoading(false);
         return;
       }
 
-      lastLocationRef.current = locationKey;
-
       try {
+        setLoading(true);
         const response = await fetch(
           `/api/dispensaries/nearby?lat=${location.lat}&lng=${location.lng}&limit=6`
         );
         const data = await response.json();
 
         if (response.ok && data.dispensaries) {
+          // Cache the results
+          cachedDispensaries = data.dispensaries;
+          cachedLocationKey = locationKey;
           setDispensaries(data.dispensaries);
           setError(null);
         } else {
@@ -72,15 +71,13 @@ export default function NearbyDispensaries() {
       }
     }
 
-    if (!locationLoading && location) {
+    if (!locationLoading) {
       fetchNearby();
-    } else if (!locationLoading && !location) {
-      setLoading(false);
     }
-  }, [mounted, location, locationLoading, dispensaries.length]);
+  }, [location, locationLoading]);
 
-  // Show loading skeleton while not mounted, loading location, or loading dispensaries
-  if (!mounted || locationLoading || loading) {
+  // Show loading skeleton
+  if (locationLoading || loading) {
     return (
       <div className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40">
         <div className="animate-pulse">

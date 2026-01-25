@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 
 interface Location {
   city: string;
@@ -22,28 +22,21 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 
 const STORAGE_KEY = 'leefii_location';
 
+// Module-level flag to prevent duplicate fetches across re-renders
+let isFetching = false;
+let hasFetched = false;
+
 export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocationState] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const fetchingRef = useRef(false);
 
-  // First effect: mark as mounted (client-side only)
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Second effect: detect location only after mounted
-  useEffect(() => {
-    if (!mounted) return;
+    // Only run on client
+    if (typeof window === 'undefined') return;
 
     async function detectLocation() {
-      // Prevent duplicate fetches
-      if (fetchingRef.current) return;
-      fetchingRef.current = true;
-
-      // Check localStorage first (skip re-detection if already stored)
+      // Check localStorage first
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -51,16 +44,22 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           if (parsed && parsed.city && parsed.lat && parsed.lng) {
             setLocationState(parsed);
             setLoading(false);
+            hasFetched = true;
             return;
-          } else {
-            localStorage.removeItem(STORAGE_KEY);
           }
+          localStorage.removeItem(STORAGE_KEY);
         }
       } catch {
         localStorage.removeItem(STORAGE_KEY);
       }
 
-      // Use our server-side API for IP geolocation (works in all browsers)
+      // Prevent duplicate fetches
+      if (isFetching || hasFetched) {
+        return;
+      }
+      isFetching = true;
+
+      // Use our server-side API for IP geolocation
       try {
         const response = await fetch('/api/geolocation');
         const data = await response.json();
@@ -83,11 +82,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setError('Could not detect location');
       } finally {
         setLoading(false);
+        isFetching = false;
+        hasFetched = true;
       }
     }
 
     detectLocation();
-  }, [mounted]);
+  }, []);
 
   const setLocation = (newLocation: Location) => {
     setLocationState(newLocation);
@@ -97,6 +98,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const clearLocation = () => {
     setLocationState(null);
     localStorage.removeItem(STORAGE_KEY);
+    hasFetched = false; // Allow re-fetch after clear
   };
 
   return (
