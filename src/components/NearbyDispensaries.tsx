@@ -46,12 +46,22 @@ export default function NearbyDispensaries() {
     }
 
     async function fetchNearby() {
+      // Double-check location is still valid (guards against race conditions)
+      if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+        setLoading(false);
+        return;
+      }
+
+      // Capture coordinates at fetch time to avoid stale closure issues
+      const lat = location.lat;
+      const lng = location.lng;
+
       fetchedForLocation.current = locationKey;
       setLoading(true);
 
       try {
         const response = await fetch(
-          `/api/dispensaries/nearby?lat=${location!.lat}&lng=${location!.lng}&limit=6`
+          `/api/dispensaries/nearby?lat=${lat}&lng=${lng}&limit=6`
         );
         const data = await response.json();
 

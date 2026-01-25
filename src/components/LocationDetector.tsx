@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef } from 'react';
 
 interface Location {
   city: string;
@@ -43,25 +43,37 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocationState] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
+
+  // Use ref to track initialization - survives React Strict Mode remounts
+  const initializingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    // Only initialize once
-    if (initialized) return;
-    setInitialized(true);
+    // Track mounted state for async cleanup
+    mountedRef.current = true;
+
+    // Prevent duplicate initialization (handles Strict Mode double-mount)
+    if (initializingRef.current) return;
+    initializingRef.current = true;
 
     async function detectLocation() {
-      // Check localStorage first
+      // Check localStorage first (synchronous)
       const stored = getStoredLocation();
       if (stored) {
-        setLocationState(stored);
-        setLoading(false);
+        if (mountedRef.current) {
+          setLocationState(stored);
+          setLoading(false);
+        }
         return;
       }
 
       // Fetch from API
       try {
         const response = await fetch('/api/geolocation');
+
+        // Check if still mounted before updating state
+        if (!mountedRef.current) return;
+
         const data = await response.json();
 
         if (response.ok && data.city && typeof data.lat === 'number' && typeof data.lng === 'number') {
@@ -73,22 +85,39 @@ export function LocationProvider({ children }: { children: ReactNode }) {
             lng: data.lng,
           };
 
-          setLocationState(detectedLocation);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
-        } else {
+          if (mountedRef.current) {
+            setLocationState(detectedLocation);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
+          }
+        } else if (mountedRef.current) {
           setError('Could not detect location');
         }
       } catch {
-        setError('Could not detect location');
+        if (mountedRef.current) {
+          setError('Could not detect location');
+        }
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     }
 
     detectLocation();
-  }, [initialized]);
+
+    // Cleanup function for Strict Mode unmount
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const setLocation = useCallback((newLocation: Location) => {
+    // Validate that the location has required numeric coordinates
+    if (typeof newLocation.lat !== 'number' || typeof newLocation.lng !== 'number' ||
+        isNaN(newLocation.lat) || isNaN(newLocation.lng)) {
+      console.error('Invalid location: lat and lng must be valid numbers', newLocation);
+      return;
+    }
     setLocationState(newLocation);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newLocation));
   }, []);
