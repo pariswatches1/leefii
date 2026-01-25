@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLocation } from './LocationDetector';
+import LocationChanger from './LocationChanger';
 
 interface Dispensary {
   id: string;
@@ -109,9 +110,10 @@ export default function NearbyDispensaries() {
           <h2 className="text-xl font-bold text-gray-900">
             Dispensaries Near You
           </h2>
-          <p className="text-sm text-gray-700">
-            Showing results near {location.city}, {location.state}
-          </p>
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>Showing results near</span>
+            <LocationChanger />
+          </div>
         </div>
         <Link
           href={`/dispensaries?lat=${location.lat}&lng=${location.lng}`}
