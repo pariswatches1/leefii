@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLocation } from './LocationDetector';
 
@@ -24,13 +24,34 @@ export default function NearbyDispensaries() {
   const [dispensaries, setDispensaries] = useState<Dispensary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const fetchedRef = useRef(false);
+  const lastLocationRef = useRef<string | null>(null);
+
+  // Mark as mounted on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    // Don't run on server or before mount
+    if (!mounted) return;
+
     async function fetchNearby() {
       if (!location) {
         setLoading(false);
         return;
       }
+
+      // Create a key based on location to prevent duplicate fetches
+      const locationKey = `${location.lat}-${location.lng}`;
+
+      // Skip if we've already fetched for this location
+      if (lastLocationRef.current === locationKey && dispensaries.length > 0) {
+        return;
+      }
+
+      lastLocationRef.current = locationKey;
 
       try {
         const response = await fetch(
@@ -38,10 +59,11 @@ export default function NearbyDispensaries() {
         );
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.dispensaries) {
           setDispensaries(data.dispensaries);
+          setError(null);
         } else {
-          setError(data.error);
+          setError(data.error || 'Failed to load');
         }
       } catch {
         setError('Failed to load nearby dispensaries');
@@ -50,12 +72,15 @@ export default function NearbyDispensaries() {
       }
     }
 
-    if (!locationLoading) {
+    if (!locationLoading && location) {
       fetchNearby();
+    } else if (!locationLoading && !location) {
+      setLoading(false);
     }
-  }, [location, locationLoading]);
+  }, [mounted, location, locationLoading, dispensaries.length]);
 
-  if (locationLoading || loading) {
+  // Show loading skeleton while not mounted, loading location, or loading dispensaries
+  if (!mounted || locationLoading || loading) {
     return (
       <div className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40">
         <div className="animate-pulse">

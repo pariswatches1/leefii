@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
 
 interface Location {
   city: string;
@@ -26,20 +26,38 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocationState] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const fetchingRef = useRef(false);
 
+  // First effect: mark as mounted (client-side only)
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Second effect: detect location only after mounted
+  useEffect(() => {
+    if (!mounted) return;
+
     async function detectLocation() {
+      // Prevent duplicate fetches
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
+
       // Check localStorage first (skip re-detection if already stored)
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
           const parsed = JSON.parse(stored);
-          setLocationState(parsed);
-          setLoading(false);
-          return;
-        } catch {
-          localStorage.removeItem(STORAGE_KEY);
+          if (parsed && parsed.city && parsed.lat && parsed.lng) {
+            setLocationState(parsed);
+            setLoading(false);
+            return;
+          } else {
+            localStorage.removeItem(STORAGE_KEY);
+          }
         }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
       }
 
       // Use our server-side API for IP geolocation (works in all browsers)
@@ -69,7 +87,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     }
 
     detectLocation();
-  }, []);
+  }, [mounted]);
 
   const setLocation = (newLocation: Location) => {
     setLocationState(newLocation);
