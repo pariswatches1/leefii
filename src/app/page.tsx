@@ -22,6 +22,25 @@ const NearbyDispensaries = dynamic(
   }
 );
 
+const NearbyDoctors = dynamic(
+  () => import('@/components/NearbyDoctors'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40">
+        <div className="animate-pulse">
+          <div className="h-6 bg-white/50 rounded w-64 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-white/50 rounded-xl"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+);
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-lime-400 via-green-400 to-emerald-500 relative overflow-hidden">
@@ -185,6 +204,11 @@ export default function Home() {
         {/* Nearby Dispensaries Section */}
         <div className="mt-12">
           <NearbyDispensaries />
+        </div>
+
+        {/* Medical Marijuana Card Doctors Section */}
+        <div className="mt-8">
+          <NearbyDoctors />
         </div>
       </main>
 
