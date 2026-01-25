@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 
 interface Location {
   city: string;
@@ -44,23 +44,14 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use ref to track initialization - survives React Strict Mode remounts
-  const initializingRef = useRef(false);
-  const mountedRef = useRef(true);
-
   useEffect(() => {
-    // Track mounted state for async cleanup
-    mountedRef.current = true;
-
-    // Prevent duplicate initialization (handles Strict Mode double-mount)
-    if (initializingRef.current) return;
-    initializingRef.current = true;
+    let cancelled = false;
 
     async function detectLocation() {
-      // Check localStorage first (synchronous)
+      // Check localStorage first
       const stored = getStoredLocation();
       if (stored) {
-        if (mountedRef.current) {
+        if (!cancelled) {
           setLocationState(stored);
           setLoading(false);
         }
@@ -70,9 +61,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       // Fetch from API
       try {
         const response = await fetch('/api/geolocation');
-
-        // Check if still mounted before updating state
-        if (!mountedRef.current) return;
+        if (cancelled) return;
 
         const data = await response.json();
 
@@ -85,19 +74,19 @@ export function LocationProvider({ children }: { children: ReactNode }) {
             lng: data.lng,
           };
 
-          if (mountedRef.current) {
+          if (!cancelled) {
             setLocationState(detectedLocation);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(detectedLocation));
           }
-        } else if (mountedRef.current) {
+        } else if (!cancelled) {
           setError('Could not detect location');
         }
       } catch {
-        if (mountedRef.current) {
+        if (!cancelled) {
           setError('Could not detect location');
         }
       } finally {
-        if (mountedRef.current) {
+        if (!cancelled) {
           setLoading(false);
         }
       }
@@ -105,14 +94,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     detectLocation();
 
-    // Cleanup function for Strict Mode unmount
     return () => {
-      mountedRef.current = false;
+      cancelled = true;
     };
   }, []);
 
   const setLocation = useCallback((newLocation: Location) => {
-    // Validate that the location has required numeric coordinates
     if (typeof newLocation.lat !== 'number' || typeof newLocation.lng !== 'number' ||
         isNaN(newLocation.lat) || isNaN(newLocation.lng)) {
       console.error('Invalid location: lat and lng must be valid numbers', newLocation);
