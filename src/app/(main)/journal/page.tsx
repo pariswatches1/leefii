@@ -35,6 +35,49 @@ interface Stats {
   entriesByType: { name: string; count: number }[];
 }
 
+interface TerpeneScore {
+  terpene: string;
+  displayName: string;
+  avgRating: number;
+  effectivenessScore: number;
+  moodImprovement: number;
+  energyChange: number;
+  count: number;
+  topEffects: string[];
+  helpsWith: string[];
+  description: string;
+}
+
+interface Insight {
+  type: string;
+  title: string;
+  description: string;
+  confidence: 'high' | 'medium' | 'low';
+  icon: string;
+}
+
+interface StrainRecommendation {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  matchScore: number;
+  matchReasons: string[];
+  predictedRating: number;
+  dominantTerpene: string;
+  effects: string[];
+  thcMax: number | null;
+}
+
+interface AIRecommendations {
+  insights: Insight[];
+  recommendations: StrainRecommendation[];
+  terpeneScores: TerpeneScore[];
+  entriesAnalyzed: number;
+  strainsTried: number;
+  message?: string;
+}
+
 const PRODUCT_TYPES = [
   { value: 'FLOWER', label: 'Flower', icon: '🌿' },
   { value: 'VAPE', label: 'Vape', icon: '💨' },
@@ -94,8 +137,10 @@ export default function JournalPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'entries' | 'insights'>('entries');
+  const [activeTab, setActiveTab] = useState<'entries' | 'insights' | 'ai'>('entries');
   const [submitting, setSubmitting] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<AIRecommendations | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -141,6 +186,27 @@ export default function JournalPage() {
       setLoading(false);
     }
   };
+
+  const fetchAIRecommendations = async () => {
+    if (aiRecommendations) return; // Already loaded
+    setLoadingAI(true);
+    try {
+      const res = await fetch('/api/journal/recommendations');
+      const data = await res.json();
+      setAiRecommendations(data);
+    } catch (error) {
+      console.error('Error fetching AI recommendations:', error);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
+  // Fetch AI recommendations when tab is selected
+  useEffect(() => {
+    if (activeTab === 'ai' && !aiRecommendations && !loadingAI) {
+      fetchAIRecommendations();
+    }
+  }, [activeTab]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,6 +332,16 @@ export default function JournalPage() {
               }`}
             >
               Insights
+            </button>
+            <button
+              onClick={() => setActiveTab('ai')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-1.5 ${
+                activeTab === 'ai'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                  : 'bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 hover:from-purple-100 hover:to-pink-100'
+              }`}
+            >
+              <span>🤖</span> AI Recommendations
             </button>
           </div>
         </div>
@@ -620,7 +696,7 @@ export default function JournalPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'entries' ? (
+        {activeTab === 'entries' && (
           entries.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">📔</div>
@@ -718,8 +794,9 @@ export default function JournalPage() {
               ))}
             </div>
           )
-        ) : (
-          // Insights Tab
+        )}
+
+        {activeTab === 'insights' && (
           <div className="space-y-8">
             {stats && stats.totalEntries > 0 ? (
               <>
@@ -816,6 +893,281 @@ export default function JournalPage() {
                   className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition"
                 >
                   Log Your First Session
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'ai' && (
+          <div className="space-y-8">
+            {loadingAI ? (
+              <div className="text-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Analyzing your journal data...</p>
+                <p className="text-sm text-gray-400 mt-2">Finding patterns in terpenes, effects, and strains</p>
+              </div>
+            ) : aiRecommendations?.message ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🧬</div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Build Your Cannabis Profile</h2>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  {aiRecommendations.message}
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveTab('entries');
+                    setShowForm(true);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition"
+                >
+                  Log Your First Session
+                </button>
+              </div>
+            ) : aiRecommendations ? (
+              <>
+                {/* AI Header */}
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-3xl">🤖</span>
+                    <h2 className="text-2xl font-bold">Your Personalized Cannabis Profile</h2>
+                  </div>
+                  <p className="text-purple-100">
+                    Based on analysis of {aiRecommendations.entriesAnalyzed} sessions across {aiRecommendations.strainsTried} strains
+                  </p>
+                </div>
+
+                {/* AI Insights */}
+                {aiRecommendations.insights.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <span>💡</span> Personalized Insights
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {aiRecommendations.insights.map((insight, i) => (
+                        <div
+                          key={i}
+                          className={`bg-white rounded-xl shadow-sm p-5 border-l-4 ${
+                            insight.confidence === 'high'
+                              ? 'border-l-green-500'
+                              : insight.confidence === 'medium'
+                              ? 'border-l-yellow-500'
+                              : 'border-l-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className="text-2xl">{insight.icon}</span>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">{insight.title}</h4>
+                              <p className="text-sm text-gray-600 mt-1">{insight.description}</p>
+                              <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-full ${
+                                insight.confidence === 'high'
+                                  ? 'bg-green-100 text-green-700'
+                                  : insight.confidence === 'medium'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {insight.confidence === 'high' ? 'High confidence' : insight.confidence === 'medium' ? 'Medium confidence' : 'Emerging pattern'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Terpene Profile */}
+                {aiRecommendations.terpeneScores.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <span>🧬</span> Your Terpene Effectiveness Profile
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      These terpenes work best for you based on your ratings and mood improvements
+                    </p>
+                    <div className="space-y-4">
+                      {aiRecommendations.terpeneScores.filter(t => t.count > 0).map((terp) => (
+                        <div key={terp.terpene} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lg">{terp.displayName}</span>
+                              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                {terp.count} sessions
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-purple-600">{terp.effectivenessScore}%</div>
+                              <div className="text-xs text-gray-500">effectiveness</div>
+                            </div>
+                          </div>
+
+                          {/* Effectiveness Bar */}
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                            <div
+                              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                              style={{ width: `${terp.effectivenessScore}%` }}
+                            />
+                          </div>
+
+                          <p className="text-sm text-gray-600 mb-3">{terp.description}</p>
+
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <span className="text-yellow-500">★</span>
+                              <span className="text-gray-700">{terp.avgRating}/5 avg rating</span>
+                            </div>
+                            {terp.moodImprovement > 0 && (
+                              <div className="flex items-center gap-1 text-green-600">
+                                <span>↑</span>
+                                <span>+{terp.moodImprovement} mood boost</span>
+                              </div>
+                            )}
+                            {terp.topEffects.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-500">Effects:</span>
+                                {terp.topEffects.map((eff, i) => (
+                                  <span key={eff} className="text-gray-700">
+                                    {eff}{i < terp.topEffects.length - 1 ? ',' : ''}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {terp.helpsWith.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              <span className="text-xs text-gray-500">Helps with:</span>
+                              {terp.helpsWith.map((symptom) => (
+                                <span key={symptom} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                                  {symptom}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Strain Recommendations */}
+                {aiRecommendations.recommendations.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <span>🎯</span> Recommended Strains For You
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      Based on your terpene preferences and effect patterns, you might enjoy these strains
+                    </p>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {aiRecommendations.recommendations.map((strain) => (
+                        <Link
+                          key={strain.id}
+                          href={`/strains/${strain.slug}`}
+                          className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition group"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition">
+                                {strain.name}
+                              </h4>
+                              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                strain.type === 'INDICA'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : strain.type === 'SATIVA'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : strain.type === 'HYBRID'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {strain.type}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-purple-600">{strain.matchScore}%</div>
+                              <div className="text-xs text-gray-500">match</div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-yellow-500">★</span>
+                              <span className="text-gray-600">Predicted: {strain.predictedRating}/5</span>
+                            </div>
+
+                            {strain.dominantTerpene && (
+                              <div className="flex items-center gap-2">
+                                <span>🧬</span>
+                                <span className="text-gray-600">Dominant: {strain.dominantTerpene}</span>
+                              </div>
+                            )}
+
+                            {strain.thcMax && (
+                              <div className="flex items-center gap-2">
+                                <span>💨</span>
+                                <span className="text-gray-600">THC: up to {strain.thcMax}%</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {strain.matchReasons.length > 0 && (
+                            <div className="mt-3 pt-3 border-t">
+                              {strain.matchReasons.map((reason, i) => (
+                                <p key={i} className="text-xs text-green-600 flex items-center gap-1">
+                                  <span>✓</span> {reason}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+
+                          {strain.effects.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-3">
+                              {strain.effects.map((eff) => (
+                                <span key={eff} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                  {eff}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Call to Action */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 text-center">
+                  <h3 className="font-semibold text-gray-900 mb-2">Keep Logging to Improve Recommendations</h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    The more sessions you log, the smarter your recommendations become. Our AI learns your unique preferences over time.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setActiveTab('entries');
+                      setShowForm(true);
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition"
+                  >
+                    Log Another Session
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🤖</div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">AI Recommendations</h2>
+                <p className="text-gray-500 mb-6">
+                  Something went wrong loading your recommendations. Please try again.
+                </p>
+                <button
+                  onClick={() => {
+                    setAiRecommendations(null);
+                    fetchAIRecommendations();
+                  }}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition"
+                >
+                  Retry
                 </button>
               </div>
             )}

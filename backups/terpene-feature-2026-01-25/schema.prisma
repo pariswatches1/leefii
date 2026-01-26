@@ -1,0 +1,723 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model State {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  slug            String        @unique
+  abbreviation    String        @unique
+  isLegal         Boolean       @default(true)
+  medicalOnly     Boolean       @default(false)
+  metaTitle       String?
+  metaDescription String?
+  description     String?
+  lawSummary      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  cities          City[]
+  dispensaries    Dispensary[]
+
+  @@index([slug])
+}
+
+model City {
+  id              String        @id @default(cuid())
+  name            String
+  slug            String
+  stateId         String
+  county          String?
+  latitude        Float?
+  longitude       Float?
+  population      Int?
+  dispensaryCount Int           @default(0)
+  metaTitle       String?
+  metaDescription String?
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  state           State         @relation(fields: [stateId], references: [id])
+  dispensaries    Dispensary[]
+
+  @@unique([slug, stateId])
+  @@index([slug])
+  @@index([stateId])
+}
+
+model Dispensary {
+  id                     String             @id @default(cuid())
+  name                   String
+  slug                   String             @unique
+  chainName              String?
+  stateId                String
+  cityId                 String
+  address                String
+  address2               String?
+  zipCode                String
+  latitude               Float
+  longitude              Float
+  phone                  String?
+  email                  String?
+  website                String?
+  hasDelivery            Boolean            @default(false)
+  hasStorefront          Boolean            @default(true)
+  hasCurbside            Boolean            @default(false)
+  isWheelchairAccessible Boolean            @default(false)
+  acceptsCreditCard      Boolean            @default(false)
+  hasATM                 Boolean            @default(false)
+  licenseType            LicenseType        @default(MEDICAL)
+  licenseNumber          String?
+  isVerified             Boolean            @default(false)
+  rating                 Float?             @default(0)
+  reviewsCount           Int                @default(0)
+  description            String?
+  metaTitle              String?
+  metaDescription        String?
+  logoUrl                String?
+  imageUrl               String?
+  isActive               Boolean            @default(true)
+  isPremium              Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  analytics              AnalyticsEvent[]
+  BusinessHours          BusinessHours[]
+  city                   City               @relation(fields: [cityId], references: [id])
+  state                  State              @relation(fields: [stateId], references: [id])
+
+  @@index([slug])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([latitude, longitude])
+  @@index([isActive, isPremium])
+}
+
+model AnalyticsEvent {
+  id           String      @id @default(cuid())
+  dispensaryId String?
+  eventType    EventType?
+  page         String?
+  referrer     String?
+  userAgent    String?
+  ipAddress    String?
+  city         String?
+  state        String?
+  country      String?
+  sessionId    String?
+  createdAt    DateTime    @default(now())
+  dispensary   Dispensary? @relation(fields: [dispensaryId], references: [id])
+
+  @@index([dispensaryId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([page])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  viewCount Int      @default(0)
+  date      DateTime @db.Date
+
+  @@unique([path, date])
+  @@index([path])
+  @@index([date])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  role         AdminRole @default(EDITOR)
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model BusinessHours {
+  id           String     @id
+  dispensaryId String
+  dayOfWeek    DayOfWeek
+  openTime     String
+  closeTime    String
+  isClosed     Boolean    @default(false)
+  dispensary   Dispensary @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
+
+  @@unique([dispensaryId, dayOfWeek])
+  @@index([dispensaryId])
+}
+
+// ==========================================
+// NEW MODELS - Strains, Blog, News, Deals
+// ==========================================
+
+model Strain {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  type        StrainType
+  thcMin      Float?
+  thcMax      Float?
+  cbdMin      Float?
+  cbdMax      Float?
+  effects     String[]
+  flavors     String[]
+  aromas      String[]
+  description String?
+  genetics    String?
+  origin      String?
+  breeder     String?
+  floweringTime String?
+  difficulty  String?
+  yieldIndoor String?
+  yieldOutdoor String?
+  rating      Float      @default(0)
+  reviewsCount Int       @default(0)
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  metaTitle   String?
+  metaDescription String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Terpene profiles (percentage values)
+  terpMyrcene      Float?   // Earthy, musky, herbal - relaxing
+  terpLimonene     Float?   // Citrus - mood elevation, stress relief
+  terpCaryophyllene Float?  // Pepper, spicy - anti-inflammatory
+  terpPinene       Float?   // Pine - alertness, memory retention
+  terpLinalool     Float?   // Floral, lavender - calming, anxiety relief
+  terpHumulene     Float?   // Earthy, woody - appetite suppressant
+  terpTerpinolene  Float?   // Floral, herbal - uplifting
+  terpOcimene      Float?   // Sweet, herbal - antiviral, decongestant
+
+  @@index([slug])
+  @@index([type])
+  @@index([rating])
+  @@index([isActive])
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  imageUrl    String?
+  thumbnailUrl String?
+  authorName  String?
+  authorImage String?
+  category    String?
+  tags        String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  metaTitle   String?
+  metaDescription String?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+  @@index([category])
+}
+
+model NewsArticle {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  sourceUrl   String?
+  sourceName  String?
+  imageUrl    String?
+  category    String?
+  tags        String[]
+  states      String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  metaTitle   String?
+  metaDescription String?
+  viewCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+  @@index([category])
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  description    String?
+  discountType   String?
+  discountValue  Float?
+  code           String?
+  dispensaryName String?
+  dispensarySlug String?
+  chainName      String?
+  stateSlug      String?
+  citySlug       String?
+  startDate      DateTime?
+  endDate        DateTime?
+  isOngoing      Boolean   @default(false)
+  terms          String?
+  minPurchase    Float?
+  imageUrl       String?
+  isActive       Boolean   @default(true)
+  isFeatured     Boolean   @default(false)
+  viewCount      Int       @default(0)
+  clickCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([stateSlug])
+  @@index([endDate])
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum LicenseType {
+  MEDICAL
+  RECREATIONAL
+  BOTH
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum EventType {
+  PAGE_VIEW
+  CALL_CLICK
+  DIRECTIONS_CLICK
+  WEBSITE_CLICK
+  SEARCH
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+enum StrainType {
+  SATIVA
+  INDICA
+  HYBRID
+  CBD
+}
+
+// ==========================================
+// USER & SELLER MODELS
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  sellerApplication SellerApplication?
+  sellerProfile     SellerProfile?
+  inquiries         Inquiry[]
+  leadReferrals     LeadReferral[]
+  reviews           Review[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SellerApplication {
+  id            String            @id @default(cuid())
+  userId        String            @unique
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName  String
+  businessType  BusinessType
+  licenseNumber String?
+  licenseState  String?
+  ein           String?
+  phone         String
+  website       String?
+  description   String
+  status        ApplicationStatus @default(PENDING)
+  adminNotes    String?
+  submittedAt   DateTime          @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?
+
+  @@index([status])
+  @@index([submittedAt])
+}
+
+model SellerProfile {
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName     String
+  slug             String           @unique
+  logo             String?
+  banner           String?
+  description      String?
+  phone            String?
+  email            String?
+  website          String?
+  address          String?
+  city             String?
+  state            String?
+  zipCode          String?
+  licenseNumber    String?
+  subscriptionTier SubscriptionTier @default(BASIC)
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  products        Product[]
+  inquiries       Inquiry[]
+  leadReferrals   LeadReferral[]
+  payoutSettings  SellerPayoutSettings?
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([subscriptionTier])
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  slug        String            @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryHierarchy")
+  products    Product[]
+  sortOrder   Int               @default(0)
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Product {
+  id             String            @id @default(cuid())
+  sellerId       String
+  seller         SellerProfile     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       ProductCategory?  @relation(fields: [categoryId], references: [id])
+  name           String
+  slug           String
+  description    String
+  price          Decimal           @db.Decimal(10, 2)
+  compareAtPrice Decimal?          @db.Decimal(10, 2)
+  images         String[]
+  thcContent     String?
+  cbdContent     String?
+  strain         String?
+  strainType     ProductStrainType?
+  weight         String?
+  brand          String?
+  isAvailable    Boolean           @default(true)
+  isFeatured     Boolean           @default(false)
+  viewCount      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  inquiries     Inquiry[]
+  leadReferrals LeadReferral[]
+
+  @@unique([sellerId, slug])
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([isFeatured])
+  @@index([createdAt])
+}
+
+model Inquiry {
+  id          String        @id @default(cuid())
+  productId   String?
+  product     Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sellerId    String
+  seller      SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  email       String
+  phone       String?
+  message     String
+  status      InquiryStatus @default(NEW)
+  createdAt   DateTime      @default(now())
+  respondedAt DateTime?
+
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// MARKETPLACE ENUMS
+// ==========================================
+
+enum UserRole {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum BusinessType {
+  DISPENSARY
+  DELIVERY
+  BRAND
+  MANUFACTURER
+  DISTRIBUTOR
+  CBD_RETAILER
+  ACCESSORIES
+}
+
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum SubscriptionTier {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum ProductStrainType {
+  INDICA
+  SATIVA
+  HYBRID
+  CBD
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+// ==========================================
+// LEAD REFERRAL & MONETIZATION
+// ==========================================
+
+model LeadReferral {
+  id              String         @id @default(cuid())
+
+  // Lead source
+  userId          String?        // Logged-in user (optional)
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId       String         // Anonymous session tracking
+  ipAddress       String?
+  userAgent       String?
+
+  // What they clicked
+  productId       String?
+  product         Product?       @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sellerId        String?
+  seller          SellerProfile? @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  dispensaryId    String?        // For dispensary referrals
+
+  // Tracking
+  referrerUrl     String?        // Page they came from
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+
+  // Destination
+  destinationUrl  String         // Seller's website URL
+  trackingCode    String         @unique // Unique code for this lead
+
+  // Status
+  status          LeadStatus     @default(CLICKED)
+  clickedAt       DateTime       @default(now())
+  convertedAt     DateTime?
+  conversionValue Decimal?       @db.Decimal(10, 2)
+
+  // Payout
+  payoutStatus    PayoutStatus   @default(PENDING)
+  payoutAmount    Decimal?       @db.Decimal(10, 2)
+  payoutDate      DateTime?
+
+  @@index([sellerId])
+  @@index([productId])
+  @@index([dispensaryId])
+  @@index([status])
+  @@index([clickedAt])
+  @@index([trackingCode])
+}
+
+model SellerPayoutSettings {
+  id               String         @id @default(cuid())
+  sellerId         String         @unique
+  seller           SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  // Payout method
+  payoutMethod     PayoutMethod   @default(BANK_TRANSFER)
+  paypalEmail      String?
+  bankAccountLast4 String?
+  stripeAccountId  String?        // For Stripe Connect
+
+  // Commission settings (set by admin based on tier)
+  commissionType   CommissionType @default(PER_LEAD)
+  commissionRate   Decimal        @default(2.00) @db.Decimal(5, 2) // $2 per lead default
+  minimumPayout    Decimal        @default(50) @db.Decimal(10, 2)
+
+  // Tracking
+  totalLeads       Int            @default(0)
+  totalPaid        Decimal        @default(0) @db.Decimal(10, 2)
+  pendingPayout    Decimal        @default(0) @db.Decimal(10, 2)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+enum LeadStatus {
+  CLICKED         // User clicked through
+  LANDED          // Confirmed landing on seller site
+  CONVERTED       // Sale confirmed
+  EXPIRED         // 30-day window passed
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum PayoutMethod {
+  BANK_TRANSFER
+  PAYPAL
+  CHECK
+  STRIPE
+}
+
+enum CommissionType {
+  PER_LEAD        // Flat fee per click/lead
+  PERCENTAGE      // Percentage of sale
+  HYBRID          // Base + percentage
+}
+
+// ==========================================
+// USER REVIEWS
+// ==========================================
+
+model Review {
+  id            String       @id @default(cuid())
+
+  // Author
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What is being reviewed (one of these)
+  dispensaryId  String?
+  strainId      String?
+  productId     String?
+  sellerId      String?
+
+  // Review content
+  rating        Int          // 1-5 stars
+  title         String?
+  content       String
+
+  // Moderation
+  isApproved    Boolean      @default(false)
+  isVerified    Boolean      @default(false) // Verified purchase
+  helpfulCount  Int          @default(0)
+  reportCount   Int          @default(0)
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([dispensaryId])
+  @@index([strainId])
+  @@index([productId])
+  @@index([sellerId])
+  @@index([userId])
+  @@index([isApproved])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model ReviewHelpful {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  isHelpful Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}

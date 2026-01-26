@@ -36,7 +36,10 @@
       "Bash(curl:*)",
       "Bash(del update-cannabutter.js .env)",
       "Bash(node update-blog.js:*)",
-      "Bash(npx prisma migrate dev:*)"
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx vercel:*)",
+      "Bash(wc:*)"
     ]
   }
 }
