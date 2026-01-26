@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { FavoriteType } from '@prisma/client';
 
 // GET - Get user's favorites
 export async function GET(request: Request) {
@@ -14,9 +15,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get('type'); // STRAIN, DISPENSARY, PRODUCT
 
-    const where: any = { userId: session.user.id };
+    const where: { userId: string; entityType?: FavoriteType } = { userId: session.user.id };
     if (entityType) {
-      where.entityType = entityType.toUpperCase();
+      where.entityType = entityType.toUpperCase() as FavoriteType;
     }
 
     const favorites = await prisma.favorite.findMany({
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
       where: {
         userId_entityType_entityId: {
           userId: session.user.id,
-          entityType: entityType.toUpperCase(),
+          entityType: entityType.toUpperCase() as FavoriteType,
           entityId,
         },
       },
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
     const favorite = await prisma.favorite.create({
       data: {
         userId: session.user.id,
-        entityType: entityType.toUpperCase(),
+        entityType: entityType.toUpperCase() as FavoriteType,
         entityId,
       },
     });
@@ -156,7 +157,7 @@ export async function DELETE(request: Request) {
       where: {
         userId_entityType_entityId: {
           userId: session.user.id,
-          entityType: entityType.toUpperCase(),
+          entityType: entityType.toUpperCase() as FavoriteType,
           entityId,
         },
       },

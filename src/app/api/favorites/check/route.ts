@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { FavoriteType } from '@prisma/client';
 
 // GET - Check if items are favorited
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     const favorites = await prisma.favorite.findMany({
       where: {
         userId: session.user.id,
-        entityType: entityType.toUpperCase(),
+        entityType: entityType.toUpperCase() as FavoriteType,
         entityId: { in: entityIds },
       },
       select: { entityId: true },
