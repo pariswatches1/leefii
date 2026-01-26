@@ -31,14 +31,15 @@ export default function Header() {
             <Link href="/strains" className="text-gray-600 hover:text-green-600 transition">
               Strains
             </Link>
+            <Link href="/quiz" className="text-green-600 font-medium hover:text-green-700 transition flex items-center gap-1">
+              <span>Quiz</span>
+              <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">New</span>
+            </Link>
             <Link href="/deals" className="text-gray-600 hover:text-green-600 transition">
               Deals
             </Link>
             <Link href="/news" className="text-gray-600 hover:text-green-600 transition">
               News
-            </Link>
-            <Link href="/blog" className="text-gray-600 hover:text-green-600 transition">
-              Blog
             </Link>
             <Link href="/sell" className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition">
               Sell on Leefii

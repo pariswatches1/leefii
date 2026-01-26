@@ -165,8 +165,27 @@ export default function Home() {
 
           {/* Right Column - Feature Cards */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Strain Quiz Card - Featured */}
+            <Link
+              href="/quiz"
+              className="col-span-2 bg-gradient-to-r from-lime-600 to-green-600 rounded-2xl p-6 border border-lime-500/40 hover:from-lime-700 hover:to-green-700 transition cursor-pointer group shadow-lg"
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">🎯</div>
+                <div>
+                  <div className="font-bold text-white text-lg group-hover:text-lime-100 transition">Find Your Perfect Strain</div>
+                  <div className="text-lime-100 text-sm">Take our 2-minute quiz for personalized recommendations</div>
+                </div>
+                <div className="ml-auto">
+                  <span className="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-medium">
+                    Start Quiz →
+                  </span>
+                </div>
+              </div>
+            </Link>
+
             {/* Find Dispensaries Card */}
-            <Link 
+            <Link
               href="/dispensaries"
               className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
@@ -176,7 +195,7 @@ export default function Home() {
             </Link>
 
             {/* Explore Strains Card */}
-            <Link 
+            <Link
               href="/strains"
               className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
@@ -186,7 +205,7 @@ export default function Home() {
             </Link>
 
             {/* Best Deals Card */}
-            <Link 
+            <Link
               href="/deals"
               className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
@@ -196,7 +215,7 @@ export default function Home() {
             </Link>
 
             {/* Latest News Card */}
-            <Link 
+            <Link
               href="/news"
               className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
