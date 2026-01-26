@@ -133,12 +133,12 @@ export async function GET() {
       take: 100, // Analyze last 100 entries
     });
 
-    if (entries.length < 3) {
+    if (entries.length < 2) {
       return NextResponse.json({
         insights: [],
         recommendations: [],
         terpeneScores: [],
-        message: 'Log at least 3 journal entries to get personalized AI recommendations.',
+        message: 'Log at least 2 journal entries to get personalized AI recommendations.',
         entriesAnalyzed: entries.length,
       });
     }
@@ -313,8 +313,8 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
   const insights: Insight[] = [];
 
   // Top terpene insight
-  const topTerpene = terpeneScores.find(t => t.count >= 3);
-  if (topTerpene && topTerpene.effectivenessScore > 50) {
+  const topTerpene = terpeneScores.find(t => t.count >= 1);
+  if (topTerpene && topTerpene.effectivenessScore > 30) {
     insights.push({
       type: 'terpene',
       title: `${topTerpene.displayName} Works Best For You`,
@@ -326,7 +326,7 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
   }
 
   // Mood improvement insight
-  const moodBooster = terpeneScores.find(t => t.moodImprovement > 0.5 && t.count >= 3);
+  const moodBooster = terpeneScores.find(t => t.moodImprovement > 0.3 && t.count >= 1);
   if (moodBooster) {
     insights.push({
       type: 'terpene',
@@ -350,7 +350,7 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
 
   const typeScores = Object.entries(typeRatings)
     .map(([type, data]) => ({ type, avg: data.total / data.count, count: data.count }))
-    .filter(t => t.count >= 3)
+    .filter(t => t.count >= 1)
     .sort((a, b) => b.avg - a.avg);
 
   if (typeScores.length > 0 && typeScores[0].avg >= 4) {
@@ -384,7 +384,7 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
   });
 
   const bestTime = Object.entries(hourRatings)
-    .filter(([, data]) => data.count >= 3)
+    .filter(([, data]) => data.count >= 1)
     .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
 
   if (bestTime && (bestTime[1].total / bestTime[1].count) >= 4) {
@@ -406,7 +406,7 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
   });
 
   const topEffect = Object.entries(effectCounts).sort((a, b) => b[1] - a[1])[0];
-  if (topEffect && topEffect[1] >= 5) {
+  if (topEffect && topEffect[1] >= 2) {
     insights.push({
       type: 'effect',
       title: `You Often Feel "${topEffect[0]}"`,
@@ -426,7 +426,7 @@ function generateInsights(entries: JournalEntryWithStrain[], terpeneScores: Terp
   });
 
   const topRelief = Object.entries(symptomRelief).sort((a, b) => b[1] - a[1])[0];
-  if (topRelief && topRelief[1] >= 3) {
+  if (topRelief && topRelief[1] >= 1) {
     // Find which terpene helped most with this symptom
     const helpfulTerpene = terpeneScores.find(t => t.helpsWith.includes(topRelief[0]));
 
