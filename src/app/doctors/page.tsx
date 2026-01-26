@@ -16,11 +16,22 @@ interface Doctor {
   photoRef: string | null;
   distance: number;
   status: string;
+  // Premium fields
+  isPremium?: boolean;
+  isFeatured?: boolean;
+  tier?: string;
+  phone?: string;
+  website?: string;
+  services?: string[];
+  telemedicine?: boolean;
+  logo?: string;
+  slug?: string;
 }
 
 export default function DoctorsPage() {
   const { location, loading: locationLoading } = useLocation();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [premiumDoctors, setPremiumDoctors] = useState<Doctor[]>([]);
+  const [googleDoctors, setGoogleDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,23 +47,30 @@ export default function DoctorsPage() {
     let cancelled = false;
     const lat = location.lat;
     const lng = location.lng;
+    const state = location.state || '';
 
     async function fetchDoctors() {
       try {
-        const response = await fetch(
-          `/api/doctors/nearby?lat=${lat}&lng=${lng}&radius=80000`
-        );
+        // Fetch both premium (database) and Google results in parallel
+        const [premiumResponse, googleResponse] = await Promise.all([
+          fetch(`/api/doctors/premium?lat=${lat}&lng=${lng}&state=${state}`),
+          fetch(`/api/doctors/nearby?lat=${lat}&lng=${lng}&radius=80000`),
+        ]);
 
         if (cancelled) return;
 
-        const data = await response.json();
+        const premiumData = await premiumResponse.json();
+        const googleData = await googleResponse.json();
 
-        if (response.ok && data.doctors) {
-          setDoctors(data.doctors);
-          setError(null);
-        } else {
-          setError(data.error || 'Failed to load doctors');
+        if (premiumResponse.ok && premiumData.doctors) {
+          setPremiumDoctors(premiumData.doctors);
         }
+
+        if (googleResponse.ok && googleData.doctors) {
+          setGoogleDoctors(googleData.doctors);
+        }
+
+        setError(null);
       } catch {
         if (!cancelled) {
           setError('Failed to load nearby doctors');
@@ -70,6 +88,8 @@ export default function DoctorsPage() {
       cancelled = true;
     };
   }, [location, locationLoading]);
+
+  const allDoctors = [...premiumDoctors, ...googleDoctors];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 relative overflow-hidden">
@@ -119,15 +139,26 @@ export default function DoctorsPage() {
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-            Medical Marijuana Card Doctors
-          </h1>
-          {location && (
-            <p className="text-xl text-white/80">
-              Showing doctors near {location.city}, {location.state}
-            </p>
-          )}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+              Medical Marijuana Card Doctors
+            </h1>
+            {location && (
+              <p className="text-xl text-white/80">
+                Showing doctors near {location.city}, {location.state}
+              </p>
+            )}
+          </div>
+          <Link
+            href="/doctors/register"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 text-yellow-900 font-semibold rounded-full hover:bg-yellow-300 transition shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            List Your Practice
+          </Link>
         </div>
 
         {/* Info Card */}
@@ -142,7 +173,7 @@ export default function DoctorsPage() {
               <h3 className="text-lg font-semibold text-white mb-1">Get Your Medical Marijuana Card</h3>
               <p className="text-white/70">
                 These doctors can help you obtain your medical marijuana card. Requirements vary by state.
-                Click on a doctor to view their location on Google Maps and get directions.
+                Click on a doctor to view their details and get in touch.
               </p>
             </div>
           </div>
@@ -175,78 +206,182 @@ export default function DoctorsPage() {
         )}
 
         {/* No Results */}
-        {!loading && !error && doctors.length === 0 && (
+        {!loading && !error && allDoctors.length === 0 && (
           <div className="bg-white/20 backdrop-blur rounded-2xl p-8 border border-white/30 text-center">
             <p className="text-white text-lg mb-2">No medical marijuana doctors found in your area.</p>
             <p className="text-white/70">Try searching in a larger area or check back later.</p>
           </div>
         )}
 
-        {/* Doctors Grid */}
-        {!loading && !error && doctors.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {doctors.map((doctor) => (
-              <a
-                key={doctor.id}
-                href={`https://www.google.com/maps/place/?q=place_id:${doctor.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/20 backdrop-blur rounded-2xl p-6 border border-white/30 hover:bg-white/30 transition group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-white/30 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-white/40 transition">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+        {/* Premium Doctors Section */}
+        {!loading && !error && premiumDoctors.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Featured Providers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {premiumDoctors.map((doctor) => (
+                <div
+                  key={doctor.id}
+                  className="bg-gradient-to-br from-yellow-400/30 to-orange-400/20 backdrop-blur rounded-2xl p-6 border-2 border-yellow-300/50 hover:border-yellow-300 transition group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 bg-white/40 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {doctor.logo ? (
+                        <img src={doctor.logo} alt={doctor.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white truncate">
+                          {doctor.name}
+                        </h3>
+                        {doctor.isFeatured && (
+                          <span className="text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full font-medium">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-white/70 truncate mt-1">
+                        {doctor.address}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white truncate group-hover:text-yellow-200 transition">
-                      {doctor.name}
-                    </h3>
-                    <p className="text-sm text-white/70 truncate mt-1">
-                      {doctor.address}
-                    </p>
+
+                  {/* Services */}
+                  {doctor.services && doctor.services.length > 0 && (
+                    <div className="mt-4 flex gap-2 flex-wrap">
+                      {doctor.services.slice(0, 3).map((service, i) => (
+                        <span key={i} className="text-xs bg-white/20 text-white px-2 py-1 rounded-full">
+                          {service}
+                        </span>
+                      ))}
+                      {doctor.telemedicine && (
+                        <span className="text-xs bg-green-500/30 text-green-100 px-2 py-1 rounded-full">
+                          Telehealth
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex items-center gap-3 flex-wrap">
+                    {doctor.rating > 0 && (
+                      <span className="inline-flex items-center gap-1 text-sm text-white">
+                        <span className="text-yellow-300">★</span>
+                        {doctor.rating.toFixed(1)}
+                      </span>
+                    )}
+                    {doctor.distance > 0 && (
+                      <span className="text-sm text-white font-medium">
+                        {doctor.distance} mi away
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-4 pt-4 border-t border-white/20 flex gap-2">
+                    {doctor.phone && (
+                      <a
+                        href={`tel:${doctor.phone.replace(/[^0-9]/g, '')}`}
+                        className="flex-1 text-center py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition"
+                      >
+                        Call Now
+                      </a>
+                    )}
+                    {doctor.website && (
+                      <a
+                        href={doctor.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-center py-2 bg-white text-blue-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
+                      >
+                        Visit Website
+                      </a>
+                    )}
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-                <div className="mt-4 flex items-center gap-3 flex-wrap">
-                  {doctor.rating > 0 && (
-                    <span className="inline-flex items-center gap-1 text-sm text-white">
-                      <span className="text-yellow-300">★</span>
-                      {doctor.rating.toFixed(1)}
-                      <span className="text-white/50">({doctor.reviewsCount})</span>
+        {/* Google Doctors Section */}
+        {!loading && !error && googleDoctors.length > 0 && (
+          <div>
+            {premiumDoctors.length > 0 && (
+              <h2 className="text-xl font-bold text-white/80 mb-4">More Providers Near You</h2>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {googleDoctors.map((doctor) => (
+                <a
+                  key={doctor.id}
+                  href={`https://www.google.com/maps/place/?q=place_id:${doctor.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/20 backdrop-blur rounded-2xl p-6 border border-white/30 hover:bg-white/30 transition group"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 bg-white/30 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-white/40 transition">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white truncate group-hover:text-yellow-200 transition">
+                        {doctor.name}
+                      </h3>
+                      <p className="text-sm text-white/70 truncate mt-1">
+                        {doctor.address}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-3 flex-wrap">
+                    {doctor.rating > 0 && (
+                      <span className="inline-flex items-center gap-1 text-sm text-white">
+                        <span className="text-yellow-300">★</span>
+                        {doctor.rating.toFixed(1)}
+                        <span className="text-white/50">({doctor.reviewsCount})</span>
+                      </span>
+                    )}
+                    <span className="text-sm text-white font-medium">
+                      {doctor.distance} mi away
                     </span>
-                  )}
-                  <span className="text-sm text-white font-medium">
-                    {doctor.distance} mi away
-                  </span>
-                </div>
+                  </div>
 
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  {doctor.isOpen !== null && (
-                    <span className={`text-xs px-3 py-1 rounded-full ${
-                      doctor.isOpen
-                        ? 'bg-green-500/30 text-green-100'
-                        : 'bg-red-500/30 text-red-100'
-                    }`}>
-                      {doctor.isOpen ? 'Open Now' : 'Closed'}
+                  <div className="mt-4 flex gap-2 flex-wrap">
+                    {doctor.isOpen !== null && (
+                      <span className={`text-xs px-3 py-1 rounded-full ${
+                        doctor.isOpen
+                          ? 'bg-green-500/30 text-green-100'
+                          : 'bg-red-500/30 text-red-100'
+                      }`}>
+                        {doctor.isOpen ? 'Open Now' : 'Closed'}
+                      </span>
+                    )}
+                    <span className="text-xs bg-white/20 text-white px-3 py-1 rounded-full">
+                      MMJ Card
                     </span>
-                  )}
-                  <span className="text-xs bg-white/20 text-white px-3 py-1 rounded-full">
-                    MMJ Card
-                  </span>
-                </div>
+                  </div>
 
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <span className="text-sm text-white/70 group-hover:text-white transition inline-flex items-center gap-1">
-                    View on Google Maps
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </span>
-                </div>
-              </a>
-            ))}
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    <span className="text-sm text-white/70 group-hover:text-white transition inline-flex items-center gap-1">
+                      View on Google Maps
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         )}
       </main>
