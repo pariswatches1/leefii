@@ -351,8 +351,30 @@ model User {
   inquiries         Inquiry[]
   leadReferrals     LeadReferral[]
   reviews           Review[]
+  favorites         Favorite[]
 
   @@index([email])
+}
+
+// User favorites for strains, dispensaries, etc.
+model Favorite {
+  id           String       @id @default(cuid())
+  userId       String
+  entityType   FavoriteType
+  entityId     String
+  createdAt    DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+enum FavoriteType {
+  STRAIN
+  DISPENSARY
+  PRODUCT
 }
 
 model Account {

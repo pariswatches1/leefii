@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import FavoriteButton from '@/components/FavoriteButton';
 
 interface Strain {
   id: string;
@@ -317,19 +318,21 @@ export default function StrainsClient({
             {/* Strain Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {strains.map((strain) => (
-                <Link
-                  key={strain.id}
-                  href={`/strains/${strain.slug}`}
-                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group"
-                >
-                  {/* Image */}
-                  <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 overflow-hidden">
-                    <img
-                      src="https://cdn.midjourney.com/69b327bd-36d7-4219-8bc6-ffd1da9dd44b/0_1.png"
-                      alt={strain.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                <div key={strain.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group relative">
+                  {/* Favorite Button */}
+                  <div className="absolute top-2 right-2 z-10">
+                    <FavoriteButton entityType="STRAIN" entityId={strain.id} size="sm" />
                   </div>
+
+                  <Link href={`/strains/${strain.slug}`}>
+                    {/* Image */}
+                    <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 overflow-hidden">
+                      <img
+                        src="https://cdn.midjourney.com/69b327bd-36d7-4219-8bc6-ffd1da9dd44b/0_1.png"
+                        alt={strain.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
                   
                   <div className="p-4">
                     {/* Type badge */}
@@ -386,7 +389,8 @@ export default function StrainsClient({
                       )}
                     </div>
                   </div>
-                </Link>
+                  </Link>
+                </div>
               ))}
             </div>
 

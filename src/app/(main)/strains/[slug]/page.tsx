@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Reviews from '@/components/Reviews';
+import FavoriteButton from '@/components/FavoriteButton';
 
 type Props = {
   params: { slug: string };
@@ -87,10 +88,19 @@ export default async function StrainPage({ params }: Props) {
             
             {/* Info */}
             <div className="flex-1">
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-3 ${getTypeColor(strain.type)}`}>
-                {strain.type}
-              </span>
-              
+              <div className="flex items-start justify-between mb-3">
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(strain.type)}`}>
+                  {strain.type}
+                </span>
+                <FavoriteButton
+                  entityType="STRAIN"
+                  entityId={strain.id}
+                  size="lg"
+                  showText
+                  className="bg-white/20 hover:bg-white/30 text-white"
+                />
+              </div>
+
               <h1 className="text-4xl font-bold mb-4">{strain.name}</h1>
               
               {strain.genetics && (
