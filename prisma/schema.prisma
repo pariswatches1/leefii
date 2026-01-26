@@ -353,6 +353,7 @@ model User {
   leadReferrals     LeadReferral[]
   reviews           Review[]
   favorites         Favorite[]
+  journalEntries    JournalEntry[]
 
   @@index([email])
 }
@@ -743,4 +744,80 @@ model ReviewHelpful {
   @@unique([reviewId, userId])
   @@index([reviewId])
   @@index([userId])
+}
+
+// ==========================================
+// CANNABIS JOURNAL
+// ==========================================
+
+model JournalEntry {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What was consumed
+  strainId        String?
+  strainName      String          // Stored separately in case strain is deleted
+  strainType      StrainType?
+  productType     ConsumptionType
+
+  // Dosage & Method
+  amount          String?         // e.g., "1 bowl", "2 puffs", "10mg"
+  method          ConsumptionMethod
+
+  // Timing
+  consumedAt      DateTime        @default(now())
+  duration        Int?            // How long effects lasted (minutes)
+
+  // Pre-consumption state
+  moodBefore      Int?            // 1-5 scale
+  energyBefore    Int?            // 1-5 scale
+  symptomsBefore  String[]        // What symptoms they were experiencing
+
+  // Effects experienced
+  effectsPositive String[]        // e.g., ["Relaxed", "Happy", "Creative"]
+  effectsNegative String[]        // e.g., ["Dry Mouth", "Anxiety", "Paranoia"]
+  overallRating   Int             // 1-5 stars
+
+  // Post-consumption state
+  moodAfter       Int?            // 1-5 scale
+  energyAfter     Int?            // 1-5 scale
+  symptomsAfter   String[]        // What symptoms remained/appeared
+
+  // Personal notes
+  notes           String?
+  setting         String?         // Where they consumed (Home, Outdoors, Social, etc.)
+  activities      String[]        // What they did while high
+
+  // Privacy
+  isPrivate       Boolean         @default(true)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([strainId])
+  @@index([consumedAt])
+  @@index([overallRating])
+}
+
+enum ConsumptionType {
+  FLOWER
+  CONCENTRATE
+  EDIBLE
+  TINCTURE
+  TOPICAL
+  VAPE
+  PRE_ROLL
+  OTHER
+}
+
+enum ConsumptionMethod {
+  SMOKE
+  VAPE
+  EAT
+  SUBLINGUAL
+  TOPICAL
+  DAB
+  OTHER
 }
