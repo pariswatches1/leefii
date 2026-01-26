@@ -16,6 +16,12 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  BarChart3,
+  ClipboardList,
+  TrendingUp,
+  Package,
+  BookOpen,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -28,6 +34,7 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Strains", href: "/strains", icon: Leaf },
   { label: "Dispensaries", href: "/dispensaries", icon: Store },
   { label: "News", href: "/news", icon: Newspaper },
@@ -35,7 +42,12 @@ const navigation: NavItem[] = [
   { label: "Blog", href: "/blog", icon: FileText },
   { label: "Users", href: "/users", icon: Users },
   { label: "Sellers", href: "/sellers", icon: ShoppingBag },
+  { label: "Applications", href: "/seller-applications", icon: ClipboardList },
+  { label: "Products", href: "/products", icon: Package },
   { label: "Reviews", href: "/reviews", icon: Star },
+  { label: "Leads", href: "/leads", icon: TrendingUp },
+  { label: "Journal", href: "/journal-entries", icon: BookOpen },
+  { label: "Admin Users", href: "/admin-users", icon: Shield },
 ];
 
 export default function Sidebar() {

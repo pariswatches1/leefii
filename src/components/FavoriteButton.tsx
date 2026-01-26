@@ -5,23 +5,27 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 interface FavoriteButtonProps {
-  entityType: 'STRAIN' | 'DISPENSARY' | 'PRODUCT';
+  entityType: 'STRAIN' | 'DISPENSARY' | 'PRODUCT' | 'strain' | 'dispensary' | 'product';
   entityId: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
+  isFavorited?: boolean;
 }
 
 export default function FavoriteButton({
-  entityType,
+  entityType: rawEntityType,
   entityId,
   className = '',
   size = 'md',
   showText = false,
+  isFavorited: initialIsFavorited,
 }: FavoriteButtonProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [isFavorited, setIsFavorited] = useState(false);
+  // Normalize entityType to uppercase
+  const entityType = rawEntityType.toUpperCase() as 'STRAIN' | 'DISPENSARY' | 'PRODUCT';
+  const [isFavorited, setIsFavorited] = useState(initialIsFavorited ?? false);
   const [isLoading, setIsLoading] = useState(false);
 
   const sizeClasses = {
@@ -30,12 +34,12 @@ export default function FavoriteButton({
     lg: 'w-12 h-12 text-lg',
   };
 
-  // Check if already favorited on mount
+  // Check if already favorited on mount (only if not provided as prop)
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) {
+    if (initialIsFavorited === undefined && status === 'authenticated' && session?.user?.id) {
       checkFavoriteStatus();
     }
-  }, [status, session?.user?.id, entityId]);
+  }, [status, session?.user?.id, entityId, initialIsFavorited]);
 
   const checkFavoriteStatus = async () => {
     try {

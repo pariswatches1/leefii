@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
-import InquiryForm from './InquiryForm';
+import ProductBuySection from './ProductBuySection';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -41,6 +41,8 @@ export default async function ProductPage({ params }: Props) {
           logo: true,
           city: true,
           state: true,
+          website: true,
+          phone: true,
         },
       },
       category: {
@@ -230,11 +232,14 @@ export default async function ProductPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Inquiry Form */}
-              <InquiryForm
+              {/* Buy Section */}
+              <ProductBuySection
                 productId={product.id}
                 sellerId={product.seller.id}
                 productName={product.name}
+                sellerWebsite={product.seller.website}
+                sellerPhone={product.seller.phone}
+                sellerName={product.seller.businessName}
               />
             </div>
           </div>

@@ -39,7 +39,11 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(npx tsx:*)",
       "Bash(npx vercel:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel:*)",
+      "Bash(npx ts-node:*)"
     ]
   }
 }
