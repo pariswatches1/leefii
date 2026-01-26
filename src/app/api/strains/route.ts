@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
     const effect = searchParams.get('effect');
     const terpene = searchParams.get('terpene');
+    const condition = searchParams.get('condition');
     const take = parseInt(searchParams.get('take') || '48');
     const skip = parseInt(searchParams.get('skip') || '0');
 
@@ -26,6 +27,11 @@ export async function GET(request: Request) {
       where[terpeneField] = { gt: 0 };
     }
 
+    // Filter by medical condition
+    if (condition) {
+      where.conditions = { has: condition };
+    }
+
     const [strains, total] = await Promise.all([
       prisma.strain.findMany({
         where,
@@ -42,6 +48,7 @@ export async function GET(request: Request) {
           cbdMin: true,
           cbdMax: true,
           effects: true,
+          conditions: true,
           rating: true,
           terpMyrcene: true,
           terpLimonene: true,

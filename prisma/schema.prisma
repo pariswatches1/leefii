@@ -171,6 +171,7 @@ model Strain {
   effects     String[]
   flavors     String[]
   aromas      String[]
+  conditions  String[]   // Medical conditions this strain may help with
   description String?
   genetics    String?
   origin      String?

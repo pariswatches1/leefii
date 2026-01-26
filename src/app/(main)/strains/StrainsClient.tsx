@@ -14,6 +14,7 @@ interface Strain {
   cbdMin?: number | null;
   cbdMax?: number | null;
   effects: string[];
+  conditions?: string[];
   rating?: number | null;
   terpMyrcene?: number | null;
   terpLimonene?: number | null;
@@ -32,6 +33,7 @@ interface StrainsClientProps {
   initialType: string;
   initialEffect: string;
   initialTerpene?: string;
+  initialCondition?: string;
 }
 
 const effects = [
@@ -47,6 +49,21 @@ const terpenes = [
   { id: 'linalool', name: 'Linalool', color: 'bg-purple-500' },
   { id: 'humulene', name: 'Humulene', color: 'bg-lime-600' },
   { id: 'terpinolene', name: 'Terpinolene', color: 'bg-pink-500' },
+];
+
+const conditions = [
+  { id: 'Chronic Pain', icon: '💆' },
+  { id: 'Anxiety', icon: '😰' },
+  { id: 'Insomnia', icon: '😴' },
+  { id: 'Depression', icon: '😔' },
+  { id: 'Stress', icon: '🧘' },
+  { id: 'Nausea', icon: '🤢' },
+  { id: 'Inflammation', icon: '🔥' },
+  { id: 'Appetite Loss', icon: '🍽️' },
+  { id: 'Migraines', icon: '🤕' },
+  { id: 'PTSD', icon: '🧠' },
+  { id: 'Arthritis', icon: '🦴' },
+  { id: 'Muscle Spasms', icon: '💪' },
 ];
 
 // Helper to get dominant terpene from a strain
@@ -81,24 +98,27 @@ export default function StrainsClient({
   filteredCount,
   initialType,
   initialEffect,
-  initialTerpene = ''
+  initialTerpene = '',
+  initialCondition = ''
 }: StrainsClientProps) {
   const [strains, setStrains] = useState<Strain[]>(initialStrains);
   const [type, setType] = useState(initialType);
   const [effect, setEffect] = useState(initialEffect);
   const [terpene, setTerpene] = useState(initialTerpene);
+  const [condition, setCondition] = useState(initialCondition);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentCount, setCurrentCount] = useState(filteredCount);
   const [page, setPage] = useState(1);
 
-  const loadStrains = async (newType: string, newEffect: string, newTerpene: string = '', reset: boolean = true) => {
+  const loadStrains = async (newType: string, newEffect: string, newTerpene: string = '', newCondition: string = '', reset: boolean = true) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (newType && newType !== 'all') params.set('type', newType);
       if (newEffect) params.set('effect', newEffect);
       if (newTerpene) params.set('terpene', newTerpene);
+      if (newCondition) params.set('condition', newCondition);
       params.set('take', '48');
       params.set('skip', '0');
 
@@ -121,6 +141,7 @@ export default function StrainsClient({
       if (type && type !== 'all') params.set('type', type);
       if (effect) params.set('effect', effect);
       if (terpene) params.set('terpene', terpene);
+      if (condition) params.set('condition', condition);
       params.set('take', '48');
       params.set('skip', String(strains.length));
 
@@ -144,7 +165,7 @@ export default function StrainsClient({
       url.searchParams.set('type', newType);
     }
     window.history.pushState({}, '', url.toString());
-    loadStrains(newType, effect, terpene);
+    loadStrains(newType, effect, terpene, condition);
   };
 
   const handleEffectChange = (newEffect: string) => {
@@ -157,7 +178,7 @@ export default function StrainsClient({
       url.searchParams.delete('effect');
     }
     window.history.pushState({}, '', url.toString());
-    loadStrains(type, updatedEffect, terpene);
+    loadStrains(type, updatedEffect, terpene, condition);
   };
 
   const handleTerpeneChange = (newTerpene: string) => {
@@ -170,7 +191,20 @@ export default function StrainsClient({
       url.searchParams.delete('terpene');
     }
     window.history.pushState({}, '', url.toString());
-    loadStrains(type, effect, updatedTerpene);
+    loadStrains(type, effect, updatedTerpene, condition);
+  };
+
+  const handleConditionChange = (newCondition: string) => {
+    const updatedCondition = condition === newCondition ? '' : newCondition;
+    setCondition(updatedCondition);
+    const url = new URL(window.location.href);
+    if (updatedCondition) {
+      url.searchParams.set('condition', updatedCondition);
+    } else {
+      url.searchParams.delete('condition');
+    }
+    window.history.pushState({}, '', url.toString());
+    loadStrains(type, effect, terpene, updatedCondition);
   };
 
   const hasMore = strains.length < currentCount;
@@ -269,7 +303,7 @@ export default function StrainsClient({
           </div>
 
           {/* Terpene Filter */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             <span className="text-gray-500 text-sm self-center mr-2">Terpenes:</span>
             {terpenes.map((terp) => (
               <button
@@ -286,6 +320,25 @@ export default function StrainsClient({
               </button>
             ))}
           </div>
+
+          {/* Medical Conditions Filter */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-gray-500 text-sm self-center mr-2">May Help:</span>
+            {conditions.map((cond) => (
+              <button
+                key={cond.id}
+                onClick={() => handleConditionChange(cond.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${
+                  condition === cond.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span>{cond.icon}</span>
+                {cond.id}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -296,6 +349,7 @@ export default function StrainsClient({
           {type !== 'all' && ` • ${type.charAt(0).toUpperCase() + type.slice(1)}`}
           {effect && ` • ${effect}`}
           {terpene && ` • ${terpene.charAt(0).toUpperCase() + terpene.slice(1)}`}
+          {condition && ` • ${condition}`}
         </div>
 
         {loading ? (
@@ -307,7 +361,7 @@ export default function StrainsClient({
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No strains found. Try adjusting your filters.</p>
             <button
-              onClick={() => { handleTypeChange('all'); setEffect(''); setTerpene(''); }}
+              onClick={() => { handleTypeChange('all'); setEffect(''); setTerpene(''); setCondition(''); }}
               className="mt-4 text-green-600 hover:underline"
             >
               View all strains →
