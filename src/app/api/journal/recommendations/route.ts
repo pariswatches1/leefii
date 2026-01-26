@@ -133,12 +133,12 @@ export async function GET() {
       take: 100, // Analyze last 100 entries
     });
 
-    if (entries.length < 2) {
+    if (entries.length < 1) {
       return NextResponse.json({
         insights: [],
         recommendations: [],
         terpeneScores: [],
-        message: 'Log at least 2 journal entries to get personalized AI recommendations.',
+        message: 'Log at least 1 journal entry to get personalized AI recommendations.',
         entriesAnalyzed: entries.length,
       });
     }
