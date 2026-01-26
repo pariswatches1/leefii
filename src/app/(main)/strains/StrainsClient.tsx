@@ -321,24 +321,37 @@ export default function StrainsClient({
             ))}
           </div>
 
-          {/* Medical Conditions Filter */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-gray-500 text-sm self-center mr-2">May Help:</span>
-            {conditions.map((cond) => (
-              <button
-                key={cond.id}
-                onClick={() => handleConditionChange(cond.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${
-                  condition === cond.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <span>{cond.icon}</span>
-                {cond.id}
-              </button>
-            ))}
+          {/* Medical Conditions Filter - Enhanced Section */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex items-center gap-2 mr-2">
+                <span className="text-blue-600 font-semibold text-sm">May Help With:</span>
+                <span className="animate-[nudge_3s_ease-in-out_infinite] text-blue-400">→</span>
+              </div>
+              {conditions.map((cond) => (
+                <button
+                  key={cond.id}
+                  onClick={() => handleConditionChange(cond.id)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                    condition === cond.id
+                      ? 'bg-blue-600 text-white shadow-md scale-105'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:scale-105 border border-blue-200'
+                  }`}
+                >
+                  <span className="text-base">{cond.icon}</span>
+                  {cond.id}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Keyframe animation for nudge arrow */}
+          <style jsx>{`
+            @keyframes nudge {
+              0%, 100% { transform: translateX(0); opacity: 0.5; }
+              50% { transform: translateX(4px); opacity: 1; }
+            }
+          `}</style>
         </div>
       </div>
 
