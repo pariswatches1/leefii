@@ -188,6 +188,16 @@ model Strain {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  // Terpene profiles (percentage values)
+  terpMyrcene      Float?   // Earthy, musky, herbal - relaxing
+  terpLimonene     Float?   // Citrus - mood elevation, stress relief
+  terpCaryophyllene Float?  // Pepper, spicy - anti-inflammatory
+  terpPinene       Float?   // Pine - alertness, memory retention
+  terpLinalool     Float?   // Floral, lavender - calming, anxiety relief
+  terpHumulene     Float?   // Earthy, woody - appetite suppressant
+  terpTerpinolene  Float?   // Floral, herbal - uplifting
+  terpOcimene      Float?   // Sweet, herbal - antiviral, decongestant
+
   @@index([slug])
   @@index([type])
   @@index([rating])

@@ -6,17 +6,24 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const effect = searchParams.get('effect');
+    const terpene = searchParams.get('terpene');
     const take = parseInt(searchParams.get('take') || '48');
     const skip = parseInt(searchParams.get('skip') || '0');
 
     const where: any = { isActive: true };
-    
+
     if (type && type !== 'all') {
       where.type = type.toUpperCase();
     }
-    
+
     if (effect) {
       where.effects = { has: effect };
+    }
+
+    // Filter by dominant terpene
+    if (terpene) {
+      const terpeneField = `terp${terpene.charAt(0).toUpperCase() + terpene.slice(1)}`;
+      where[terpeneField] = { gt: 0 };
     }
 
     const [strains, total] = await Promise.all([
@@ -36,6 +43,14 @@ export async function GET(request: Request) {
           cbdMax: true,
           effects: true,
           rating: true,
+          terpMyrcene: true,
+          terpLimonene: true,
+          terpCaryophyllene: true,
+          terpPinene: true,
+          terpLinalool: true,
+          terpHumulene: true,
+          terpTerpinolene: true,
+          terpOcimene: true,
         }
       }),
       prisma.strain.count({ where }),

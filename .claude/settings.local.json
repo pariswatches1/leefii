@@ -35,7 +35,8 @@
       "Bash(node prisma/update-blog-image.js:*)",
       "Bash(curl:*)",
       "Bash(del update-cannabutter.js .env)",
-      "Bash(node update-blog.js:*)"
+      "Bash(node update-blog.js:*)",
+      "Bash(npx prisma migrate dev:*)"
     ]
   }
 }

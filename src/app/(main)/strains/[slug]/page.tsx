@@ -183,6 +183,114 @@ export default async function StrainPage({ params }: Props) {
               </div>
             )}
 
+            {/* Terpene Profile */}
+            {(strain.terpMyrcene || strain.terpLimonene || strain.terpCaryophyllene ||
+              strain.terpPinene || strain.terpLinalool || strain.terpHumulene ||
+              strain.terpTerpinolene || strain.terpOcimene) && (
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-2">Terpene Profile</h2>
+                <p className="text-gray-500 text-sm mb-6">Terpenes are aromatic compounds that influence the effects and flavor of cannabis</p>
+                <div className="space-y-4">
+                  {strain.terpMyrcene && strain.terpMyrcene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Myrcene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpMyrcene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpMyrcene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Earthy, musky • Relaxing, sedating</p>
+                    </div>
+                  )}
+                  {strain.terpLimonene && strain.terpLimonene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Limonene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpLimonene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpLimonene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Citrus, lemon • Mood elevation, stress relief</p>
+                    </div>
+                  )}
+                  {strain.terpCaryophyllene && strain.terpCaryophyllene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Caryophyllene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpCaryophyllene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-orange-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpCaryophyllene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Pepper, spicy • Anti-inflammatory, pain relief</p>
+                    </div>
+                  )}
+                  {strain.terpPinene && strain.terpPinene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Pinene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpPinene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpPinene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Pine, fresh • Alertness, memory retention</p>
+                    </div>
+                  )}
+                  {strain.terpLinalool && strain.terpLinalool > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Linalool</span>
+                        <span className="text-gray-500 text-sm">{strain.terpLinalool.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-purple-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpLinalool * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Floral, lavender • Calming, anxiety relief</p>
+                    </div>
+                  )}
+                  {strain.terpHumulene && strain.terpHumulene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Humulene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpHumulene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-lime-600 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpHumulene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Earthy, woody • Appetite suppressant</p>
+                    </div>
+                  )}
+                  {strain.terpTerpinolene && strain.terpTerpinolene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Terpinolene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpTerpinolene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-pink-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpTerpinolene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Floral, herbal • Uplifting, energizing</p>
+                    </div>
+                  )}
+                  {strain.terpOcimene && strain.terpOcimene > 0 && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-medium text-gray-700">Ocimene</span>
+                        <span className="text-gray-500 text-sm">{strain.terpOcimene.toFixed(2)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="bg-teal-500 h-2.5 rounded-full" style={{ width: `${Math.min(strain.terpOcimene * 50, 100)}%` }}></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Sweet, herbal • Antiviral, decongestant</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Reviews */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <Reviews
