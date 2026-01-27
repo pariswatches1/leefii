@@ -22,6 +22,7 @@ import {
   Package,
   BookOpen,
   Shield,
+  Stethoscope,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -42,6 +43,7 @@ const navigation: NavItem[] = [
   { label: "Blog", href: "/blog", icon: FileText },
   { label: "Users", href: "/users", icon: Users },
   { label: "Sellers", href: "/sellers", icon: ShoppingBag },
+  { label: "Doctors", href: "/doctors", icon: Stethoscope },
   { label: "Applications", href: "/seller-applications", icon: ClipboardList },
   { label: "Products", href: "/products", icon: Package },
   { label: "Reviews", href: "/reviews", icon: Star },
