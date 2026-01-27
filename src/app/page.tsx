@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
+// Import HeroSearchV2 directly - it handles its own client-side features
+import { HeroSearchV2 } from '@/components/search-v2/HeroSearchV2';
+
 // Dynamically import with SSR disabled to prevent hydration issues
 // This component uses browser APIs (localStorage, geolocation) that don't exist on server
 const NearbyDispensaries = dynamic(
@@ -49,191 +52,156 @@ export default function Home() {
       <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-lime-200/40 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute top-1/2 right-10 w-64 h-64 bg-green-300/30 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* Header */}
-      <header className="relative z-10 px-6 lg:px-8 py-6">
+      {/* Header - kept but visually lighter */}
+      <header className="relative z-10 px-6 lg:px-8 py-4">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white/20 backdrop-blur-lg rounded-2xl px-6 py-4 border border-white/30">
-            <div className="flex justify-between items-center">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-lime-600 rounded-xl flex items-center justify-center shadow-lg shadow-lime-600/20">
-                  <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-800">Leefii</span>
-              </Link>
-
-              {/* Navigation */}
-              <nav className="hidden md:flex items-center gap-6">
-                <Link href="/dispensaries" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Dispensaries
-                </Link>
-                <Link href="/delivery" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Delivery
-                </Link>
-                <Link href="/doctors" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Doctors
-                </Link>
-                <Link href="/strains" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Strains
-                </Link>
-                <Link href="/deals" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Deals
-                </Link>
-                <Link href="/news" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  News
-                </Link>
-                <Link href="/blog" className="text-gray-800 hover:text-gray-900 transition font-medium">
-                  Blog
-                </Link>
-                <Link href="/sell" className="px-7 py-3 bg-lime-700 text-white text-lg font-bold rounded-full hover:bg-lime-800 transition shadow-lg shadow-lime-700/30 border-2 border-lime-800">
-                  Sell on Leefii
-                </Link>
-                <Link href="/login" className="px-5 py-2 bg-gray-900 text-white font-semibold rounded-full hover:bg-gray-800 transition">
-                  Sign In
-                </Link>
-              </nav>
-
-              {/* Mobile menu button */}
-              <button className="md:hidden p-2 text-gray-800">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          <div className="flex justify-between items-center">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-lime-600 rounded-xl flex items-center justify-center shadow-lg shadow-lime-600/20">
+                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                 </svg>
-              </button>
-            </div>
+              </div>
+              <span className="text-2xl font-extrabold text-gray-800">Leefii</span>
+            </Link>
+
+            {/* Navigation - de-emphasized */}
+            <nav className="hidden lg:flex items-center gap-4 text-sm">
+              <Link href="/dispensaries" className="text-gray-700 hover:text-gray-900 transition">
+                Dispensaries
+              </Link>
+              <Link href="/delivery" className="text-gray-700 hover:text-gray-900 transition">
+                Delivery
+              </Link>
+              <Link href="/doctors" className="text-gray-700 hover:text-gray-900 transition">
+                Doctors
+              </Link>
+              <Link href="/strains" className="text-gray-700 hover:text-gray-900 transition">
+                Strains
+              </Link>
+              <Link href="/deals" className="text-gray-700 hover:text-gray-900 transition">
+                Deals
+              </Link>
+              <Link href="/news" className="text-gray-700 hover:text-gray-900 transition">
+                News
+              </Link>
+              <Link href="/blog" className="text-gray-700 hover:text-gray-900 transition">
+                Blog
+              </Link>
+              <Link href="/sell" className="px-4 py-2 bg-lime-700 text-white font-semibold rounded-full hover:bg-lime-800 transition text-sm">
+                Sell on Leefii
+              </Link>
+              <Link href="/login" className="px-4 py-2 bg-gray-900 text-white font-medium rounded-full hover:bg-gray-800 transition text-sm">
+                Sign In
+              </Link>
+            </nav>
+
+            {/* Mobile menu button */}
+            <button className="lg:hidden p-2 text-gray-800">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Column - Text Content */}
-          <div>
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900/10 backdrop-blur rounded-full text-gray-900 text-sm mb-6">
-              <span className="w-2 h-2 bg-lime-600 rounded-full animate-pulse"></span>
-              Trusted by 100,000+ users
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              Find Cannabis
-              <span className="block text-lime-800">Near You</span>
+      {/* HERO SECTION - Search is now the dominant focal point */}
+      <main className="relative z-10">
+        {/* Primary Focus Area - Search Dominates */}
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-12 lg:pt-20 pb-8">
+          {/* Headline - supports search, doesn't compete */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3">
+              Find Cannabis <span className="text-lime-800">Near You</span>
             </h1>
-
-            {/* Subheadline */}
-            <p className="text-xl text-gray-800/70 mb-8 max-w-lg">
-              Discover dispensaries, explore strains, and find the best deals in your area.
+            <p className="text-lg text-gray-800/70 max-w-xl mx-auto">
+              Search dispensaries, strains, products, and more
             </p>
-
-            {/* Search Bar */}
-            <div className="bg-white/40 backdrop-blur-lg rounded-2xl p-2 border border-white/50 mb-8 shadow-lg">
-              <form className="flex" action="/search" method="GET">
-                <input 
-                  type="text"
-                  name="q"
-                  placeholder="Search dispensaries, strains..." 
-                  className="flex-1 px-4 py-3 bg-transparent text-gray-900 placeholder-gray-600 outline-none"
-                />
-                <button 
-                  type="submit"
-                  className="px-6 py-3 bg-lime-700 text-white font-semibold rounded-xl hover:bg-lime-800 transition shadow-lg shadow-lime-700/20"
-                >
-                  Search
-                </button>
-              </form>
-            </div>
-
-            {/* Stats */}
-            <div className="flex gap-8">
-              <div>
-                <div className="text-3xl font-bold text-gray-900">6,891+</div>
-                <div className="text-gray-700">Dispensaries</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-gray-900">5,632+</div>
-                <div className="text-gray-700">Strains</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-gray-900">51</div>
-                <div className="text-gray-700">States</div>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column - Feature Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Strain Quiz Card - Featured */}
+          {/* SEARCH - The Primary Action */}
+          <div className="max-w-2xl mx-auto">
+            <HeroSearchV2 />
+          </div>
+
+          {/* Stats - smaller, de-emphasized */}
+          <div className="flex justify-center gap-8 mt-8 text-center">
+            <div>
+              <div className="text-xl font-bold text-gray-900">6,891+</div>
+              <div className="text-sm text-gray-700">Dispensaries</div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">5,632+</div>
+              <div className="text-sm text-gray-700">Strains</div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">51</div>
+              <div className="text-sm text-gray-700">States</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Secondary Content - Below the fold, accessible by scrolling */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+          {/* Quick Actions - de-emphasized grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+            {/* Strain Quiz Card */}
             <Link
               href="/quiz"
-              className="col-span-2 bg-gradient-to-r from-lime-600 to-green-600 rounded-2xl p-6 border border-lime-500/40 hover:from-lime-700 hover:to-green-700 transition cursor-pointer group shadow-lg"
+              className="col-span-2 md:col-span-1 bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">🎯</div>
-                <div>
-                  <div className="font-bold text-white text-lg group-hover:text-lime-100 transition">Find Your Perfect Strain</div>
-                  <div className="text-lime-100 text-sm">Take our 2-minute quiz for personalized recommendations</div>
-                </div>
-                <div className="ml-auto">
-                  <span className="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-medium">
-                    Start Quiz →
-                  </span>
-                </div>
-              </div>
+              <div className="text-2xl mb-2">🎯</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Strain Quiz</div>
             </Link>
 
             {/* Find Dispensaries Card */}
             <Link
               href="/dispensaries"
-              className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
-              <div className="text-3xl mb-3">🏪</div>
-              <div className="font-semibold text-gray-900 group-hover:text-lime-800 transition">Find Dispensaries</div>
-              <div className="text-gray-700 text-sm">Near you</div>
+              <div className="text-2xl mb-2">🏪</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Dispensaries</div>
             </Link>
 
             {/* Explore Strains Card */}
             <Link
               href="/strains"
-              className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
-              <div className="text-3xl mb-3">🌿</div>
-              <div className="font-semibold text-gray-900 group-hover:text-lime-800 transition">Explore Strains</div>
-              <div className="text-gray-700 text-sm">All types</div>
+              <div className="text-2xl mb-2">🌿</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Strains</div>
             </Link>
 
             {/* Best Deals Card */}
             <Link
               href="/deals"
-              className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
-              <div className="text-3xl mb-3">💰</div>
-              <div className="font-semibold text-gray-900 group-hover:text-lime-800 transition">Best Deals</div>
-              <div className="text-gray-700 text-sm">Daily</div>
+              <div className="text-2xl mb-2">💰</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Deals</div>
             </Link>
 
             {/* Latest News Card */}
             <Link
               href="/news"
-              className="bg-white/30 backdrop-blur rounded-2xl p-6 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
-              <div className="text-3xl mb-3">📰</div>
-              <div className="font-semibold text-gray-900 group-hover:text-lime-800 transition">Latest News</div>
-              <div className="text-gray-700 text-sm">Updates</div>
+              <div className="text-2xl mb-2">📰</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">News</div>
             </Link>
           </div>
-        </div>
 
-        {/* Nearby Dispensaries Section */}
-        <div className="mt-12">
-          <NearbyDispensaries />
-        </div>
+          {/* Nearby Dispensaries Section */}
+          <div className="mb-8">
+            <NearbyDispensaries />
+          </div>
 
-        {/* Medical Marijuana Card Doctors Section */}
-        <div className="mt-8">
-          <NearbyDoctors />
+          {/* Medical Marijuana Card Doctors Section */}
+          <div className="mb-8">
+            <NearbyDoctors />
+          </div>
         </div>
       </main>
 
@@ -264,8 +232,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-
-

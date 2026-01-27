@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
+// Default location for development (Miami, FL)
+const DEV_DEFAULT_LOCATION = {
+  city: 'Miami',
+  state: 'Florida',
+  zip: '33101',
+  lat: 25.7617,
+  lng: -80.1918,
+  country: 'United States',
+};
+
 export async function GET() {
   try {
     // Get visitor's IP from headers
@@ -8,6 +18,9 @@ export async function GET() {
     const forwardedFor = headersList.get('x-forwarded-for');
     const realIp = headersList.get('x-real-ip');
     const ip = forwardedFor?.split(',')[0]?.trim() || realIp || '';
+
+    // On localhost/development, IP lookup won't work - use default
+    const isLocalhost = !ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.');
 
     // Use ipapi.co which supports HTTPS and has good accuracy
     // Falls back to ip-api.com via server-side (no mixed content issues)
@@ -67,6 +80,11 @@ export async function GET() {
 
     if (locationData) {
       return NextResponse.json(locationData);
+    }
+
+    // Fallback to default location for development
+    if (isLocalhost || process.env.NODE_ENV === 'development') {
+      return NextResponse.json(DEV_DEFAULT_LOCATION);
     }
 
     return NextResponse.json(
