@@ -18,9 +18,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const title = post.metaTitle || `${post.title} | Leefii`;
+  const description = post.metaDescription || post.excerpt || '';
+
   return {
-    title: post.metaTitle || `${post.title} | Leefii`,
-    description: post.metaDescription || post.excerpt || '',
+    title,
+    description,
+    keywords: post.tags || [],
+    openGraph: {
+      title,
+      description,
+      url: `https://leefii.com/blog/${params.slug}`,
+      type: 'article',
+      images: post.imageUrl ? [{ url: post.imageUrl, alt: post.title }] : undefined,
+      publishedTime: post.publishedAt?.toISOString(),
+      authors: post.authorName ? [post.authorName] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `https://leefii.com/blog/${params.slug}`,
+    },
   };
 }
 

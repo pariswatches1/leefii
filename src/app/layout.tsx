@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states, explore 5,000+ strains, and find the best deals.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'Leefii - Cannabis Dispensary Directory',
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
     description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states and explore 5,000+ strains.',
-    images: ['/og-image.png'],
+    images: ['/og-image.svg'],
     creator: '@leefii',
   },
   robots: {
@@ -130,7 +130,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.svg" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#16a34a" />
         

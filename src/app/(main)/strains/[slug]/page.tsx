@@ -18,17 +18,38 @@ async function getStrain(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const strain = await getStrain(params.slug);
-  
+
   if (!strain) {
     return { title: 'Strain Not Found | Leefii' };
   }
-  
+
+  const description = strain.description || `Learn about ${strain.name}, a ${strain.type.toLowerCase()} cannabis strain. THC: ${strain.thcMin}-${strain.thcMax}%. Effects: ${strain.effects?.join(', ')}.`;
+
   return {
     title: `${strain.name} - ${strain.type} Cannabis Strain | Leefii`,
-    description: strain.description || `Learn about ${strain.name}, a ${strain.type.toLowerCase()} cannabis strain. THC: ${strain.thcMin}-${strain.thcMax}%. Effects: ${strain.effects?.join(', ')}.`,
+    description,
+    keywords: [
+      strain.name,
+      `${strain.name} strain`,
+      `${strain.type.toLowerCase()} strain`,
+      'cannabis strain',
+      ...(strain.effects || []),
+      ...(strain.flavors || []),
+    ],
     openGraph: {
       title: `${strain.name} - ${strain.type} Cannabis Strain | Leefii`,
-      description: strain.description || `Learn about ${strain.name}, a ${strain.type.toLowerCase()} cannabis strain.`,
+      description,
+      url: `https://leefii.com/strains/${strain.slug}`,
+      type: 'article',
+      images: strain.imageUrl ? [{ url: strain.imageUrl, alt: strain.name }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${strain.name} - ${strain.type} Cannabis Strain`,
+      description,
+    },
+    alternates: {
+      canonical: `https://leefii.com/strains/${strain.slug}`,
     },
   };
 }
@@ -58,7 +79,67 @@ export default async function StrainPage({ params }: Props) {
     }
   };
 
+  // JSON-LD Schema for Product (Strain)
+  const strainSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: strain.name,
+    description: strain.description || `${strain.name} is a ${strain.type.toLowerCase()} cannabis strain.`,
+    url: `https://leefii.com/strains/${strain.slug}`,
+    image: strain.imageUrl || 'https://leefii.com/og-image.svg',
+    brand: {
+      '@type': 'Brand',
+      name: strain.breeder || 'Unknown'
+    },
+    category: `${strain.type} Cannabis Strain`,
+    ...(strain.rating > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: strain.rating,
+        bestRating: 5,
+        worstRating: 1,
+        ratingCount: strain.reviewsCount || 1
+      }
+    } : {})
+  };
+
+  // BreadcrumbList Schema
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://leefii.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Strains',
+        item: 'https://leefii.com/strains'
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: strain.name,
+        item: `https://leefii.com/strains/${strain.slug}`
+      }
+    ]
+  };
+
   return (
+    <>
+      {/* JSON-LD Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(strainSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
@@ -386,5 +467,6 @@ export default async function StrainPage({ params }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }

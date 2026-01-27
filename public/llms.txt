@@ -1,45 +1,149 @@
 # Leefii - Cannabis Dispensary Directory
 
-> Leefii is a comprehensive cannabis dispensary directory helping users find licensed dispensaries and strains across all 50 US states.
+> Leefii is a comprehensive cannabis dispensary directory helping users find licensed dispensaries, strains, doctors, and products across all 50 US states.
 
 ## About Leefii
 
 Leefii is a trusted cannabis resource providing:
 - Directory of 2,897+ licensed cannabis dispensaries
-- Database of 5,000+ cannabis strains with effects and THC/CBD info
-- Real-time hours and contact information for dispensaries
+- Database of 5,000+ cannabis strains with effects, terpenes, and THC/CBD info
+- 650+ medical marijuana doctors and evaluation services
+- Cannabis marketplace for licensed products
+- Real-time hours, reviews, and contact information
 - Deals and discounts from local dispensaries
 - Cannabis industry news and education
 
 ## Main Sections
 
-- **Dispensaries** (/dispensaries): Browse all dispensaries by state and city
-- **Strains** (/strains): Explore cannabis strains by type (Sativa, Indica, Hybrid)
-- **Deals** (/deals): Find cannabis deals and discounts
-- **News** (/news): Latest cannabis industry news
-- **Blog** (/blog): Cannabis education and guides
+### Dispensaries (/dispensaries)
+Browse all dispensaries by state and city. Each dispensary page includes:
+- Business hours and contact information
+- Address with map integration
+- License type (Medical, Recreational, or Both)
+- Features: delivery, curbside, ATM, credit cards
+- Customer reviews and ratings
+
+### Strains (/strains)
+Explore 5,000+ cannabis strains with detailed profiles:
+- Strain type: Sativa, Indica, or Hybrid
+- THC and CBD percentages
+- Effects (relaxed, happy, euphoric, creative, etc.)
+- Flavors and aromas
+- Terpene profiles with percentages
+- Genetics and breeder information
+- Growing difficulty and flowering time
+
+### Doctors (/doctors)
+Find medical marijuana doctors and evaluation services:
+- Licensed physicians for cannabis recommendations
+- Telehealth and in-person consultations
+- State-specific medical card requirements
+- Doctor reviews and ratings
+
+### Marketplace (/marketplace)
+Browse cannabis products from licensed sellers:
+- Flower, edibles, concentrates, topicals
+- Product details with THC/CBD content
+- Verified licensed sellers only
+- Direct contact with sellers
+
+### Deals (/deals)
+Find cannabis deals and discounts from dispensaries:
+- Daily specials
+- First-time patient discounts
+- Loyalty programs
+- Holiday promotions
+
+### News (/news)
+Latest cannabis industry news:
+- Legislative updates
+- Industry trends
+- State-by-state legal changes
+- Business news
+
+### Blog (/blog)
+Cannabis education and guides:
+- Strain guides and comparisons
+- Consumption methods
+- Medical cannabis information
+- Growing tips
 
 ## Popular Locations
 
-- California: Los Angeles, San Francisco, San Diego
+### West Coast
+- California: Los Angeles, San Francisco, San Diego, Sacramento
+- Oregon: Portland, Eugene, Salem
+- Washington: Seattle, Tacoma, Spokane
+
+### Mountain States
 - Colorado: Denver, Boulder, Colorado Springs
-- Florida: Miami, Orlando, Tampa
-- Michigan: Detroit, Ann Arbor, Grand Rapids
+- Nevada: Las Vegas, Reno
 - Arizona: Phoenix, Tucson, Scottsdale
 
-## Strain Categories
+### Midwest
+- Michigan: Detroit, Ann Arbor, Grand Rapids
+- Illinois: Chicago, Springfield
+- Ohio: Columbus, Cleveland, Cincinnati
 
-- **Sativa**: Energizing, uplifting, creative effects
-- **Indica**: Relaxing, calming, sleep-inducing effects
-- **Hybrid**: Balanced combination of Sativa and Indica
+### East Coast
+- Massachusetts: Boston, Cambridge
+- New York: New York City, Buffalo
+- New Jersey: Newark, Jersey City
+
+### South
+- Florida: Miami, Orlando, Tampa
+- Oklahoma: Oklahoma City, Tulsa
+
+## Strain Information
+
+### Types
+- **Sativa**: Energizing, uplifting, creative effects. Best for daytime use.
+- **Indica**: Relaxing, calming, sleep-inducing effects. Best for evening use.
+- **Hybrid**: Balanced combination of Sativa and Indica effects.
+
+### Common Effects
+- Relaxed, Happy, Euphoric, Uplifted, Creative
+- Focused, Energetic, Talkative, Hungry
+- Sleepy, Tingly, Giggly
+
+### Common Flavors
+- Earthy, Sweet, Citrus, Berry, Pine
+- Diesel, Skunk, Grape, Tropical, Woody
+
+### Terpenes
+- **Myrcene**: Earthy, musky. Relaxing effects.
+- **Limonene**: Citrus. Mood elevation.
+- **Caryophyllene**: Pepper, spicy. Anti-inflammatory.
+- **Pinene**: Pine, fresh. Alertness.
+- **Linalool**: Floral. Calming.
+
+## Data and Coverage
+
+- 50 US states covered
+- 2,897+ verified dispensaries
+- 5,000+ strain profiles
+- 650+ medical marijuana doctors
+- Real-time data updates
+- User reviews and ratings
+
+## API and Integration
+
+Leefii provides structured data for:
+- Dispensary locations with geo-coordinates
+- Business hours in machine-readable format
+- Strain chemical profiles
+- Schema.org structured data on all pages
 
 ## Contact
 
 - Website: https://leefii.com
 - Email: support@leefii.com
+- Sitemap: https://leefii.com/sitemap.xml
 
-## Legal
+## Legal Notice
 
 - Users must be 21+ to access cannabis information
 - Leefii only lists licensed, legally operating dispensaries
 - Cannabis laws vary by state - always verify local regulations
+- Not intended as medical advice - consult healthcare professionals
+- Leefii does not sell cannabis products directly

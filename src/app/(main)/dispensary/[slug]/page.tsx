@@ -64,13 +64,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Dispensary Not Found' }
   }
 
+  const title = `${dispensary.name} - Hours, Address & Phone | Leefii`
+  const description = `${dispensary.name} at ${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}. ${dispensary.hasDelivery ? 'Delivery available.' : ''} ${dispensary.licenseType === 'MEDICAL' ? 'Medical marijuana dispensary.' : 'Recreational dispensary.'}`
+
   return {
-    title: `${dispensary.name} - Hours, Address & Phone | Leefii`,
-    description: `${dispensary.name} at ${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}. ${dispensary.hasDelivery ? 'Delivery available.' : ''} ${dispensary.licenseType === 'MEDICAL' ? 'Medical marijuana dispensary.' : 'Recreational dispensary.'}`,
+    title,
+    description,
+    keywords: [
+      dispensary.name,
+      `${dispensary.city.name} dispensary`,
+      `${dispensary.state.name} dispensary`,
+      dispensary.licenseType === 'MEDICAL' ? 'medical marijuana' : 'recreational cannabis',
+      dispensary.hasDelivery ? 'cannabis delivery' : '',
+    ].filter(Boolean),
     openGraph: {
       title: dispensary.name,
-      description: `${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}.`
-    }
+      description: `${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}.`,
+      url: `https://leefii.com/dispensary/${dispensary.slug}`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: dispensary.name,
+      description,
+    },
+    alternates: {
+      canonical: `https://leefii.com/dispensary/${dispensary.slug}`,
+    },
   }
 }
 
@@ -107,7 +127,7 @@ export default async function DispensaryPage({ params }: Props) {
     orderBy: { rating: 'desc' }
   })
 
-  // JSON-LD Schema
+  // JSON-LD Schema for MedicalBusiness
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'MedicalBusiness',
@@ -134,15 +154,60 @@ export default async function DispensaryPage({ params }: Props) {
       dayOfWeek: h.dayOfWeek.charAt(0) + h.dayOfWeek.slice(1).toLowerCase(),
       opens: h.openTime,
       closes: h.closeTime
-    }))
+    })),
+    ...(dispensary.rating && dispensary.reviewsCount ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: dispensary.rating,
+        reviewCount: dispensary.reviewsCount,
+        bestRating: 5,
+        worstRating: 1
+      }
+    } : {})
+  }
+
+  // BreadcrumbList Schema
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://leefii.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: dispensary.state.name,
+        item: `https://leefii.com/dispensaries/${dispensary.state.slug}`
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: dispensary.city.name,
+        item: `https://leefii.com/dispensaries/${dispensary.state.slug}/${dispensary.city.slug}`
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: dispensary.name,
+        item: `https://leefii.com/dispensary/${dispensary.slug}`
+      }
+    ]
   }
 
   return (
     <>
-      {/* JSON-LD */}
+      {/* JSON-LD Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
       <div>

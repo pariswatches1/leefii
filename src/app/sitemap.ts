@@ -32,6 +32,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, updatedAt: true }
   })
 
+  // Get all blog posts
+  const blogPosts = await prisma.blogPost.findMany({
+    where: { isPublished: true },
+    select: { slug: true, updatedAt: true }
+  })
+
+  // Get all news articles
+  const newsArticles = await prisma.newsArticle.findMany({
+    where: { isPublished: true },
+    select: { slug: true, updatedAt: true }
+  })
+
+  // Get all doctors
+  const doctors = await prisma.doctor.findMany({
+    where: { isActive: true },
+    select: { slug: true, updatedAt: true }
+  })
+
+  // Get all marketplace products
+  const products = await prisma.product.findMany({
+    where: { isAvailable: true, seller: { isActive: true } },
+    select: { slug: true, updatedAt: true }
+  })
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -94,6 +118,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
+    {
+      url: `${baseUrl}/doctors`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/marketplace`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
   ]
 
   // State pages
@@ -128,11 +164,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // Blog post pages
+  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: post.updatedAt || new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // News article pages
+  const newsPages: MetadataRoute.Sitemap = newsArticles.map((article) => ({
+    url: `${baseUrl}/news/${article.slug}`,
+    lastModified: article.updatedAt || new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Doctor pages
+  const doctorPages: MetadataRoute.Sitemap = doctors.map((doctor) => ({
+    url: `${baseUrl}/doctors/${doctor.slug}`,
+    lastModified: doctor.updatedAt || new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Marketplace product pages
+  const productPages: MetadataRoute.Sitemap = products.map((product) => ({
+    url: `${baseUrl}/marketplace/product/${product.slug}`,
+    lastModified: product.updatedAt || new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.6,
+  }))
+
   return [
     ...staticPages,
     ...statePages,
     ...cityPages,
     ...dispensaryPages,
     ...strainPages,
+    ...blogPages,
+    ...newsPages,
+    ...doctorPages,
+    ...productPages,
   ]
 }

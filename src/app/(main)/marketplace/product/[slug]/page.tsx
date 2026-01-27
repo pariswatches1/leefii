@@ -12,16 +12,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await prisma.product.findFirst({
     where: { slug, isAvailable: true, seller: { isActive: true } },
-    include: { seller: { select: { businessName: true } } },
+    include: { seller: { select: { businessName: true } }, category: { select: { name: true } } },
   });
 
   if (!product) {
     return { title: 'Product Not Found | Leefii' };
   }
 
+  const title = `${product.name} | Leefii Marketplace`;
+  const description = product.description.slice(0, 160);
+
   return {
-    title: `${product.name} | Leefii Marketplace`,
-    description: product.description.slice(0, 160),
+    title,
+    description,
+    keywords: [
+      product.name,
+      product.brand || '',
+      product.category?.name || '',
+      product.strainType || '',
+      'cannabis products',
+      'buy cannabis online',
+    ].filter(Boolean),
+    openGraph: {
+      title,
+      description,
+      url: `https://leefii.com/marketplace/product/${slug}`,
+      type: 'website',
+      images: product.images[0] ? [{ url: product.images[0], alt: product.name }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `https://leefii.com/marketplace/product/${slug}`,
+    },
   };
 }
 
