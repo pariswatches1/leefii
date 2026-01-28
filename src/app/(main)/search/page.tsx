@@ -399,9 +399,13 @@ export default async function SearchPage({ searchParams }: Props) {
         })
       } else {
         // Standard text search
+        // Filter by state if we have location info
+        const stateFilter = userLocation?.state ? { state: { name: userLocation.state } } : {}
+
         const rawDispensaries = await prisma.dispensary.findMany({
           where: {
             isActive: true,
+            ...stateFilter,
             OR: [
               { name: { contains: query, mode: 'insensitive' } },
               { address: { contains: query, mode: 'insensitive' } },
