@@ -270,13 +270,12 @@ export default async function SearchPage({ searchParams }: Props) {
 
       if (navIntent === 'dispensaries') {
         // User wants to browse dispensaries - get nearby if we have location
-        if (userLat && userLng) {
-          // Get dispensaries within ~75 miles and sort by distance
+        if (userLat && userLng && userLocation?.state) {
+          // Get dispensaries within user's state, sorted by distance
           const rawDispensaries = await prisma.dispensary.findMany({
             where: {
               isActive: true,
-              latitude: { gte: userLat - 1.1, lte: userLat + 1.1 },
-              longitude: { gte: userLng - 1.1, lte: userLng + 1.1 },
+              state: { name: userLocation.state },
             },
             include: { city: true, state: true },
             take: 200,
@@ -314,10 +313,13 @@ export default async function SearchPage({ searchParams }: Props) {
           ]
         })
       } else {
-        // Standard text search
+        // Standard text search - filter by state if we have location
+        const stateFilter = userLocation?.state ? { state: { name: userLocation.state } } : {}
+
         dispensaries = await prisma.dispensary.findMany({
           where: {
             isActive: true,
+            ...stateFilter,
             OR: [
               { name: { contains: query, mode: 'insensitive' } },
               { address: { contains: query, mode: 'insensitive' } },
