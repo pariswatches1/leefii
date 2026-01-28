@@ -343,9 +343,13 @@ export default async function SearchPage({ searchParams }: Props) {
 
         if (userLat && userLng) {
           // Get dispensaries within ~75 miles and sort by distance
+          // Also filter by state if we have location info
+          const stateFilter = userLocation?.state ? { state: { name: userLocation.state } } : {}
+
           const rawDispensaries = await prisma.dispensary.findMany({
             where: {
               ...whereClause,
+              ...stateFilter,
               latitude: { gte: userLat - 1.1, lte: userLat + 1.1 },
               longitude: { gte: userLng - 1.1, lte: userLng + 1.1 },
             },
