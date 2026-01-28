@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import prisma from '@/lib/prisma'
-import { Sparkles, MapPin } from 'lucide-react'
+import { Sparkles, MapPin, Clock, Truck, Building2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Search | Leefii',
@@ -10,7 +10,66 @@ export const metadata: Metadata = {
 }
 
 type Props = {
-  searchParams: { q?: string; ai?: string; lat?: string; lng?: string }
+  searchParams: { q?: string; ai?: string; lat?: string; lng?: string; filter?: string }
+}
+
+// Get current day of week for business hours lookup
+function getCurrentDayOfWeek(): string {
+  const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+  return days[new Date().getDay()]
+}
+
+// Check if dispensary is currently open based on business hours
+function getOpenStatus(businessHours: any[]): { isOpen: boolean; statusText: string; closingTime?: string } {
+  if (!businessHours || businessHours.length === 0) {
+    return { isOpen: false, statusText: 'Hours unknown' }
+  }
+
+  const today = getCurrentDayOfWeek()
+  const todayHours = businessHours.find(h => h.dayOfWeek === today)
+
+  if (!todayHours || todayHours.isClosed) {
+    return { isOpen: false, statusText: 'Closed today' }
+  }
+
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  // Parse times like "09:00" or "9:00 AM"
+  const parseTime = (timeStr: string): number => {
+    if (!timeStr) return 0
+    // Handle 24h format (09:00)
+    if (timeStr.includes(':') && !timeStr.toLowerCase().includes('am') && !timeStr.toLowerCase().includes('pm')) {
+      const [hours, minutes] = timeStr.split(':').map(Number)
+      return hours * 60 + (minutes || 0)
+    }
+    // Handle 12h format (9:00 AM)
+    const match = timeStr.match(/(\d+):?(\d*)\s*(am|pm)?/i)
+    if (!match) return 0
+    let hours = parseInt(match[1])
+    const minutes = parseInt(match[2]) || 0
+    const period = match[3]?.toLowerCase()
+    if (period === 'pm' && hours !== 12) hours += 12
+    if (period === 'am' && hours === 12) hours = 0
+    return hours * 60 + minutes
+  }
+
+  const openMinutes = parseTime(todayHours.openTime)
+  const closeMinutes = parseTime(todayHours.closeTime)
+
+  if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+    const minutesUntilClose = closeMinutes - currentMinutes
+    if (minutesUntilClose <= 60) {
+      return { isOpen: true, statusText: `Closes in ${minutesUntilClose}m`, closingTime: todayHours.closeTime }
+    }
+    return { isOpen: true, statusText: 'Open now', closingTime: todayHours.closeTime }
+  }
+
+  if (currentMinutes < openMinutes) {
+    return { isOpen: false, statusText: `Opens at ${todayHours.openTime}` }
+  }
+
+  return { isOpen: false, statusText: 'Closed' }
 }
 
 // Default location for development (Miami, FL)
@@ -270,37 +329,58 @@ export default async function SearchPage({ searchParams }: Props) {
 
       if (navIntent === 'dispensaries') {
         // User wants to browse dispensaries - get nearby if we have location
+        // Build filter conditions based on URL params
+        const filterParam = searchParams.filter
+        const whereClause: any = { isActive: true }
+
+        if (filterParam === 'delivery') {
+          whereClause.hasDelivery = true
+        } else if (filterParam === 'medical') {
+          whereClause.licenseType = { in: ['MEDICAL', 'BOTH'] }
+        } else if (filterParam === 'recreational') {
+          whereClause.licenseType = { in: ['RECREATIONAL', 'BOTH'] }
+        }
+
         if (userLat && userLng) {
           // Get dispensaries within ~75 miles and sort by distance
           const rawDispensaries = await prisma.dispensary.findMany({
             where: {
-              isActive: true,
+              ...whereClause,
               latitude: { gte: userLat - 1.1, lte: userLat + 1.1 },
               longitude: { gte: userLng - 1.1, lte: userLng + 1.1 },
             },
-            include: { city: true, state: true },
+            include: { city: true, state: true, BusinessHours: true },
             take: 200,
           })
 
-          // Sort by distance
+          // Sort by distance and add status
           dispensaries = rawDispensaries
-            .map(d => ({
-              ...d,
-              distance: calculateDistance(userLat!, userLng!, d.latitude, d.longitude)
-            }))
+            .map(d => {
+              const openStatus = getOpenStatus(d.BusinessHours)
+              return {
+                ...d,
+                distance: calculateDistance(userLat!, userLng!, d.latitude, d.longitude),
+                ...openStatus,
+              }
+            })
             .sort((a, b) => a.distance - b.distance)
             .slice(0, 50)
         } else {
           // No location - show popular dispensaries
-          dispensaries = await prisma.dispensary.findMany({
-            where: { isActive: true },
-            include: { city: true, state: true },
+          const rawDispensaries = await prisma.dispensary.findMany({
+            where: whereClause,
+            include: { city: true, state: true, BusinessHours: true },
             take: 50,
             orderBy: [
               { isPremium: 'desc' },
               { rating: 'desc' },
               { reviewsCount: 'desc' },
             ]
+          })
+
+          dispensaries = rawDispensaries.map(d => {
+            const openStatus = getOpenStatus(d.BusinessHours)
+            return { ...d, ...openStatus }
           })
         }
       } else if (navIntent === 'strains') {
@@ -315,7 +395,7 @@ export default async function SearchPage({ searchParams }: Props) {
         })
       } else {
         // Standard text search
-        dispensaries = await prisma.dispensary.findMany({
+        const rawDispensaries = await prisma.dispensary.findMany({
           where: {
             isActive: true,
             OR: [
@@ -324,9 +404,14 @@ export default async function SearchPage({ searchParams }: Props) {
               { chainName: { contains: query, mode: 'insensitive' } },
             ]
           },
-          include: { city: true, state: true },
+          include: { city: true, state: true, BusinessHours: true },
           take: 20,
           orderBy: { rating: 'desc' }
+        })
+
+        dispensaries = rawDispensaries.map(d => {
+          const openStatus = getOpenStatus(d.BusinessHours)
+          return { ...d, ...openStatus }
         })
 
         cities = await prisma.city.findMany({
@@ -540,7 +625,7 @@ export default async function SearchPage({ searchParams }: Props) {
           )}
 
           {/* Dispensary Results */}
-          {!aiMode && dispensaries.length > 0 && (
+          {!aiMode && (dispensaries.length > 0 || detectNavIntent(query) === 'dispensaries') && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 Dispensaries
@@ -551,6 +636,70 @@ export default async function SearchPage({ searchParams }: Props) {
                   </span>
                 )}
               </h2>
+
+              {/* Filter Chips - only show for dispensaries navigation intent */}
+              {detectNavIntent(query) === 'dispensaries' && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}`}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      !searchParams.filter
+                        ? 'bg-lime-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </Link>
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}&filter=delivery`}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                      searchParams.filter === 'delivery'
+                        ? 'bg-lime-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    Delivery
+                  </Link>
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}&filter=medical`}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      searchParams.filter === 'medical'
+                        ? 'bg-lime-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Medical
+                  </Link>
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}&filter=recreational`}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      searchParams.filter === 'recreational'
+                        ? 'bg-lime-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Recreational
+                  </Link>
+                </div>
+              )}
+
+              {/* No results message when filter applied */}
+              {dispensaries.length === 0 && searchParams.filter && (
+                <div className="text-center py-8 bg-gray-50 rounded-xl">
+                  <p className="text-gray-600">
+                    No {searchParams.filter === 'delivery' ? 'delivery' : searchParams.filter} dispensaries found in your area.
+                  </p>
+                  <Link
+                    href={`/search?q=${encodeURIComponent(query)}`}
+                    className="inline-block mt-3 text-lime-600 hover:text-lime-700 font-medium"
+                  >
+                    View all dispensaries →
+                  </Link>
+                </div>
+              )}
+
+              {dispensaries.length > 0 && (
               <div className="space-y-4">
                 {dispensaries.map((dispensary) => (
                   <Link
@@ -559,34 +708,80 @@ export default async function SearchPage({ searchParams }: Props) {
                     className="block p-5 bg-white border border-gray-200 rounded-xl hover:border-primary-500 hover:shadow-lg transition-all"
                   >
                     <div className="flex items-start justify-between">
-                      <div>
-                        <div className="text-lg font-semibold text-gray-900 hover:text-primary-600">
-                          {dispensary.name}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg font-semibold text-gray-900 hover:text-primary-600">
+                            {dispensary.name}
+                          </span>
+                          {/* Open/Closed Status Badge */}
+                          {dispensary.statusText && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              dispensary.isOpen
+                                ? dispensary.statusText.includes('Closes in')
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              <Clock className="w-3 h-3" />
+                              {dispensary.statusText}
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-gray-500 mt-1">
                           {dispensary.address}, {dispensary.city.name}, {dispensary.state.abbreviation} {dispensary.zipCode}
                         </div>
-                        {dispensary.phone && (
-                          <div className="text-sm text-gray-500 mt-1">{dispensary.phone}</div>
-                        )}
+
+                        {/* Feature Badges */}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {dispensary.hasDelivery && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                              <Truck className="w-3 h-3" />
+                              Delivery
+                            </span>
+                          )}
+                          {dispensary.hasStorefront && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                              <Building2 className="w-3 h-3" />
+                              Storefront
+                            </span>
+                          )}
+                          {dispensary.licenseType && (
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              dispensary.licenseType === 'MEDICAL'
+                                ? 'bg-red-50 text-red-700'
+                                : dispensary.licenseType === 'RECREATIONAL'
+                                  ? 'bg-green-50 text-green-700'
+                                  : 'bg-amber-50 text-amber-700'
+                            }`}>
+                              {dispensary.licenseType === 'BOTH' ? 'Med & Rec' : dispensary.licenseType.charAt(0) + dispensary.licenseType.slice(1).toLowerCase()}
+                            </span>
+                          )}
+                        </div>
+
                         {dispensary.distance !== undefined && (
-                          <div className="text-sm text-lime-600 font-medium mt-1">
+                          <div className="text-sm text-lime-600 font-medium mt-2">
                             {dispensary.distance.toFixed(1)} miles away
                           </div>
                         )}
                       </div>
                       {dispensary.rating > 0 && (
-                        <div className="text-right">
+                        <div className="text-right ml-4">
                           <div className="inline-flex items-center px-2 py-1 bg-yellow-50 rounded-lg">
                             <span className="text-yellow-500">★</span>
                             <span className="ml-1 font-semibold">{dispensary.rating.toFixed(1)}</span>
                           </div>
+                          {dispensary.reviewsCount > 0 && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {dispensary.reviewsCount} reviews
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   </Link>
                 ))}
               </div>
+              )}
             </div>
           )}
 
