@@ -6,7 +6,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/_next/'],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/_next/',
+          '/dashboard/',
+          '/doctor-dashboard/',
+          '/seller/',
+          '/journal/',
+          '/login',
+          '/register',
+          '/strapi-admin/',
+        ],
       },
       {
         userAgent: 'Googlebot',

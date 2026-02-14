@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import Providers from '@/components/Providers'
 import AgeVerification from '@/components/AgeVerification'
+import InstallPrompt from '@/components/InstallPrompt'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     default: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
     template: '%s | Leefii'
   },
-  description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states, explore 5,000+ strains, read reviews, and find the best deals.',
+  description: 'Find licensed cannabis dispensaries near you. Browse 6,891+ dispensaries across 51 states, explore 5,632+ strains, read reviews, and find the best deals.',
   keywords: [
     'cannabis dispensary',
     'marijuana dispensary',
@@ -34,6 +35,12 @@ export const metadata: Metadata = {
   authors: [{ name: 'Leefii' }],
   creator: 'Leefii',
   publisher: 'Leefii',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Leefii',
+  },
   formatDetection: {
     email: false,
     address: false,
@@ -45,10 +52,10 @@ export const metadata: Metadata = {
     url: 'https://leefii.com',
     siteName: 'Leefii',
     title: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
-    description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states, explore 5,000+ strains, and find the best deals.',
+    description: 'Find licensed cannabis dispensaries near you. Browse 6,891+ dispensaries across 51 states, explore 5,632+ strains, and find the best deals.',
     images: [
       {
-        url: '/og-image.svg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Leefii - Cannabis Dispensary Directory',
@@ -58,8 +65,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Leefii - Find Cannabis Dispensaries & Strains Near You',
-    description: 'Find licensed cannabis dispensaries near you. Browse 2,897+ dispensaries across 50 states and explore 5,000+ strains.',
-    images: ['/og-image.svg'],
+    description: 'Find licensed cannabis dispensaries near you. Browse 6,891+ dispensaries across 51 states and explore 5,632+ strains.',
+    images: ['/og-image.png'],
     creator: '@leefii',
   },
   robots: {
@@ -75,8 +82,6 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'EW1VQnrDf1bvRYo-ddwkuBfvoRJWWs8bDi8w6Ltn9qE',
-    // yandex: 'your-yandex-verification-code',
-    // bing: 'your-bing-verification-code',
   },
   alternates: {
     canonical: 'https://leefii.com',
@@ -89,7 +94,7 @@ const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'Leefii',
-  description: 'Find licensed cannabis dispensaries near you. Browse dispensaries across 50 states, explore strains, and find the best deals.',
+  description: 'Find licensed cannabis dispensaries near you. Browse dispensaries across 51 states, explore strains, and find the best deals.',
   url: 'https://leefii.com',
   potentialAction: {
     '@type': 'SearchAction',
@@ -130,10 +135,13 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-icon.svg" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="theme-color" content="#16a34a" />
-        
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Leefii" />
+        <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
+
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -162,9 +170,8 @@ export default function RootLayout({
           <AgeVerification />
           {children}
         </Providers>
+        <InstallPrompt />
       </body>
     </html>
   )
 }
-
-
