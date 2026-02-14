@@ -85,13 +85,78 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // ==================== EFFECTS PAGES ====================
-  const effectSlugs = ['relaxed', 'energetic', 'happy', 'creative', 'focused', 'sleepy', 'hungry', 'euphoric', 'uplifted', 'calm', 'talkative', 'giggly']
+  const effectSlugs = ['relaxed', 'energetic', 'happy', 'creative', 'focused', 'sleepy', 'hungry', 'euphoric', 'uplifted', 'calm', 'talkative', 'giggly', 'tingly', 'aroused', 'peaceful']
   const effectPages: MetadataRoute.Sitemap = effectSlugs.map((slug) => ({
     url: `${baseUrl}/strains/effects/${slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }))
+
+  // ==================== STRAIN TYPE PAGES ====================
+  const typeSlugs = ['indica', 'sativa', 'hybrid']
+  const typePages: MetadataRoute.Sitemap = typeSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/type/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  // ==================== TYPE + EFFECT COMBO PAGES ====================
+  const typeEffectPages: MetadataRoute.Sitemap = typeSlugs.flatMap((typeSlug) =>
+    effectSlugs.map((effectSlug) => ({
+      url: `${baseUrl}/strains/type/${typeSlug}/${effectSlug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }))
+  )
+
+  // ==================== TERPENE PAGES ====================
+  const terpeneSlugs = ['myrcene', 'limonene', 'caryophyllene', 'pinene', 'linalool', 'humulene', 'terpinolene', 'ocimene']
+  const terpenePages: MetadataRoute.Sitemap = terpeneSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/terpene/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // ==================== CONDITION PAGES ====================
+  const conditionSlugs = ['anxiety', 'depression', 'stress', 'chronic-pain', 'insomnia', 'ptsd', 'nausea', 'appetite-loss', 'inflammation', 'muscle-spasms', 'arthritis']
+  const conditionPages: MetadataRoute.Sitemap = conditionSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/conditions/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // ==================== FLAVOR PAGES ====================
+  const flavorSlugs = ['earthy','berry','tropical','spicy','sweet','pineapple','citrus','mango','pine','woody','blueberry','pungent','herbal','floral','orange','honey','chemical','nutty','diesel','lemon','grape','cheese','mint','strawberry','lime','coffee','vanilla','lavender','cherry','apple','grapefruit','banana','peach','chocolate','skunk','coconut','rose','watermelon','butter','fruity','ammonia','garlic','creamy']
+  const flavorPages: MetadataRoute.Sitemap = flavorSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/flavors/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.5,
+  }))
+
+  // ==================== STRAIN COMPARISON PAGES ====================
+  const topComparableStrains = await prisma.strain.findMany({
+    where: { isActive: true, rating: { gte: 4.0 }, reviewsCount: { gte: 10 } },
+    orderBy: [{ reviewsCount: 'desc' }, { rating: 'desc' }],
+    take: 100,
+    select: { slug: true },
+  })
+  const comparisonUrls: MetadataRoute.Sitemap = []
+  for (let i = 0; i < topComparableStrains.length; i++) {
+    for (let j = i + 1; j < topComparableStrains.length && comparisonUrls.length < 4950; j++) {
+      comparisonUrls.push({
+        url: `${baseUrl}/strains/compare/${topComparableStrains[i].slug}-vs-${topComparableStrains[j].slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.4,
+      })
+    }
+  }
 
   // ==================== STATE PAGES ====================
   const statePages: MetadataRoute.Sitemap = states.map((s) => ({
@@ -176,6 +241,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...competitorPages,
     ...effectPages,
+    ...typePages,
+    ...typeEffectPages,
+    ...terpenePages,
+    ...conditionPages,
+    ...flavorPages,
+    ...comparisonUrls,
     ...statePages,
     ...cityPages,
     ...deliveryPages,
