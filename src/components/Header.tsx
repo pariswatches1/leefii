@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { MobileNav } from '@/components/MobileNav';
 
 export default function Header() {
   const { data: session, status } = useSession();
@@ -51,6 +52,21 @@ export default function Header() {
 
           {/* Right side icons */}
           <div className="flex items-center gap-2">
+            {/* Mobile menu */}
+            <MobileNav
+              links={[
+                { href: '/dispensaries', label: 'Dispensaries' },
+                { href: '/marketplace', label: 'Marketplace' },
+                { href: '/strains', label: 'Strains' },
+                { href: '/quiz', label: 'Quiz' },
+                { href: '/journal', label: 'Journal', badge: 'New' },
+                { href: '/deals', label: 'Deals' },
+                { href: '/news', label: 'News' },
+                { href: '/sell', label: 'Sell on Leefii', highlight: true },
+              ]}
+              className="md:hidden text-gray-600"
+            />
+
             {/* Journal Icon */}
             <Link
               href="/journal"

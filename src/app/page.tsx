@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 
 // Import HeroSearchV2 directly - it handles its own client-side features
 import { HeroSearchV2 } from '@/components/search-v2/HeroSearchV2';
+import { MobileNav } from '@/components/MobileNav';
 
 // Dynamically import with SSR disabled to prevent hydration issues
 // This component uses browser APIs (localStorage, geolocation) that don't exist on server
@@ -113,12 +114,21 @@ export default function Home() {
               </Link>
             </nav>
 
-            {/* Mobile menu button */}
-            <button className="lg:hidden p-2 text-gray-800">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            {/* Mobile menu */}
+            <MobileNav
+              links={[
+                { href: '/dispensaries', label: 'Dispensaries' },
+                { href: '/delivery', label: 'Delivery' },
+                { href: '/doctors', label: 'Doctors' },
+                { href: '/strains', label: 'Strains' },
+                { href: '/deals', label: 'Deals' },
+                { href: '/news', label: 'News' },
+                { href: '/blog', label: 'Blog' },
+                { href: '/sell', label: 'Sell on Leefii', highlight: true },
+                { href: '/login', label: 'Sign In' },
+              ]}
+              className="lg:hidden text-gray-800"
+            />
           </div>
         </div>
       </header>
