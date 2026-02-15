@@ -206,6 +206,9 @@ export default async function StatePage({ params }: Props) {
               {state.isLegal && !state.medicalOnly ? 'Rec + Med' : state.medicalOnly ? 'Medical Only' : 'Limited'}
             </span>
           </div>
+          <p className="text-sm text-gray-400 mt-4">
+            Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </p>
         </div>
       </section>
 

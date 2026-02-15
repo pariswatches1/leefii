@@ -150,6 +150,9 @@ export default async function CityPage({ params }: Props) {
               </div>
             )}
           </div>
+          <p className="text-sm text-green-200 mt-4">
+            Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </p>
         </div>
       </div>
 

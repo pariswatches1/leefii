@@ -27,6 +27,34 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: 'Bingbot',
         allow: '/',
       },
+      {
+        userAgent: 'ChatGPT-User',
+        allow: '/',
+      },
+      {
+        userAgent: 'PerplexityBot',
+        allow: '/',
+      },
+      {
+        userAgent: 'ClaudeBot',
+        allow: '/',
+      },
+      {
+        userAgent: 'Applebot',
+        allow: '/',
+      },
+      {
+        userAgent: 'Bytespider',
+        allow: '/',
+      },
+      {
+        userAgent: 'cohere-ai',
+        allow: '/',
+      },
+      {
+        userAgent: 'anthropic-ai',
+        allow: '/',
+      },
     ],
     sitemap: 'https://leefii.com/sitemap.xml',
   }

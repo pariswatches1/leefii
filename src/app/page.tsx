@@ -45,8 +45,24 @@ const NearbyDoctors = dynamic(
 );
 
 export default function Home() {
+  const websiteLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Leefii',
+    url: 'https://leefii.com',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: 'https://leefii.com/search?q={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-lime-400 via-green-400 to-emerald-500 relative overflow-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }} />
       {/* Background blur effects */}
       <div className="absolute top-10 left-1/4 w-80 h-80 bg-yellow-300/30 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-lime-200/40 rounded-full blur-3xl pointer-events-none"></div>
