@@ -237,64 +237,64 @@ export default function StrainsClient({
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {/* Type Filter */}
-          <div className="flex flex-wrap gap-2 mb-4">
+      {/* Filters — sticky below header (top-16 = 64px header height) */}
+      <div className="bg-white border-b sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {/* Type Filter — always visible */}
+          <div className="flex gap-2 mb-3">
             <button
               onClick={() => handleTypeChange('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                type === 'all' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                type === 'all'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               All Types
             </button>
             <button
               onClick={() => handleTypeChange('sativa')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                type === 'sativa' 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                type === 'sativa'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Sativa
             </button>
             <button
               onClick={() => handleTypeChange('indica')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                type === 'indica' 
-                  ? 'bg-purple-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                type === 'indica'
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Indica
             </button>
             <button
               onClick={() => handleTypeChange('hybrid')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                type === 'hybrid' 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                type === 'hybrid'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Hybrid
             </button>
           </div>
-          
-          {/* Effects Filter */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="text-gray-500 text-sm self-center mr-2">Effects:</span>
+
+          {/* Effects Filter — horizontal scroll on mobile */}
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible">
+            <span className="text-gray-500 text-sm self-center mr-1 shrink-0">Effects:</span>
             {effects.map((eff) => (
               <button
                 key={eff}
                 onClick={() => handleEffectChange(eff)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition whitespace-nowrap shrink-0 ${
                   effect === eff
                     ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                 }`}
               >
                 {eff}
@@ -302,17 +302,17 @@ export default function StrainsClient({
             ))}
           </div>
 
-          {/* Terpene Filter */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="text-gray-500 text-sm self-center mr-2">Terpenes:</span>
+          {/* Terpene Filter — horizontal scroll on mobile */}
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible">
+            <span className="text-gray-500 text-sm self-center mr-1 shrink-0">Terpenes:</span>
             {terpenes.map((terp) => (
               <button
                 key={terp.id}
                 onClick={() => handleTerpeneChange(terp.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1 whitespace-nowrap shrink-0 ${
                   terpene === terp.id
                     ? `${terp.color} text-white`
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full ${terpene === terp.id ? 'bg-white' : terp.color}`}></span>
@@ -321,21 +321,20 @@ export default function StrainsClient({
             ))}
           </div>
 
-          {/* Medical Conditions Filter - Enhanced Section */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex items-center gap-2 mr-2">
-                <span className="text-blue-600 font-semibold text-sm">May Help With:</span>
-                <span className="animate-[nudge_3s_ease-in-out_infinite] text-blue-400">→</span>
+          {/* Medical Conditions Filter — horizontal scroll on mobile */}
+          <div className="pt-3 border-t border-gray-200">
+            <div className="flex gap-2 items-center overflow-x-auto pb-1 scrollbar-hide md:flex-wrap md:overflow-visible">
+              <div className="flex items-center gap-1 mr-1 shrink-0">
+                <span className="text-blue-600 font-semibold text-sm whitespace-nowrap">May Help With:</span>
               </div>
               {conditions.map((cond) => (
                 <button
                   key={cond.id}
                   onClick={() => handleConditionChange(cond.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                     condition === cond.id
-                      ? 'bg-blue-600 text-white shadow-md scale-105'
-                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:scale-105 border border-blue-200'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 border border-blue-200'
                   }`}
                 >
                   <span className="text-base">{cond.icon}</span>
@@ -345,12 +344,10 @@ export default function StrainsClient({
             </div>
           </div>
 
-          {/* Keyframe animation for nudge arrow */}
+          {/* Hide scrollbar CSS */}
           <style jsx>{`
-            @keyframes nudge {
-              0%, 100% { transform: translateX(0); opacity: 0.5; }
-              50% { transform: translateX(4px); opacity: 1; }
-            }
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
           `}</style>
         </div>
       </div>
@@ -383,35 +380,39 @@ export default function StrainsClient({
         ) : (
           <>
             {/* Strain Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {strains.map((strain) => (
-                <div key={strain.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group relative">
-                  {/* Favorite Button */}
-                  <div className="absolute top-2 right-2 z-10">
+                <Link
+                  key={strain.id}
+                  href={`/strains/${strain.slug}`}
+                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition group relative block"
+                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {/* Favorite Button — absolute, stops propagation so it doesn't navigate */}
+                  <div className="absolute top-2 right-2 z-10" onClick={(e) => e.preventDefault()}>
                     <FavoriteButton entityType="STRAIN" entityId={strain.id} size="sm" />
                   </div>
 
-                  <Link href={`/strains/${strain.slug}`}>
-                    {/* Image */}
-                    <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 overflow-hidden">
-                      <img
-                        src="https://cdn.midjourney.com/69b327bd-36d7-4219-8bc6-ffd1da9dd44b/0_1.png"
-                        alt={strain.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  
+                  {/* Image */}
+                  <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 overflow-hidden rounded-t-xl">
+                    <img
+                      src="https://cdn.midjourney.com/69b327bd-36d7-4219-8bc6-ffd1da9dd44b/0_1.png"
+                      alt={strain.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
                   <div className="p-4">
                     {/* Type badge */}
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${getTypeColor(strain.type)}`}>
                       {strain.type}
                     </span>
-                    
+
                     {/* Name */}
                     <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition">
                       {strain.name}
                     </h3>
-                    
+
                     {/* THC/CBD */}
                     <div className="flex gap-3 mt-2 text-sm">
                       {strain.thcMax && strain.thcMax > 0 && (
@@ -425,7 +426,7 @@ export default function StrainsClient({
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Effects */}
                     {strain.effects && strain.effects.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
@@ -456,8 +457,7 @@ export default function StrainsClient({
                       )}
                     </div>
                   </div>
-                  </Link>
-                </div>
+                </Link>
               ))}
             </div>
 
