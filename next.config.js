@@ -4,8 +4,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   fallbacks: {
     document: "/offline",
@@ -54,9 +54,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
           cacheName: "pages-cache",
           expiration: {
             maxEntries: 200,
-            maxAgeSeconds: 60 * 60 * 24,
+            maxAgeSeconds: 60 * 60,
           },
-          networkTimeoutSeconds: 10,
+          networkTimeoutSeconds: 3,
         },
       },
     ],
