@@ -169,8 +169,8 @@ export default function RootLayout({
         <Providers>
           <AgeVerification />
           {children}
+          <InstallPrompt />
         </Providers>
-        <InstallPrompt />
       </body>
     </html>
   )
