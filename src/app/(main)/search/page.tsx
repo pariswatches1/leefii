@@ -168,7 +168,9 @@ function detectIntent(query: string): { intent: string; confidence: number } {
 }
 
 export default async function SearchPage({ searchParams }: Props) {
-  const query = searchParams.q || ''
+  // Sanitize query: ignore Google's literal placeholder from SearchAction schema
+  const rawQuery = searchParams.q || ''
+  const query = rawQuery === '{search_term_string}' ? '' : rawQuery
   const aiMode = searchParams.ai === '1'
 
   // Get user location from params or IP

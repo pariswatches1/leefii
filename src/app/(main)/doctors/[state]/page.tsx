@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import DoctorDetailPage from './DoctorDetailPage'
 
 interface Props {
   params: Promise<{ state: string }>
@@ -9,30 +10,100 @@ interface Props {
 
 export const revalidate = 3600
 
+// ==================== METADATA ====================
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { state: stateSlug } = await params
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
-  if (!state) return {}
+  const { state: slug } = await params
 
-  const count = await prisma.doctor.count({ where: { state: state.abbreviation, isActive: true } })
-
-  const title = `Medical Marijuana Doctors in ${state.name} | ${count}+ MMJ Doctors | Leefii`
-  const description = `Find ${count}+ licensed medical marijuana doctors in ${state.name}. Compare reviews, services, and pricing. Get your MMJ card with telehealth or in-person consultations.`
-
-  return {
-    title,
-    description,
-    openGraph: { title, description, url: `https://leefii.com/doctors/${stateSlug}`, siteName: 'Leefii' },
-    twitter: { card: 'summary_large_image', title, description },
-    alternates: { canonical: `https://leefii.com/doctors/${stateSlug}` },
+  // 1. Check if it's a state slug
+  const state = await prisma.state.findUnique({ where: { slug } })
+  if (state) {
+    const count = await prisma.doctor.count({ where: { state: state.abbreviation, isActive: true } })
+    const title = `Medical Marijuana Doctors in ${state.name} | ${count}+ MMJ Doctors | Leefii`
+    const description = `Find ${count}+ licensed medical marijuana doctors in ${state.name}. Compare reviews, services, and pricing. Get your MMJ card with telehealth or in-person consultations.`
+    return {
+      title,
+      description,
+      openGraph: { title, description, url: `https://leefii.com/doctors/${slug}`, siteName: 'Leefii' },
+      twitter: { card: 'summary_large_image', title, description },
+      alternates: { canonical: `https://leefii.com/doctors/${slug}` },
+    }
   }
+
+  // 2. Check if it's a doctor slug
+  const doctor = await prisma.doctor.findUnique({ where: { slug } })
+  if (doctor) {
+    const locationString = [doctor.city, doctor.state].filter(Boolean).join(', ')
+    const title = `${doctor.name}${doctor.businessName ? ` - ${doctor.businessName}` : ''} | MMJ Doctor | Leefii`
+    const description = doctor.description
+      ? doctor.description.slice(0, 160)
+      : `${doctor.name} - Medical marijuana doctor${locationString ? ` in ${locationString}` : ''}. ${doctor.telemedicine ? 'Telehealth available. ' : ''}${doctor.services?.slice(0, 3).join(', ') || 'MMJ evaluations and card renewals.'}`
+
+    return {
+      title,
+      description,
+      keywords: [
+        doctor.name,
+        doctor.businessName,
+        doctor.city ? `${doctor.city} mmj doctor` : '',
+        doctor.state ? `${doctor.state} medical marijuana doctor` : '',
+        doctor.telemedicine ? 'telehealth mmj' : '',
+        'medical marijuana card',
+        'mmj doctor',
+      ].filter(Boolean) as string[],
+      openGraph: {
+        title: doctor.name,
+        description,
+        url: `https://leefii.com/doctors/${doctor.slug}`,
+        type: 'website',
+      },
+      twitter: { card: 'summary', title: doctor.name, description },
+      alternates: { canonical: `https://leefii.com/doctors/${doctor.slug}` },
+    }
+  }
+
+  return {}
 }
 
-export default async function DoctorsStatePage({ params }: Props) {
-  const { state: stateSlug } = await params
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
-  if (!state) notFound()
+// ==================== PAGE ====================
+export default async function DoctorsPage({ params }: Props) {
+  const { state: slug } = await params
 
+  // 1. Try state listing first
+  const state = await prisma.state.findUnique({ where: { slug } })
+  if (state) {
+    return <StateDoctorsPage stateSlug={slug} state={state} />
+  }
+
+  // 2. Try individual doctor
+  const doctor = await prisma.doctor.findUnique({
+    where: { slug },
+    include: { businessHours: true },
+  })
+
+  if (doctor) {
+    // Increment view count (non-blocking)
+    prisma.doctor.update({ where: { id: doctor.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
+
+    // Find related doctors in same state
+    const relatedDoctors = await prisma.doctor.findMany({
+      where: {
+        state: doctor.state || undefined,
+        isActive: true,
+        id: { not: doctor.id },
+      },
+      take: 4,
+      orderBy: { rating: 'desc' },
+    })
+
+    return <DoctorDetailPage doctor={doctor} relatedDoctors={relatedDoctors} />
+  }
+
+  // 3. Neither state nor doctor found
+  notFound()
+}
+
+// ==================== STATE LISTING COMPONENT ====================
+async function StateDoctorsPage({ stateSlug, state }: { stateSlug: string; state: any }) {
   const doctors = await prisma.doctor.findMany({
     where: { state: state.abbreviation, isActive: true },
     orderBy: [
