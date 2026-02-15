@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { sendEmail } from '@/lib/email';
+import { getSequenceEmail } from '@/lib/email-templates';
 
 export async function POST(request: Request) {
   try {
@@ -67,6 +69,67 @@ export async function POST(request: Request) {
         description,
       },
     });
+
+    // Start B2B email sequence (non-blocking)
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true, name: true, emailOptOut: true },
+      });
+
+      if (user && !user.emailOptOut) {
+        const welcomeEmail = getSequenceEmail('B2B', 1, session.user.id, businessName);
+        if (welcomeEmail) {
+          // Send the first email immediately
+          await sendEmail({
+            to: user.email,
+            subject: welcomeEmail.subject,
+            html: welcomeEmail.html,
+            tags: [
+              { name: 'sequence', value: 'B2B' },
+              { name: 'step', value: '1' },
+            ],
+          });
+
+          // Log the sent email
+          await prisma.emailLog.create({
+            data: {
+              userId: session.user.id,
+              template: 'B2B_STEP_1',
+              subject: welcomeEmail.subject,
+            },
+          });
+        }
+
+        // Create the sequence state for remaining emails (step 2 onwards)
+        const nextEmail = getSequenceEmail('B2B', 2, session.user.id);
+        const nextSendAt = new Date();
+        nextSendAt.setDate(nextSendAt.getDate() + (nextEmail?.delayDays || 3));
+
+        await prisma.emailSequenceState.upsert({
+          where: {
+            userId_sequence: {
+              userId: session.user.id,
+              sequence: 'B2B',
+            },
+          },
+          create: {
+            userId: session.user.id,
+            sequence: 'B2B',
+            currentStep: 2,
+            nextSendAt,
+          },
+          update: {
+            currentStep: 2,
+            nextSendAt,
+            completedAt: null,
+          },
+        });
+      }
+    } catch (emailError) {
+      // Don't fail the application if email fails
+      console.error('Failed to start B2B email sequence:', emailError);
+    }
 
     return NextResponse.json(
       { message: 'Application submitted successfully' },

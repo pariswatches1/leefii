@@ -345,6 +345,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  emailOptOut       Boolean   @default(false)
+
   accounts          Account[]
   sessions          Session[]
   sellerApplication SellerApplication?
@@ -354,6 +356,8 @@ model User {
   reviews           Review[]
   favorites         Favorite[]
   journalEntries    JournalEntry[]
+  emailLogs         EmailLog[]
+  emailSequences    EmailSequenceState[]
 
   @@index([email])
 }
@@ -957,4 +961,45 @@ enum DoctorLeadType {
   PHONE_CLICK
   DIRECTIONS_CLICK
   FORM_SUBMIT
+}
+
+// ==========================================
+// EMAIL SEQUENCES
+// ==========================================
+
+model EmailLog {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template  String      // e.g., "B2C_STEP_1", "B2B_STEP_3"
+  subject   String
+  status    EmailStatus @default(SENT)
+  sentAt    DateTime    @default(now())
+
+  @@index([userId])
+  @@index([template])
+  @@index([sentAt])
+}
+
+model EmailSequenceState {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sequence    String    // "B2C" or "B2B"
+  currentStep Int       @default(1)
+  nextSendAt  DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, sequence])
+  @@index([nextSendAt])
+  @@index([completedAt])
+}
+
+enum EmailStatus {
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
 }
