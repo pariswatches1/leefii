@@ -194,6 +194,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // State delivery index pages: /delivery/[state] (only for delivery-legal states)
+  const deliveryStatePages: MetadataRoute.Sitemap = Array.from(
+    new Set(deliveryCities.map((c) => c.state.slug))
+  ).map((stateSlug) => ({
+    url: `${baseUrl}/delivery/${stateSlug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
   // ==================== DOCTORS+STATE PAGES ====================
   const doctorStatePages: MetadataRoute.Sitemap = doctorStates.map((s) => ({
     url: `${baseUrl}/doctors/${s.slug}`,
@@ -396,6 +406,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...statePages,
     ...cityPages,
     ...deliveryPages,
+    ...deliveryStatePages,
     ...doctorStatePages,
     ...dispensaryPages,
     ...strainPages,

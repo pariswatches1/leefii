@@ -19,6 +19,57 @@ interface Dispensary {
   distance: number;
 }
 
+const DELIVERY_STATES = [
+  { name: 'Arizona', slug: 'arizona', abbr: 'AZ' },
+  { name: 'California', slug: 'california', abbr: 'CA' },
+  { name: 'Colorado', slug: 'colorado', abbr: 'CO' },
+  { name: 'Connecticut', slug: 'connecticut', abbr: 'CT' },
+  { name: 'Illinois', slug: 'illinois', abbr: 'IL' },
+  { name: 'Maine', slug: 'maine', abbr: 'ME' },
+  { name: 'Maryland', slug: 'maryland', abbr: 'MD' },
+  { name: 'Massachusetts', slug: 'massachusetts', abbr: 'MA' },
+  { name: 'Michigan', slug: 'michigan', abbr: 'MI' },
+  { name: 'Missouri', slug: 'missouri', abbr: 'MO' },
+  { name: 'Montana', slug: 'montana', abbr: 'MT' },
+  { name: 'Nevada', slug: 'nevada', abbr: 'NV' },
+  { name: 'New Jersey', slug: 'new-jersey', abbr: 'NJ' },
+  { name: 'New Mexico', slug: 'new-mexico', abbr: 'NM' },
+  { name: 'New York', slug: 'new-york', abbr: 'NY' },
+  { name: 'Oregon', slug: 'oregon', abbr: 'OR' },
+  { name: 'Vermont', slug: 'vermont', abbr: 'VT' },
+  { name: 'Virginia', slug: 'virginia', abbr: 'VA' },
+  { name: 'Washington', slug: 'washington', abbr: 'WA' },
+  { name: 'Washington DC', slug: 'washington-dc', abbr: 'DC' },
+];
+
+const FAQ_ITEMS = [
+  {
+    question: 'Where can I get weed delivered?',
+    answer:
+      'Cannabis delivery is available in states that have legalized recreational or medical marijuana and permit licensed delivery services. Currently, states like California, Michigan, Massachusetts, Arizona, Colorado, Oregon, Nevada, Illinois, Connecticut, Maine, Maryland, Missouri, Montana, New Jersey, New Mexico, New York, Vermont, Virginia, Washington, and Washington DC allow some form of cannabis delivery. Availability depends on your local municipality, as some cities opt out of delivery even in legal states. Use Leefii to check which dispensaries deliver to your specific address.',
+  },
+  {
+    question: 'How does cannabis delivery work?',
+    answer:
+      'Ordering cannabis delivery is straightforward. First, browse delivery-enabled dispensaries on Leefii and select products from their menu. Place your order online and complete checkout. A licensed delivery driver will bring your order directly to your door. You will need to present a valid government-issued ID proving you are 21 or older (or 18+ with a medical card in some states). Most dispensaries offer delivery windows ranging from one to three hours, and some provide real-time tracking so you can follow your order from dispatch to doorstep.',
+  },
+  {
+    question: 'Is cannabis delivery safe and legal?',
+    answer:
+      'Yes, cannabis delivery is safe and legal in states that have authorized it. All delivery drivers are licensed and vetted by the state regulatory agency. Products are sealed, lab-tested, and compliant with state packaging and labeling requirements. Deliveries are made in unmarked vehicles to protect your privacy. Drivers verify your identity and age at the door before handing over any products. State regulators track every delivery from dispensary to consumer, ensuring full chain-of-custody compliance.',
+  },
+  {
+    question: 'How much does cannabis delivery cost?',
+    answer:
+      'Delivery fees vary by dispensary and location. Many dispensaries offer free delivery on orders above a minimum amount, typically between $50 and $100. Standard delivery fees usually range from $5 to $15. Some dispensaries charge based on distance, while others have a flat fee. Premium or express delivery options may cost more. Check each dispensary listing on Leefii for their specific delivery fees, minimum order requirements, and any active promotions that might waive the delivery charge.',
+  },
+  {
+    question: 'Can I get same-day cannabis delivery?',
+    answer:
+      'Many dispensaries offer same-day delivery when you place your order during business hours. Delivery windows typically range from one to three hours depending on demand and your distance from the dispensary. Some dispensaries also offer scheduled delivery, letting you pick a specific date and time window. Express delivery options are available at select dispensaries for an additional fee, often arriving within 60 minutes. Check the dispensary details on Leefii to see their estimated delivery times and available scheduling options.',
+  },
+];
+
 export default function DeliveryPage() {
   const { location, loading: locationLoading } = useLocation();
   const [dispensaries, setDispensaries] = useState<Dispensary[]>([]);
@@ -76,8 +127,50 @@ export default function DeliveryPage() {
     };
   }, [location, locationLoading]);
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://leefii.com',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Cannabis Delivery',
+        item: 'https://leefii.com/delivery',
+      },
+    ],
+  };
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_ITEMS.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-400 to-pink-500 relative overflow-hidden">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
       {/* Background blur effects */}
       <div className="absolute top-10 left-1/4 w-80 h-80 bg-yellow-300/30 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-orange-300/40 rounded-full blur-3xl pointer-events-none"></div>
@@ -253,6 +346,113 @@ export default function DeliveryPage() {
             ))}
           </div>
         )}
+
+        {/* ================================================== */}
+        {/* STATIC SEO SECTIONS BELOW DYNAMIC CONTENT          */}
+        {/* ================================================== */}
+
+        {/* Where Can I Get Weed Delivered — State Grid */}
+        <section className="mt-16">
+          <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Where Can I Get Weed Delivered?
+            </h2>
+            <p className="text-white/70 mb-8 max-w-2xl">
+              Cannabis delivery is legal in {DELIVERY_STATES.length} states and territories.
+              Browse delivery dispensaries by state to find licensed options near you.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {DELIVERY_STATES.map((state) => (
+                <Link
+                  key={state.slug}
+                  href={`/delivery/${state.slug}`}
+                  className="group flex items-center gap-2 bg-white/10 hover:bg-white/25 border border-white/15 hover:border-white/40 rounded-xl px-4 py-3 transition-all duration-200"
+                >
+                  <span className="text-xs font-bold text-orange-200 bg-white/15 rounded-md px-2 py-0.5 group-hover:bg-white/25 transition">
+                    {state.abbr}
+                  </span>
+                  <span className="text-sm font-medium text-white truncate">
+                    {state.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SEO Intro Section */}
+        <section className="mt-12">
+          <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <h2 className="text-3xl font-bold text-white mb-6">
+              How Cannabis Delivery Works
+            </h2>
+            <div className="prose prose-lg max-w-none text-white/80 space-y-4">
+              <p>
+                Cannabis delivery brings licensed dispensary products directly to your door. As more states
+                legalize recreational and medical marijuana, delivery services have become one of the fastest-growing
+                segments of the cannabis industry. Whether you are a medical patient who cannot easily travel to a
+                dispensary or a recreational consumer looking for convenience, delivery offers a safe and legal
+                alternative to in-store shopping.
+              </p>
+              <p>
+                The process is simple. Browse dispensaries on Leefii that offer delivery in your area, explore
+                their menus, and place your order online. Most dispensaries accept debit cards, cash on delivery,
+                or secure online payment through platforms like Dutchie or Jane. After checkout, a licensed
+                delivery driver is dispatched with your sealed, lab-tested products. Delivery windows typically
+                range from one to three hours, though some dispensaries offer express and scheduled options for
+                greater flexibility.
+              </p>
+              <p>
+                Every delivery must comply with state regulations. Drivers are background-checked and licensed
+                by the state cannabis authority. They carry only the legal limit of product and verify your
+                identity and age at the door using a valid government-issued ID. You must be at least 21 years
+                old for recreational purchases, or 18 and older with a valid medical marijuana card in states
+                that allow medical delivery. Products arrive in child-resistant, tamper-evident packaging with
+                complete lab testing information on the label.
+              </p>
+              <p>
+                Delivery menus typically include flower, pre-rolls, edibles, vape cartridges, concentrates,
+                tinctures, topicals, and accessories. Pricing is generally the same as in-store, and many
+                dispensaries waive delivery fees on orders above a certain threshold. Leefii makes it easy to
+                compare delivery dispensaries by rating, distance, menu selection, and real-time availability
+                so you can find the best option for your needs.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="mt-12">
+          <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+            <h2 className="text-3xl font-bold text-white mb-6">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-3">
+              {FAQ_ITEMS.map((faq, index) => (
+                <details
+                  key={index}
+                  className="group bg-white/10 border border-white/15 rounded-xl overflow-hidden"
+                >
+                  <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-white font-semibold hover:bg-white/10 transition select-none list-none">
+                    <span>{faq.question}</span>
+                    <svg
+                      className="w-5 h-5 text-white/60 group-open:rotate-180 transition-transform duration-200 flex-shrink-0 ml-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="px-6 pb-5 text-white/70 leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
