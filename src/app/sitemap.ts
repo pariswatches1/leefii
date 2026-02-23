@@ -4,6 +4,7 @@ import { getStateLawSlugs } from '@/data/cannabis-laws'
 import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
 import { getAllDealPageSlugs } from '@/data/deal-categories'
 import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
+import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -236,6 +237,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // Blog category pages: /blog/category/[slug]
+  const blogCategoryPages: MetadataRoute.Sitemap = getAllCategorySlugs().map((slug) => ({
+    url: `${baseUrl}/blog/category/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Static pillar article pages (may overlap with DB blog posts — deduplicated by URL)
+  const dbBlogSlugs = new Set(blogPosts.map((p) => p.slug))
+  const staticArticlePages: MetadataRoute.Sitemap = getAllStaticArticleSlugs()
+    .filter((slug) => !dbBlogSlugs.has(slug))
+    .map((slug) => ({
+      url: `${baseUrl}/blog/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }))
+
   const newsPages: MetadataRoute.Sitemap = newsArticles.map((a) => ({
     url: `${baseUrl}/news/${a.slug}`,
     lastModified: a.updatedAt || new Date(),
@@ -411,6 +431,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...dispensaryPages,
     ...strainPages,
     ...blogPages,
+    ...blogCategoryPages,
+    ...staticArticlePages,
     ...newsPages,
     ...doctorPages,
     ...productPages,
