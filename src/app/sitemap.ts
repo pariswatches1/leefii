@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { getStateLawSlugs } from '@/data/cannabis-laws'
+import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -301,6 +302,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/laws/federal`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
   ]
 
+  // ==================== STRAIN PURPOSE PAGES (/strains/for/[slug]) ====================
+  const forPageSlugs = getAllForPageSlugs()
+  const strainForPages: MetadataRoute.Sitemap = forPageSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/for/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  // ==================== CROSS-REFERENCE PAGES (/strains/[category]/for/[purpose]) ====================
+  const crossRefParams = getAllCrossRefParams()
+  const crossRefPages: MetadataRoute.Sitemap = crossRefParams.map((cr) => ({
+    url: `${baseUrl}/strains/${cr.category}/for/${cr.purpose}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
   // ==================== COMBINE ALL ====================
   return [
     ...staticPages,
@@ -327,5 +346,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...nearMeStaticPages,
     ...zipCodePages,
     ...neighborhoodPages,
+    ...strainForPages,
+    ...crossRefPages,
   ]
 }
