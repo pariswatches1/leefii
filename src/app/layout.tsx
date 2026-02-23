@@ -5,6 +5,8 @@ import Script from 'next/script'
 import Providers from '@/components/Providers'
 import AgeVerification from '@/components/AgeVerification'
 import InstallPrompt from '@/components/InstallPrompt'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -171,6 +173,8 @@ export default function RootLayout({
           {children}
           <InstallPrompt />
         </Providers>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )
