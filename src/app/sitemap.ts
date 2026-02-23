@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getStateLawSlugs } from '@/data/cannabis-laws'
 import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
 import { getAllDealPageSlugs } from '@/data/deal-categories'
+import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -345,6 +346,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
+  // ==================== MEDICAL CARD GUIDE PAGES ====================
+  const medicalCardSlugs = getAllMedicalCardGuideSlugs()
+  const medicalCardPages: MetadataRoute.Sitemap = medicalCardSlugs.map((slug) => ({
+    url: `${baseUrl}/medical-card/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
+  const medicalCardStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/medical-card/qualifying-conditions`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+  ]
+
+  // Doctor city pages: /doctors/[state]/[city] (cities with 3+ doctors)
+  const doctorCityData = await prisma.doctor.groupBy({
+    by: ['state', 'city'],
+    where: { isActive: true },
+    _count: { id: true },
+  })
+  const doctorCityPages: MetadataRoute.Sitemap = []
+  for (const d of doctorCityData.filter((g) => g._count.id >= 3 && g.state && g.city)) {
+    const stateRecord = states.find((s) => s.abbreviation === d.state)
+    if (!stateRecord) continue
+    const cityRecord = await prisma.city.findFirst({
+      where: { name: { equals: d.city!, mode: 'insensitive' }, state: { abbreviation: d.state! } },
+      select: { slug: true },
+    })
+    if (cityRecord) {
+      doctorCityPages.push({
+        url: `${baseUrl}/doctors/${stateRecord.slug}/${cityRecord.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      })
+    }
+  }
+
   // ==================== COMBINE ALL ====================
   return [
     ...staticPages,
@@ -375,5 +412,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...crossRefPages,
     ...dealTypePages,
     ...cityDealPages,
+    ...medicalCardPages,
+    ...medicalCardStaticPages,
+    ...doctorCityPages,
   ]
 }

@@ -28,12 +28,40 @@ interface Doctor {
   slug?: string;
 }
 
+interface StateStat {
+  abbreviation: string;
+  slug: string;
+  name: string;
+  doctorCount: number;
+}
+
+interface DoctorStats {
+  totalDoctors: number;
+  stateCount: number;
+  states: StateStat[];
+}
+
 export default function DoctorsPage() {
   const { location, loading: locationLoading } = useLocation();
   const [premiumDoctors, setPremiumDoctors] = useState<Doctor[]>([]);
   const [googleDoctors, setGoogleDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<DoctorStats | null>(null);
+
+  // Fetch doctor stats on mount
+  useEffect(() => {
+    fetch('/api/doctors/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.totalDoctors !== undefined) {
+          setStats(data);
+        }
+      })
+      .catch(() => {
+        // Stats are non-critical, silently fail
+      });
+  }, []);
 
   useEffect(() => {
     if (locationLoading) return;
@@ -161,6 +189,24 @@ export default function DoctorsPage() {
           </Link>
         </div>
 
+        {/* Stats Bar */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white/20 backdrop-blur rounded-2xl p-5 border border-white/30 text-center">
+              <p className="text-3xl font-bold text-white">{stats.totalDoctors.toLocaleString()}+</p>
+              <p className="text-sm text-white/70 mt-1">Verified MMJ Doctors</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-2xl p-5 border border-white/30 text-center">
+              <p className="text-3xl font-bold text-white">{stats.stateCount}</p>
+              <p className="text-sm text-white/70 mt-1">States Covered</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur rounded-2xl p-5 border border-white/30 text-center hidden md:block">
+              <p className="text-3xl font-bold text-white">24/7</p>
+              <p className="text-sm text-white/70 mt-1">Telehealth Available</p>
+            </div>
+          </div>
+        )}
+
         {/* Info Card */}
         <div className="bg-white/20 backdrop-blur rounded-2xl p-6 border border-white/30 mb-8">
           <div className="flex items-start gap-4">
@@ -274,7 +320,7 @@ export default function DoctorsPage() {
                   <div className="mt-4 flex items-center gap-3 flex-wrap">
                     {doctor.rating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm text-white">
-                        <span className="text-yellow-300">★</span>
+                        <span className="text-yellow-300">&#9733;</span>
                         {doctor.rating.toFixed(1)}
                       </span>
                     )}
@@ -346,7 +392,7 @@ export default function DoctorsPage() {
                   <div className="mt-4 flex items-center gap-3 flex-wrap">
                     {doctor.rating > 0 && (
                       <span className="inline-flex items-center gap-1 text-sm text-white">
-                        <span className="text-yellow-300">★</span>
+                        <span className="text-yellow-300">&#9733;</span>
                         {doctor.rating.toFixed(1)}
                         <span className="text-white/50">({doctor.reviewsCount})</span>
                       </span>
@@ -384,6 +430,86 @@ export default function DoctorsPage() {
             </div>
           </div>
         )}
+
+        {/* Get Your Medical Card CTA */}
+        <section className="my-12">
+          <div className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 backdrop-blur rounded-2xl p-8 md:p-10 border border-green-300/40 text-center">
+            <div className="w-16 h-16 bg-green-500/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+              Get Your Medical Marijuana Card
+            </h2>
+            <p className="text-white/80 text-lg max-w-2xl mx-auto mb-6">
+              Not sure if you qualify? Check our comprehensive guide to qualifying conditions across all legal states. Learn about requirements, costs, and the application process.
+            </p>
+            <Link
+              href="/medical-card/qualifying-conditions"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 transition shadow-lg text-lg"
+            >
+              View Qualifying Conditions
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
+        {/* State Selector Grid */}
+        {stats && stats.states.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Browse Doctors by State
+            </h2>
+            <p className="text-white/70 mb-6">
+              Find medical marijuana doctors in your state. Click a state to see all available providers.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {stats.states.map((s) => (
+                <Link
+                  key={s.abbreviation}
+                  href={`/doctors/${s.slug}`}
+                  className="bg-white/15 backdrop-blur rounded-xl p-4 border border-white/20 hover:bg-white/25 hover:border-white/40 transition group text-center"
+                >
+                  <span className="text-sm font-bold text-white/50 group-hover:text-white/70 transition">
+                    {s.abbreviation}
+                  </span>
+                  <h3 className="font-semibold text-white text-sm mt-1 group-hover:text-yellow-200 transition truncate">
+                    {s.name}
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1">
+                    {s.doctorCount} doctor{s.doctorCount !== 1 ? 's' : ''}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SEO Text Section */}
+        <section className="mb-12">
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/20">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Find Medical Marijuana Doctors and Get Your MMJ Card
+            </h2>
+            <div className="text-white/70 space-y-4 leading-relaxed">
+              <p>
+                Leefii is your trusted resource for finding licensed medical marijuana doctors across the United States. Whether you are seeking your first medical marijuana card or need a renewal, our directory connects you with verified physicians who specialize in cannabis evaluations. We list doctors who offer both in-person appointments and telehealth consultations, making it convenient to get the care you need from anywhere.
+              </p>
+              <p>
+                Getting a medical marijuana card starts with an evaluation by a licensed physician. During the consultation, your doctor will review your medical history, discuss your symptoms, and determine whether cannabis therapy is appropriate for your condition. Many states now recognize a wide range of qualifying conditions, including chronic pain, anxiety, PTSD, epilepsy, cancer, and more. The process is straightforward, confidential, and typically takes less than 30 minutes.
+              </p>
+              <p>
+                Each state has its own medical marijuana program with specific requirements, fees, and qualifying conditions. After receiving your doctor&apos;s recommendation, you will need to apply for your state medical marijuana card through your state&apos;s health department. Card costs vary by state, ranging from free to around $200 for the state registration fee, with separate doctor consultation fees typically between $100 and $300. Many doctors on Leefii offer competitive pricing and accept various payment methods.
+              </p>
+              <p>
+                Telehealth has made getting a medical marijuana card more accessible than ever. Many of the doctors listed on Leefii offer video consultations, allowing you to complete your evaluation from the comfort of your home. This is especially beneficial for patients with mobility challenges or those living in rural areas without nearby MMJ doctors. Browse our state-by-state directory to find a qualified medical marijuana doctor near you and start your journey toward relief today.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
@@ -405,7 +531,7 @@ export default function DoctorsPage() {
               <Link href="/terms" className="hover:text-white transition">Terms</Link>
             </div>
             <div className="text-sm text-white/60">
-              © 2026 Leefii. All rights reserved.
+              &copy; 2026 Leefii. All rights reserved.
             </div>
           </div>
         </div>
