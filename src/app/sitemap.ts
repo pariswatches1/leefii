@@ -5,6 +5,7 @@ import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes
 import { getAllDealPageSlugs } from '@/data/deal-categories'
 import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
 import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
+import { getAllNewsCategorySlugs } from '@/data/news-categories'
 import { getAllCategoryComparisonSlugs, getAllPlatformComparisonSlugs, TOP_STRAIN_PAIRS } from '@/data/comparison-pages'
 import { getAllToolSlugs } from '@/data/tools'
 
@@ -486,5 +487,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/api-docs/keys`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
     { url: `${baseUrl}/api-docs/quickstart`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
     { url: `${baseUrl}/api-docs/examples`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    // ==================== NEWS CATEGORY & STATE PAGES ====================
+    ...getAllNewsCategorySlugs().map((slug) => ({
+      url: `${baseUrl}/news/category/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    })),
+    ...['florida', 'california', 'colorado', 'new-york', 'texas', 'illinois', 'ohio', 'michigan', 'arizona', 'new-jersey', 'pennsylvania', 'virginia', 'oklahoma', 'hawaii', 'new-hampshire'].map((slug) => ({
+      url: `${baseUrl}/news/state/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    })),
   ]
 }
