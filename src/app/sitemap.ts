@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { getStateLawSlugs } from '@/data/cannabis-laws'
 import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
+import { getAllDealPageSlugs } from '@/data/deal-categories'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -66,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${baseUrl}/dispensaries`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/strains`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/deals`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${baseUrl}/deals`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/delivery`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/doctors`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/marketplace`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
@@ -320,6 +321,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // ==================== DEAL TYPE + PRODUCT PAGES ====================
+  const dealPageSlugs = getAllDealPageSlugs()
+  const dealTypePages: MetadataRoute.Sitemap = dealPageSlugs.map((slug) => ({
+    url: `${baseUrl}/deals/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  // City deal pages: /deals/[state]/[city]
+  const cityDealsDistinct = await prisma.deal.findMany({
+    where: { isActive: true },
+    select: { stateSlug: true, citySlug: true },
+    distinct: ['stateSlug', 'citySlug'],
+  })
+  const cityDealPages: MetadataRoute.Sitemap = cityDealsDistinct
+    .filter((d) => d.stateSlug && d.citySlug)
+    .map((d) => ({
+      url: `${baseUrl}/deals/${d.stateSlug}/${d.citySlug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    }))
+
   // ==================== COMBINE ALL ====================
   return [
     ...staticPages,
@@ -348,5 +373,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...neighborhoodPages,
     ...strainForPages,
     ...crossRefPages,
+    ...dealTypePages,
+    ...cityDealPages,
   ]
 }
