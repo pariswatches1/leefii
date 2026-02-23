@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 export const revalidate = 86400
 
