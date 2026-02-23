@@ -95,12 +95,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ==================== STRAIN TYPE PAGES ====================
   const typeSlugs = ['indica', 'sativa', 'hybrid']
-  const typePages: MetadataRoute.Sitemap = typeSlugs.map((slug) => ({
-    url: `${baseUrl}/strains/type/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
+  const typePages: MetadataRoute.Sitemap = typeSlugs.flatMap((slug) => [
+    {
+      url: `${baseUrl}/strains/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/strains/type/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+  ])
 
   // ==================== TYPE + EFFECT COMBO PAGES ====================
   const typeEffectPages: MetadataRoute.Sitemap = typeSlugs.flatMap((typeSlug) =>
