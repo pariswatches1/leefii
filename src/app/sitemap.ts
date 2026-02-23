@@ -5,6 +5,7 @@ import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes
 import { getAllDealPageSlugs } from '@/data/deal-categories'
 import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
 import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
+import { getAllCategoryComparisonSlugs, getAllPlatformComparisonSlugs, TOP_STRAIN_PAIRS } from '@/data/comparison-pages'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -448,5 +449,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...medicalCardPages,
     ...medicalCardStaticPages,
     ...doctorCityPages,
+    // ==================== COMPARISON PAGES (/compare) ====================
+    { url: `${baseUrl}/compare`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...getAllCategoryComparisonSlugs().map((slug) => ({
+      url: `${baseUrl}/compare/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    ...getAllPlatformComparisonSlugs().map((slug) => ({
+      url: `${baseUrl}/compare/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    ...TOP_STRAIN_PAIRS.map((pair) => ({
+      url: `${baseUrl}/compare/${pair}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    })),
   ]
 }
