@@ -38,6 +38,7 @@ export async function GET(request: Request) {
     const radius = parseFloat(searchParams.get('radius') || '25')
     const type = searchParams.get('type')?.toUpperCase()
     const delivery = searchParams.get('delivery')
+    const verified = searchParams.get('verified')
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
 
@@ -68,6 +69,9 @@ export async function GET(request: Request) {
     } else if (delivery === 'false') {
       where.hasDelivery = false
     }
+    if (verified === 'true') {
+      where.verificationDate = { not: null }
+    }
 
     const select = {
       id: true,
@@ -83,6 +87,10 @@ export async function GET(request: Request) {
       hasStorefront: true,
       licenseType: true,
       isVerified: true,
+      verificationDate: true,
+      verificationMethod: true,
+      verificationStatus: true,
+      isClaimed: true,
       rating: true,
       reviewsCount: true,
       city: { select: { name: true } },
