@@ -68,6 +68,9 @@ export default async function CityPage({ params }: Props) {
     ? 'medical cannabis is legal with a valid MMJ card'
     : 'cannabis laws vary — check current regulations'
 
+  // Stats: verified count
+  const verifiedCount = dispensaries.filter((d) => d.verificationDate !== null).length
+
   // Serialize dispensaries for client component
   const serializedDispensaries = dispensaries.map((d) => ({
     id: d.id,
@@ -83,6 +86,10 @@ export default async function CityPage({ params }: Props) {
     rating: d.rating ? Number(d.rating) : null,
     reviewsCount: d.reviewsCount,
     isPremium: d.isPremium,
+    verificationDate: d.verificationDate?.toISOString() ?? null,
+    verificationStatus: d.verificationStatus,
+    verificationMethod: d.verificationMethod,
+    isClaimed: d.isClaimed,
     BusinessHours: d.BusinessHours.map((h) => ({
       dayOfWeek: h.dayOfWeek,
       openTime: h.openTime,
@@ -213,6 +220,12 @@ export default async function CityPage({ params }: Props) {
               <div className="text-2xl font-bold">{deliveryCount}</div>
               <div className="text-green-100 text-sm">Delivery</div>
             </div>
+            {verifiedCount > 0 && (
+              <div className="bg-white/15 rounded-lg px-4 py-3 text-center">
+                <div className="text-2xl font-bold">{verifiedCount}</div>
+                <div className="text-green-100 text-sm">Verified</div>
+              </div>
+            )}
           </div>
           <p className="text-sm text-green-200 mt-4">
             Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}

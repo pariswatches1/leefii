@@ -30,6 +30,15 @@ interface Dispensary {
   licenseType: string;
   licenseNumber: string | null;
   isVerified: boolean;
+  verificationDate: string | null;
+  verificationMethod: string | null;
+  verificationStatus: string;
+  verifiedBy: string | null;
+  menuAccuracyScore: number | null;
+  isClaimed: boolean;
+  claimedDate: string | null;
+  claimingContactEmail: string | null;
+  claimingContactPhone: string | null;
   description: string | null;
   logoUrl: string | null;
   imageUrl: string | null;
@@ -77,6 +86,15 @@ export default function DispensaryForm({ dispensary, states }: DispensaryFormPro
     licenseType: dispensary.licenseType,
     licenseNumber: dispensary.licenseNumber || "",
     isVerified: dispensary.isVerified,
+    verificationDate: dispensary.verificationDate || "",
+    verificationMethod: dispensary.verificationMethod || "",
+    verificationStatus: dispensary.verificationStatus || "UNVERIFIED",
+    verifiedBy: dispensary.verifiedBy || "",
+    menuAccuracyScore: dispensary.menuAccuracyScore ?? "",
+    isClaimed: dispensary.isClaimed,
+    claimedDate: dispensary.claimedDate || "",
+    claimingContactEmail: dispensary.claimingContactEmail || "",
+    claimingContactPhone: dispensary.claimingContactPhone || "",
     description: dispensary.description || "",
     logoUrl: dispensary.logoUrl || "",
     imageUrl: dispensary.imageUrl || "",
@@ -344,6 +362,124 @@ export default function DispensaryForm({ dispensary, states }: DispensaryFormPro
                   rows={3}
                   className="w-full px-3 py-2 border rounded-md text-sm"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Verification & Trust</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="verificationDate">Last Verified Date</Label>
+                  <Input
+                    id="verificationDate"
+                    type="datetime-local"
+                    value={formData.verificationDate ? formData.verificationDate.slice(0, 16) : ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        verificationDate: e.target.value ? new Date(e.target.value).toISOString() : "",
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="verificationMethod">Verification Method</Label>
+                  <select
+                    id="verificationMethod"
+                    value={formData.verificationMethod}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, verificationMethod: e.target.value }))}
+                    className="w-full h-10 px-3 border rounded-md"
+                  >
+                    <option value="">Not Set</option>
+                    <option value="PHONE_CALL">Phone Call</option>
+                    <option value="EMAIL">Email</option>
+                    <option value="IN_PERSON">In-Person Visit</option>
+                    <option value="WEBSITE_CHECK">Website Check</option>
+                    <option value="POS_SYNC">POS System Sync</option>
+                    <option value="SELF_REPORTED">Self-Reported</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="verificationStatus">Verification Status</Label>
+                  <select
+                    id="verificationStatus"
+                    value={formData.verificationStatus}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, verificationStatus: e.target.value }))}
+                    className="w-full h-10 px-3 border rounded-md"
+                  >
+                    <option value="UNVERIFIED">Unverified</option>
+                    <option value="VERIFIED_TODAY">Verified Today</option>
+                    <option value="VERIFIED_THIS_WEEK">Verified This Week</option>
+                    <option value="VERIFIED_THIS_MONTH">Verified This Month</option>
+                    <option value="NEEDS_UPDATE">Needs Update</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="verifiedBy">Verified By</Label>
+                  <Input
+                    id="verifiedBy"
+                    value={formData.verifiedBy}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, verifiedBy: e.target.value }))}
+                    placeholder="e.g. Sam, Bot, Team"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="menuAccuracyScore">Menu Accuracy Score (0-100)</Label>
+                <Input
+                  id="menuAccuracyScore"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={formData.menuAccuracyScore}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      menuAccuracyScore: e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-semibold mb-3">Claim Status</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <Label htmlFor="isClaimed">Claimed by Owner</Label>
+                  <input
+                    id="isClaimed"
+                    type="checkbox"
+                    checked={formData.isClaimed}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, isClaimed: e.target.checked }))}
+                    className="h-4 w-4"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="claimingContactEmail">Claiming Contact Email</Label>
+                    <Input
+                      id="claimingContactEmail"
+                      type="email"
+                      value={formData.claimingContactEmail}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, claimingContactEmail: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="claimingContactPhone">Claiming Contact Phone</Label>
+                    <Input
+                      id="claimingContactPhone"
+                      value={formData.claimingContactPhone}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, claimingContactPhone: e.target.value }))}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import ShopNowButton from '@/components/ShopNowButton'
 import Reviews from '@/components/Reviews'
+import TrustBadge from '@/components/TrustBadge'
+import { getVerificationTier, getVerificationMethodLabel, formatVerificationDate } from '@/lib/verification'
 
 type Props = {
   params: { slug: string }
@@ -257,8 +259,8 @@ export default async function DispensaryPage({ params }: Props) {
                   )}
                 </div>
 
-                {/* Status Badge */}
-                <div className="mt-4 flex items-center space-x-4">
+                {/* Status Badges */}
+                <div className="mt-4 flex items-center flex-wrap gap-3">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {open ? 'Open Now' : 'Closed'}
                   </span>
@@ -268,7 +270,27 @@ export default async function DispensaryPage({ params }: Props) {
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${dispensary.licenseType === 'MEDICAL' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
                     {dispensary.licenseType === 'MEDICAL' ? 'Medical' : dispensary.licenseType === 'RECREATIONAL' ? 'Recreational' : 'Medical & Recreational'}
                   </span>
+                  <TrustBadge
+                    verificationDate={dispensary.verificationDate?.toISOString() ?? null}
+                    verificationMethod={dispensary.verificationMethod}
+                    verifiedBy={dispensary.verifiedBy}
+                    menuAccuracyScore={dispensary.menuAccuracyScore}
+                    isClaimed={dispensary.isClaimed}
+                    size="lg"
+                    showModal
+                  />
+                  {dispensary.isClaimed && (
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                      Claimed by Owner
+                    </span>
+                  )}
                 </div>
+                {/* Verification info line */}
+                {dispensary.verificationDate && (
+                  <p className="mt-2 text-sm text-gray-500">
+                    Menu last verified: {formatVerificationDate(dispensary.verificationDate)} via {getVerificationMethodLabel(dispensary.verificationMethod)}
+                  </p>
+                )}
               </div>
 
               {/* Description */}
@@ -303,6 +325,55 @@ export default async function DispensaryPage({ params }: Props) {
                   ) : (
                     <p className="text-gray-500">Hours not available. Please call for hours.</p>
                   )}
+                </div>
+              </div>
+
+              {/* Verification Status Section */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Verification Status</h2>
+                <div className="bg-gray-50 rounded-xl p-5">
+                  {(() => {
+                    const vInfo = getVerificationTier(dispensary.verificationDate)
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${vInfo.dotClass}`} />
+                          <span className={`font-medium ${vInfo.textClass}`}>{vInfo.label}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{vInfo.description}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">Last Verified</span>
+                            <p className="font-medium text-gray-900">{formatVerificationDate(dispensary.verificationDate)}</p>
+                          </div>
+                          {dispensary.verificationMethod && (
+                            <div>
+                              <span className="text-gray-500">Method</span>
+                              <p className="font-medium text-gray-900">{getVerificationMethodLabel(dispensary.verificationMethod)}</p>
+                            </div>
+                          )}
+                          {dispensary.menuAccuracyScore != null && (
+                            <div>
+                              <span className="text-gray-500">Menu Accuracy</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full ${dispensary.menuAccuracyScore >= 80 ? 'bg-green-500' : dispensary.menuAccuracyScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                    style={{ width: `${Math.min(100, Math.max(0, dispensary.menuAccuracyScore))}%` }}
+                                  />
+                                </div>
+                                <span className="font-medium text-gray-900">{dispensary.menuAccuracyScore}%</span>
+                              </div>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-gray-500">Claimed</span>
+                            <p className="font-medium text-gray-900">{dispensary.isClaimed ? 'Yes — Owner Verified' : 'Not yet claimed'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
 

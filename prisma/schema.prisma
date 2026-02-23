@@ -73,6 +73,17 @@ model Dispensary {
   licenseType            LicenseType        @default(MEDICAL)
   licenseNumber          String?
   isVerified             Boolean            @default(false)
+  verificationDate       DateTime?
+  verificationMethod     VerificationMethod?
+  verificationStatus     VerificationStatus @default(UNVERIFIED)
+  verifiedBy             String?
+  menuAccuracyScore      Int?
+  lastReportedInaccuracy DateTime?
+  inaccuracyReportsCount Int                @default(0)
+  isClaimed              Boolean            @default(false)
+  claimedDate            DateTime?
+  claimingContactEmail   String?
+  claimingContactPhone   String?
   rating                 Float?             @default(0)
   reviewsCount           Int                @default(0)
   description            String?
@@ -94,6 +105,8 @@ model Dispensary {
   @@index([stateId])
   @@index([latitude, longitude])
   @@index([isActive, isPremium])
+  @@index([verificationStatus])
+  @@index([verificationDate])
 }
 
 model AnalyticsEvent {
@@ -297,6 +310,23 @@ enum LicenseType {
   MEDICAL
   RECREATIONAL
   BOTH
+}
+
+enum VerificationMethod {
+  PHONE_CALL
+  EMAIL
+  IN_PERSON
+  WEBSITE_CHECK
+  POS_SYNC
+  SELF_REPORTED
+}
+
+enum VerificationStatus {
+  VERIFIED_TODAY
+  VERIFIED_THIS_WEEK
+  VERIFIED_THIS_MONTH
+  UNVERIFIED
+  NEEDS_UPDATE
 }
 
 enum DayOfWeek {
