@@ -481,5 +481,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // ==================== BADGE PAGES (/badges) ====================
     { url: `${baseUrl}/badges`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${baseUrl}/badges/all`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
+    // ==================== API DOCS (/api-docs) ====================
+    { url: `${baseUrl}/api-docs`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${baseUrl}/api-docs/keys`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${baseUrl}/api-docs/quickstart`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/api-docs/examples`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
   ]
 }
