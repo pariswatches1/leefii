@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+  <defs>
+    <linearGradient id="tr-bg-sm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="40" rx="6" fill="url(#tr-bg-sm)" stroke="#b45309" stroke-width="1"/>
+  <rect x="2" y="2" width="36" height="36" rx="5" fill="rgba(0,0,0,0.12)"/>
+  <!-- Star icon -->
+  <path d="M20 10l3 6.5 7 1-5 5 1.2 7-6.2-3.3-6.2 3.3 1.2-7-5-5 7-1z" fill="white" opacity="0.95"/>
+  <!-- Text -->
+  <text x="42" y="16" font-family="sans-serif" font-size="7" font-weight="700" fill="white" letter-spacing="0.3">TOP RATED ON</text>
+  <text x="42" y="28" font-family="sans-serif" font-size="9" font-weight="700" fill="white" letter-spacing="0.2">LEEFII 2026</text>
+</svg>

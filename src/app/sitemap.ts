@@ -478,5 +478,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
+    // ==================== BADGE PAGES (/badges) ====================
+    { url: `${baseUrl}/badges`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${baseUrl}/badges/all`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
   ]
 }
