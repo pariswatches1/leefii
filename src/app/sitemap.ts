@@ -245,6 +245,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // ==================== NEAR ME + NEIGHBORHOOD PAGES ====================
+  // Near Me landing page
+  const nearMeStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/near-me`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
+  ]
+
+  // Zip code pages: /near-me/[zipcode]
+  const distinctZips = await prisma.dispensary.findMany({
+    where: { isActive: true },
+    select: { zipCode: true },
+    distinct: ['zipCode'],
+  })
+  const zipCodePages: MetadataRoute.Sitemap = distinctZips.map((d) => ({
+    url: `${baseUrl}/near-me/${d.zipCode}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Neighborhood pages: /dispensaries/[state]/[city]/[zipcode] (cities with pop >= 50K)
+  const neighborhoodCities = await prisma.city.findMany({
+    where: { dispensaryCount: { gt: 0 }, population: { gte: 50000 } },
+    select: { id: true, slug: true, state: { select: { slug: true } } },
+  })
+  const neighborhoodPages: MetadataRoute.Sitemap = []
+  for (const nc of neighborhoodCities) {
+    const cityZips = await prisma.dispensary.findMany({
+      where: { cityId: nc.id, isActive: true },
+      select: { zipCode: true },
+      distinct: ['zipCode'],
+    })
+    for (const d of cityZips) {
+      neighborhoodPages.push({
+        url: `${baseUrl}/dispensaries/${nc.state.slug}/${nc.slug}/${d.zipCode}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.5,
+      })
+    }
+  }
+
   // ==================== LAW PAGES ====================
   const lawStateSlugs = getStateLawSlugs()
   const lawStatePages: MetadataRoute.Sitemap = lawStateSlugs.map((slug) => ({
@@ -283,5 +324,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...productPages,
     ...lawStatePages,
     ...lawStaticPages,
+    ...nearMeStaticPages,
+    ...zipCodePages,
+    ...neighborhoodPages,
   ]
 }
