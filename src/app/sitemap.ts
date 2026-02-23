@@ -6,6 +6,7 @@ import { getAllDealPageSlugs } from '@/data/deal-categories'
 import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
 import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
 import { getAllCategoryComparisonSlugs, getAllPlatformComparisonSlugs, TOP_STRAIN_PAIRS } from '@/data/comparison-pages'
+import { getAllToolSlugs } from '@/data/tools'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -468,6 +469,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.5,
+    })),
+    // ==================== INTERACTIVE TOOLS (/tools) ====================
+    { url: `${baseUrl}/tools`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    ...getAllToolSlugs().map((slug) => ({
+      url: `${baseUrl}/tools/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
     })),
   ]
 }
