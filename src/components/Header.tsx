@@ -2,12 +2,24 @@
 
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MobileNav } from '@/components/MobileNav';
 
 export default function Header() {
   const { data: session, status } = useSession();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setShowMore(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -22,30 +34,70 @@ export default function Header() {
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link href="/dispensaries" className="text-gray-600 hover:text-green-600 transition">
+          <div className="hidden md:flex items-center space-x-5">
+            <Link href="/dispensaries" className="text-gray-600 hover:text-green-600 transition text-sm">
               Dispensaries
             </Link>
-            <Link href="/marketplace" className="text-gray-600 hover:text-green-600 transition">
-              Marketplace
+            <Link href="/doctors" className="text-gray-600 hover:text-green-600 transition text-sm">
+              Doctors
             </Link>
-            <Link href="/strains" className="text-gray-600 hover:text-green-600 transition">
+            <Link href="/strains" className="text-gray-600 hover:text-green-600 transition text-sm">
               Strains
             </Link>
-            <Link href="/quiz" className="text-gray-600 hover:text-green-600 transition">
-              Quiz
-            </Link>
-            <Link href="/journal" className="text-indigo-600 font-medium hover:text-indigo-700 transition flex items-center gap-1">
-              <span>Journal</span>
-              <span className="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">New</span>
-            </Link>
-            <Link href="/deals" className="text-gray-600 hover:text-green-600 transition">
+            <Link href="/deals" className="text-gray-600 hover:text-green-600 transition text-sm">
               Deals
             </Link>
-            <Link href="/news" className="text-gray-600 hover:text-green-600 transition">
+            <Link href="/blog" className="text-gray-600 hover:text-green-600 transition text-sm">
+              Blog
+            </Link>
+            <Link href="/news" className="text-gray-600 hover:text-green-600 transition text-sm">
               News
             </Link>
-            <Link href="/sell" className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition">
+            {/* More dropdown */}
+            <div className="relative" ref={moreRef}>
+              <button
+                onClick={() => setShowMore(!showMore)}
+                className="text-gray-600 hover:text-green-600 transition text-sm flex items-center gap-1"
+              >
+                More
+                <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showMore && (
+                <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                  <Link href="/laws" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Cannabis Laws
+                  </Link>
+                  <Link href="/tools" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Tools & Calculators
+                  </Link>
+                  <Link href="/delivery" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Delivery
+                  </Link>
+                  <Link href="/compare" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Compare
+                  </Link>
+                  <Link href="/marketplace" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Marketplace
+                  </Link>
+                  <Link href="/quiz" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Strain Quiz
+                  </Link>
+                  <Link href="/badges" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Dispensary Badges
+                  </Link>
+                  <Link href="/api-docs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    API Docs
+                  </Link>
+                  <div className="border-t border-gray-100 my-1"></div>
+                  <Link href="/journal" className="block px-4 py-2 text-sm text-indigo-600 font-medium hover:bg-indigo-50" onClick={() => setShowMore(false)}>
+                    Journal
+                  </Link>
+                </div>
+              )}
+            </div>
+            <Link href="/sell" className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition text-sm">
               Sell on Leefii
             </Link>
           </div>
@@ -56,12 +108,18 @@ export default function Header() {
             <MobileNav
               links={[
                 { href: '/dispensaries', label: 'Dispensaries' },
-                { href: '/marketplace', label: 'Marketplace' },
+                { href: '/doctors', label: 'Doctors' },
                 { href: '/strains', label: 'Strains' },
+                { href: '/deals', label: 'Deals' },
+                { href: '/blog', label: 'Blog' },
+                { href: '/news', label: 'News' },
+                { href: '/laws', label: 'Cannabis Laws' },
+                { href: '/tools', label: 'Tools' },
+                { href: '/delivery', label: 'Delivery' },
+                { href: '/compare', label: 'Compare' },
+                { href: '/marketplace', label: 'Marketplace' },
                 { href: '/quiz', label: 'Quiz' },
                 { href: '/journal', label: 'Journal', badge: 'New' },
-                { href: '/deals', label: 'Deals' },
-                { href: '/news', label: 'News' },
                 { href: '/sell', label: 'Sell on Leefii', highlight: true },
               ]}
               className="md:hidden text-gray-600"
