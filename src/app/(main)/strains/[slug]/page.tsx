@@ -196,6 +196,7 @@ export default async function StrainPage({ params }: Props) {
     description: quickSummary.slice(0, 300),
     url: `https://leefii.com/strains/${strain.slug}`,
     image: 'https://leefii.com/og-image.png',
+    dateModified: strain.updatedAt ? new Date(strain.updatedAt).toISOString() : new Date().toISOString(),
     brand: {
       '@type': 'Brand',
       name: strain.breeder || 'Unknown',
@@ -325,6 +326,13 @@ export default async function StrainPage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {/* AI Quick Answer Block */}
+        <section aria-label="Quick Summary" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-gray-700 text-lg leading-relaxed">
+            {strain.name} is a {strain.type?.toLowerCase()} cannabis strain{strain.thcMax ? ` with up to ${strain.thcMax}% THC` : ''}{strain.cbdMax && strain.cbdMax > 0.5 ? ` and ${strain.cbdMax}% CBD` : ''}. {strain.effects?.length > 0 ? `Known effects include ${strain.effects.slice(0, 3).join(', ').toLowerCase()}.` : ''} {strain.flavors?.length > 0 ? `Flavors are ${strain.flavors.slice(0, 3).join(', ').toLowerCase()}.` : ''} {strain.rating ? `Rated ${strain.rating.toFixed(1)}/5 by ${strain.reviewsCount || 0} users on Leefii.` : ''}
+          </p>
+        </section>
 
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

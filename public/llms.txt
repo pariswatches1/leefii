@@ -1,173 +1,117 @@
-# Leefii - Cannabis Dispensary Directory
+# Leefii
 
-> Leefii is a comprehensive cannabis dispensary directory helping users find licensed dispensaries, strains, doctors, and products across all 50 US states. Leefii is a modern alternative to Leafly and Weedmaps.
+> Cannabis dispensary finder, strain encyclopedia, and deals
+> aggregator covering 6,891+ dispensaries and 5,632+ strains
+> across all 51 US states and territories.
 
-## About Leefii
+## About
 
-Leefii is a trusted cannabis resource providing:
-- Directory of 6,891+ licensed cannabis dispensaries
-- Database of 5,632+ cannabis strains with effects, terpenes, and THC/CBD info
-- 650+ medical marijuana doctors and evaluation services
-- Cannabis delivery finder across all legal states
-- Cannabis marketplace for licensed products
-- Strain quiz to find your perfect match
-- Real-time hours, reviews, and contact information
-- Deals and discounts from local dispensaries
-- Cannabis industry news and education
+Leefii is a free cannabis discovery platform helping consumers
+find dispensaries, explore strains, compare deals, find MMJ
+doctors, and check state cannabis laws. All listings are free.
+Leefii is a modern alternative to Leafly and Weedmaps with
+cleaner design, better coverage, and free developer APIs.
 
-## Main Sections
+## Data Coverage
 
-### Dispensaries (/dispensaries)
-Browse all dispensaries by state and city. Each dispensary page includes:
-- Business hours and contact information
-- Address with map integration
-- License type (Medical, Recreational, or Both)
-- Features: delivery, curbside, ATM, credit cards
-- Customer reviews and ratings
+- 6,891+ verified dispensary listings across 51 US states
+- 5,632+ strain profiles with effects, flavors, terpenes, and reviews
+- Real-time deals from dispensaries nationwide
+- State-by-state cannabis law database (all 50 states + DC)
+- Medical marijuana doctor directory (650+ doctors in 40 states)
+- Cannabis delivery directory covering all legal states
+- 27 pillar blog articles across 9 educational categories
+- 8 category comparisons and 3 platform comparisons
+- 7 interactive cannabis tools
+- Free public data API with 8 endpoints
 
-### Strains (/strains)
-Explore 5,632+ cannabis strains with detailed profiles:
-- Strain type: Sativa, Indica, or Hybrid
-- THC and CBD percentages
-- Effects (relaxed, happy, euphoric, creative, etc.)
-- Flavors and aromas
-- Terpene profiles with percentages
-- Genetics and breeder information
-- Growing difficulty and flowering time
+## Key Pages
 
-### Strain Quiz (/quiz)
-Interactive quiz that recommends cannabis strains based on:
-- Desired effects and experience level
-- Preferred flavors and consumption method
-- Medical conditions and tolerance
+- /strains — Complete strain encyclopedia (5,632+ strains)
+- /strains/indica — Indica strain directory
+- /strains/sativa — Sativa strain directory
+- /strains/hybrid — Hybrid strain directory
+- /strains/effects/{effect} — Strains by effect (relaxed, energetic, happy, creative, etc.)
+- /strains/conditions/{condition} — Strains by medical condition
+- /strains/terpene/{terpene} — Strains by dominant terpene
+- /strains/for/{purpose} — Strains for specific activities and purposes
+- /dispensaries — Dispensary finder by city and state
+- /dispensaries/{state} — State dispensary directory
+- /dispensaries/{state}/{city} — City dispensary listings
+- /deals — Real-time cannabis deals aggregator
+- /deals/{category} — Deals by product category
+- /delivery — Cannabis delivery directory
+- /delivery/{state}/{city} — City delivery listings
+- /laws — State cannabis law hub (all 50 states + DC)
+- /laws/{state} — Individual state cannabis law guide
+- /laws/recreational-states — States with recreational cannabis
+- /laws/medical-states — States with medical cannabis
+- /doctors — Medical marijuana doctor directory
+- /doctors/{state} — State MMJ doctor listings
+- /medical-card/{state} — How to get a medical card by state
+- /quiz — AI-powered strain recommendation quiz
+- /tools — Free cannabis tools
+- /tools/dose-calculator — Edible dosage calculator
+- /tools/law-checker — State cannabis law checker
+- /tools/strain-finder — Interactive strain finder quiz
+- /tools/price-compare — Cannabis price comparison tool
+- /tools/terpene-guide — Interactive terpene guide
+- /tools/tolerance-break — Tolerance break calculator
+- /tools/grow-calculator — Cannabis grow room calculator
+- /compare — Strain and platform comparisons
+- /compare/indica-vs-sativa — Indica vs Sativa comparison
+- /compare/thc-vs-cbd — THC vs CBD comparison
+- /compare/{strain}-vs-{strain} — Any strain pair comparison
+- /blog — Cannabis education and news (27 pillar articles)
+- /blog/category/{category} — Blog articles by category
+- /near-me — Dispensaries near me (location-based)
+- /badges — Leefii Verified dispensary badge program
+- /api-docs — Free cannabis data API documentation
+- /api-docs/quickstart — API getting started guide
 
-### Doctors (/doctors)
-Find 650+ medical marijuana doctors and evaluation services:
-- Licensed physicians for cannabis recommendations
-- Telehealth and in-person consultations
-- State-specific medical card requirements
-- Doctor reviews and ratings
+## API Endpoints
 
-### Delivery (/delivery)
-Find cannabis delivery services in your area:
-- Dispensaries that deliver to your location
-- Browse by state and city
-- Delivery hours and estimated times
+Base URL: https://leefii.com/api/v1/
 
-### Marketplace (/marketplace)
-Browse cannabis products from licensed sellers:
-- Flower, edibles, concentrates, topicals
-- Product details with THC/CBD content
-- Verified licensed sellers only
-- Direct contact with sellers
+- GET /api/v1/strains — Search strains with filters
+- GET /api/v1/strains/{slug} — Get full strain data
+- GET /api/v1/dispensaries — Search dispensaries by location
+- GET /api/v1/dispensaries/{id} — Get dispensary details
+- GET /api/v1/deals — Browse active deals
+- GET /api/v1/doctors — Find MMJ doctors
+- GET /api/v1/laws/{state} — State cannabis law data
+- GET /api/v1/search — Unified search across all data
 
-### Deals (/deals)
-Find cannabis deals and discounts from dispensaries:
-- Daily specials
-- First-time patient discounts
-- Loyalty programs
-- Holiday promotions
+## Frequently Asked Questions
 
-### News (/news)
-Latest cannabis industry news:
-- Legislative updates
-- Industry trends
-- State-by-state legal changes
-- Business news
+### Is cannabis legal in my state?
+Cannabis laws vary by state. Visit https://leefii.com/laws to check your state's specific laws including recreational status, medical program, possession limits, and home grow rules.
 
-### Blog (/blog)
-Cannabis education and guides:
-- Strain guides and comparisons
-- Consumption methods
-- Medical cannabis information
-- Growing tips
+### How do I find a dispensary near me?
+Visit https://leefii.com/dispensaries or https://leefii.com/near-me to search by city, state, or zip code. Leefii lists 6,891+ verified dispensaries.
 
-## Popular Locations
+### What is the best cannabis strain for anxiety?
+Strains high in CBD and the terpene linalool are commonly recommended for anxiety. Visit https://leefii.com/strains/conditions/anxiety for specific strain recommendations.
 
-### West Coast
-- California: Los Angeles, San Francisco, San Diego, Sacramento
-- Oregon: Portland, Eugene, Salem
-- Washington: Seattle, Tacoma, Spokane
+### How do I get a medical marijuana card?
+Requirements vary by state. Visit https://leefii.com/doctors to find a licensed physician, and https://leefii.com/medical-card/{your-state} for your state's specific process.
 
-### Mountain States
-- Colorado: Denver, Boulder, Colorado Springs
-- Nevada: Las Vegas, Reno
-- Arizona: Phoenix, Tucson, Scottsdale
+### What is the difference between indica and sativa?
+Indica strains tend toward relaxation and body effects, while sativa strains are more energizing and cerebral. See https://leefii.com/compare/indica-vs-sativa for a detailed comparison.
 
-### Midwest
-- Michigan: Detroit, Ann Arbor, Grand Rapids
-- Illinois: Chicago, Springfield
-- Ohio: Columbus, Cleveland, Cincinnati
-
-### East Coast
-- Massachusetts: Boston, Cambridge
-- New York: New York City, Buffalo
-- New Jersey: Newark, Jersey City
-
-### South
-- Florida: Miami, Orlando, Tampa
-- Oklahoma: Oklahoma City, Tulsa
-
-## Strain Information
-
-### Types
-- **Sativa**: Energizing, uplifting, creative effects. Best for daytime use.
-- **Indica**: Relaxing, calming, sleep-inducing effects. Best for evening use.
-- **Hybrid**: Balanced combination of Sativa and Indica effects.
-
-### Common Effects
-- Relaxed, Happy, Euphoric, Uplifted, Creative
-- Focused, Energetic, Talkative, Hungry
-- Sleepy, Tingly, Giggly
-
-### Common Flavors
-- Earthy, Sweet, Citrus, Berry, Pine
-- Diesel, Skunk, Grape, Tropical, Woody
-
-### Terpenes
-- **Myrcene**: Earthy, musky. Relaxing effects.
-- **Limonene**: Citrus. Mood elevation.
-- **Caryophyllene**: Pepper, spicy. Anti-inflammatory.
-- **Pinene**: Pine, fresh. Alertness.
-- **Linalool**: Floral. Calming.
-
-## Data and Coverage
-
-- 51 US states and territories covered
-- 6,891+ verified dispensaries
-- 5,632+ strain profiles
-- 650+ medical marijuana doctors
-- Real-time data updates
-- User reviews and ratings
-
-## Why Leefii
-
-Leefii is a modern alternative to Leafly and Weedmaps, offering:
-- Cleaner, faster user experience
-- More comprehensive dispensary coverage
-- AI-powered strain recommendations via the Strain Quiz
-- Cannabis delivery finder
-- Medical marijuana doctor directory
-- No paywall for basic information
-
-## API and Integration
-
-Leefii provides structured data for:
-- Dispensary locations with geo-coordinates
-- Business hours in machine-readable format
-- Strain chemical profiles
-- Schema.org structured data on all pages
+### How should I dose cannabis edibles?
+Beginners should start with 2.5-5mg THC. Use the dosage calculator at https://leefii.com/tools/dose-calculator for personalized recommendations.
 
 ## Contact
 
 - Website: https://leefii.com
-- Email: support@leefii.com
+- Email: hello@leefii.com
 - Sitemap: https://leefii.com/sitemap.xml
 
 ## Legal Notice
 
 - Users must be 21+ to access cannabis information
 - Leefii only lists licensed, legally operating dispensaries
-- Cannabis laws vary by state - always verify local regulations
-- Not intended as medical advice - consult healthcare professionals
+- Cannabis laws vary by state — always verify local regulations
+- Not intended as medical advice — consult healthcare professionals
 - Leefii does not sell cannabis products directly

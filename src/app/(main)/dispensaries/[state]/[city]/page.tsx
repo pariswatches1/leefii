@@ -59,6 +59,7 @@ export default async function CityPage({ params }: Props) {
   const recCount = dispensaries.filter((d) => d.licenseType === 'RECREATIONAL' || d.licenseType === 'BOTH').length
   const medCount = dispensaries.filter((d) => d.licenseType === 'MEDICAL' || d.licenseType === 'BOTH').length
   const deliveryCount = dispensaries.filter((d) => d.hasDelivery).length
+  const creditCardCount = dispensaries.filter((d) => d.acceptsCreditCard).length
 
   // Legal status text
   const legalStatus = state.isLegal && !state.medicalOnly
@@ -182,18 +183,14 @@ export default async function CityPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Quick Answer Block */}
-      <div className="bg-white border-b">
+      {/* AI Quick Answer Block */}
+      <section aria-label="Quick Summary" className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <p className="text-gray-700 text-lg max-w-3xl">
-            There are <strong>{dispensaries.length} licensed cannabis dispensaries</strong> in {city.name}, {state.abbreviation}.
-            {recCount > 0 && ` ${recCount} offer recreational products for adults 21+`}
-            {medCount > 0 && recCount > 0 ? ` and ${medCount} serve medical patients` : medCount > 0 ? ` ${medCount} serve medical patients` : ''}.
-            {deliveryCount > 0 ? ` ${deliveryCount} dispensaries provide delivery.` : ''}
-            {' '}Compare ratings, hours, and services below to find the best dispensary near you.
+            There are {dispensaries.length} licensed cannabis dispensaries in {city.name}, {state.abbreviation}. {deliveryCount > 0 ? `${deliveryCount} offer delivery.` : ''} {creditCardCount > 0 ? `${creditCardCount} accept credit cards.` : ''} Find hours, menus, and reviews for every dispensary in {city.name} on Leefii.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Header with Stats */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 text-white">

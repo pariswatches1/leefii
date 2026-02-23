@@ -146,11 +146,11 @@ export default async function StateLawPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Quick Answer Block */}
-      <section className="bg-green-50 border-b border-green-100">
+      {/* AI Quick Answer Block */}
+      <section aria-label="Quick Summary" className="bg-green-50 border-b border-green-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-gray-800 text-lg leading-relaxed max-w-4xl">
-            {law.statusDescription}
+            Cannabis is {law.status === 'recreational' ? 'legal for recreational and medical use' : law.status === 'medical' ? 'legal for medical use only' : law.status === 'decriminalized' ? 'decriminalized' : 'illegal'} in {law.name}. Possession limit: {law.possessionLimit}. Home grow: {law.homeGrow}. Minimum age: {law.minimumAge > 0 ? `${law.minimumAge}+` : 'N/A'}. {dispensaryCount > 0 ? `${dispensaryCount} licensed dispensaries listed on Leefii.` : ''} Last updated: {lastUpdatedFormatted}.
           </p>
         </div>
       </section>

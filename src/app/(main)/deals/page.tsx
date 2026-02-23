@@ -188,19 +188,13 @@ export default async function DealsPage() {
         </div>
       </section>
 
-      {/* Last Updated */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <p className="text-gray-500 text-sm">
-          Last updated:{' '}
-          {now.toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-          })}
+      {/* AI Quick Answer Block + Freshness Signal */}
+      <section aria-label="Quick Summary" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <p className="text-gray-700 text-lg leading-relaxed mb-2">
+          Leefii lists {totalDeals.toLocaleString()} active cannabis deals and dispensary discounts across {dealsByState.length} US states. Browse daily specials, first-time patient offers, BOGO deals, veteran discounts, and more from licensed dispensaries nationwide.
         </p>
-      </div>
+        <p className="text-sm text-gray-500">Deals updated in real-time. Last checked: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+      </section>
 
       {/* Featured Deals */}
       {featuredDeals.length > 0 && (

@@ -28,7 +28,15 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
       {
+        userAgent: 'GPTBot',
+        allow: '/',
+      },
+      {
         userAgent: 'ChatGPT-User',
+        allow: '/',
+      },
+      {
+        userAgent: 'Google-Extended',
         allow: '/',
       },
       {
@@ -53,6 +61,14 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'anthropic-ai',
+        allow: '/',
+      },
+      {
+        userAgent: 'YouBot',
+        allow: '/',
+      },
+      {
+        userAgent: 'CCBot',
         allow: '/',
       },
     ],
