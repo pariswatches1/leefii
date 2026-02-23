@@ -23,8 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!state) return { title: 'State Not Found' }
 
   const count = state._count.dispensaries
-  const title = state.metaTitle || `Cannabis Dispensaries in ${state.name} | ${count}+ Dispensaries | Leefii`
-  const description = state.metaDescription || `Find ${count}+ cannabis dispensaries in ${state.name}. Compare ratings, hours, deals, and delivery options. Updated daily on Leefii.`
+  const cityCount = await prisma.city.count({ where: { stateId: state.id, dispensaryCount: { gt: 0 } } })
+  const title = state.metaTitle || `Cannabis Dispensaries in ${state.name} | ${count} Stores in ${cityCount} Cities | Leefii`
+  const description = state.metaDescription || `Find ${count}+ cannabis dispensaries across ${cityCount} cities in ${state.name}. Compare ratings, hours, deals, and delivery options on Leefii.`
 
   return {
     title,
