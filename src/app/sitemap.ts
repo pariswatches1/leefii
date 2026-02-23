@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
+import { getStateLawSlugs } from '@/data/cannabis-laws'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -244,6 +245,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // ==================== LAW PAGES ====================
+  const lawStateSlugs = getStateLawSlugs()
+  const lawStatePages: MetadataRoute.Sitemap = lawStateSlugs.map((slug) => ({
+    url: `${baseUrl}/laws/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+  const lawStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/laws`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.9 },
+    { url: `${baseUrl}/laws/recreational-states`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/laws/medical-states`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/laws/federal`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+  ]
+
   // ==================== COMBINE ALL ====================
   return [
     ...staticPages,
@@ -265,5 +281,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...newsPages,
     ...doctorPages,
     ...productPages,
+    ...lawStatePages,
+    ...lawStaticPages,
   ]
 }
