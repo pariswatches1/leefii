@@ -156,7 +156,7 @@ model AdminUser {
 }
 
 model BusinessHours {
-  id           String     @id
+  id           String     @id @default(cuid())
   dispensaryId String
   dayOfWeek    DayOfWeek
   openTime     String
