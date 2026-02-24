@@ -5,6 +5,8 @@ import Script from 'next/script'
 import Providers from '@/components/Providers'
 import AgeVerification from '@/components/AgeVerification'
 import InstallPrompt from '@/components/InstallPrompt'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -112,17 +114,32 @@ const organizationSchema = {
   name: 'Leefii',
   url: 'https://leefii.com',
   logo: 'https://leefii.com/logo.png',
-  description: 'Cannabis dispensary directory helping you find licensed dispensaries and strains.',
+  description: 'Leefii is a free cannabis dispensary directory covering 6,891+ licensed dispensaries, 5,632+ strains, real-time deals, MMJ doctors, and state cannabis laws across all 51 US states and territories.',
+  foundingDate: '2024',
   sameAs: [
     'https://twitter.com/leefii',
     'https://facebook.com/leefii',
-    'https://instagram.com/leefii'
+    'https://instagram.com/leefii',
+    'https://github.com/leefii'
   ],
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
-    email: 'support@leefii.com'
-  }
+    email: 'hello@leefii.com',
+    availableLanguage: 'English'
+  },
+  areaServed: {
+    '@type': 'Country',
+    name: 'United States'
+  },
+  knowsAbout: [
+    'Cannabis dispensaries',
+    'Cannabis strains',
+    'Medical marijuana',
+    'Cannabis laws',
+    'Cannabis delivery',
+    'Cannabis deals'
+  ]
 }
 
 export default function RootLayout({
@@ -171,6 +188,8 @@ export default function RootLayout({
           {children}
           <InstallPrompt />
         </Providers>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )

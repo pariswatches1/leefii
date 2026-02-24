@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" width="180" height="60">
+  <defs>
+    <linearGradient id="vd-bg-md" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="60" rx="8" fill="url(#vd-bg-md)" stroke="#15803d" stroke-width="1"/>
+  <rect x="4" y="4" width="52" height="52" rx="6" fill="rgba(0,0,0,0.15)"/>
+  <!-- Leaf icon -->
+  <path d="M30 14c-9 3-15 12-15 21 1.5-4.5 6-7.5 10.5-9-1.5 4.5-1.5 9 0 13.5 1.5-4.5 4.5-7.5 9-10.5-1.5 6 0 10.5 1.5 13.5 3-7.5 3-18-6-28.5z" fill="white" opacity="0.95"/>
+  <!-- Checkmark circle -->
+  <circle cx="42" cy="42" r="7" fill="white" opacity="0.3"/>
+  <path d="M38 42l3 3 6-6" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Text -->
+  <text x="64" y="24" font-family="sans-serif" font-size="10" font-weight="700" fill="white" letter-spacing="0.5">LEEFII VERIFIED</text>
+  <text x="64" y="42" font-family="sans-serif" font-size="13" font-weight="700" fill="white" letter-spacing="0.3">DISPENSARY</text>
+  <rect x="64" y="47" width="50" height="1" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+</svg>

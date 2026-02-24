@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
+import { getVerificationTier } from '@/lib/verification'
 
 type Props = {
   params: Promise<{ state: string }>
@@ -23,8 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!state) return { title: 'State Not Found' }
 
   const count = state._count.dispensaries
-  const title = state.metaTitle || `Cannabis Dispensaries in ${state.name} | ${count}+ Dispensaries | Leefii`
-  const description = state.metaDescription || `Find ${count}+ cannabis dispensaries in ${state.name}. Compare ratings, hours, deals, and delivery options. Updated daily on Leefii.`
+  const cityCount = await prisma.city.count({ where: { stateId: state.id, dispensaryCount: { gt: 0 } } })
+  const title = state.metaTitle || `Cannabis Dispensaries in ${state.name} | ${count} Stores in ${cityCount} Cities | Leefii`
+  const description = state.metaDescription || `Find ${count}+ cannabis dispensaries across ${cityCount} cities in ${state.name}. Compare ratings, hours, deals, and delivery options on Leefii.`
 
   return {
     title,
@@ -70,6 +72,10 @@ export default async function StatePage({ params }: Props) {
 
   const doctorsCount = await prisma.doctor.count({
     where: { state: state.abbreviation, isActive: true },
+  })
+
+  const verifiedCount = await prisma.dispensary.count({
+    where: { stateId: state.id, isActive: true, verificationDate: { not: null } },
   })
 
   const totalDispensaries = state._count.dispensaries
@@ -194,6 +200,12 @@ export default async function StatePage({ params }: Props) {
                 <span className="text-gray-600">Deliver</span>
               </div>
             )}
+            {verifiedCount > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl font-bold text-green-600">{verifiedCount}</span>
+                <span className="text-gray-600">Verified</span>
+              </div>
+            )}
             {doctorsCount > 0 && (
               <Link href={`/doctors?state=${state.abbreviation}`} className="flex items-center space-x-2 hover:opacity-80">
                 <span className="text-2xl font-bold text-purple-600">{doctorsCount}</span>
@@ -225,11 +237,23 @@ export default async function StatePage({ params }: Props) {
                   className="flex items-center justify-between bg-white rounded-xl p-4 border border-gray-200 hover:border-green-500 hover:shadow-md transition-all"
                 >
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {d.isPremium && (
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">Featured</span>
                       )}
                       <h3 className="font-semibold text-gray-900">{d.name}</h3>
+                      {(() => {
+                        const vInfo = getVerificationTier(d.verificationDate)
+                        if (vInfo.tier === 'unverified') return null
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${vInfo.bgClass} ${vInfo.textClass}`}>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Verified
+                          </span>
+                        )
+                      })()}
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
                       {d.city.name}, {state.abbreviation}

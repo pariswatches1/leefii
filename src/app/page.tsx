@@ -169,6 +169,13 @@ export default function Home() {
           </div>
         </div>
 
+        {/* AI Quick Answer Block */}
+        <section aria-label="Quick Summary" className="max-w-4xl mx-auto px-6 lg:px-8 py-6">
+          <p className="text-gray-800/80 text-base leading-relaxed text-center">
+            Leefii is a free cannabis dispensary directory covering 6,891+ licensed dispensaries and 5,632+ strains across all 51 US states. Find dispensaries near you, explore strain effects, compare deals, check state cannabis laws, and connect with MMJ doctors.
+          </p>
+        </section>
+
         {/* Secondary Content - Below the fold, accessible by scrolling */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           {/* Quick Actions - de-emphasized grid */}

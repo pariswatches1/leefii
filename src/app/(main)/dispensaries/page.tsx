@@ -1,10 +1,20 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 
-export const metadata: Metadata = {
-  title: 'Browse Cannabis Dispensaries by State | Leefii',
-  description: 'Find licensed cannabis dispensaries in every legal state. Browse California, Colorado, Florida, Michigan, and more.',
+export const revalidate = 86400
+
+export async function generateMetadata(): Promise<Metadata> {
+  const totalCount = await prisma.dispensary.count({ where: { isActive: true } })
+  const title = `Find Cannabis Dispensaries Near You | ${totalCount.toLocaleString()}+ Stores | Leefii`
+  const description = `Browse ${totalCount.toLocaleString()}+ licensed cannabis dispensaries across every legal state. Compare ratings, hours, delivery options, and deals on Leefii.`
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: 'https://leefii.com/dispensaries', siteName: 'Leefii' },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: { canonical: 'https://leefii.com/dispensaries' },
+  }
 }
 
 export default async function DispensariesPage() {

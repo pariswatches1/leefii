@@ -1,5 +1,13 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
+import { getStateLawSlugs } from '@/data/cannabis-laws'
+import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
+import { getAllDealPageSlugs } from '@/data/deal-categories'
+import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
+import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
+import { getAllNewsCategorySlugs } from '@/data/news-categories'
+import { getAllCategoryComparisonSlugs, getAllPlatformComparisonSlugs, TOP_STRAIN_PAIRS } from '@/data/comparison-pages'
+import { getAllToolSlugs } from '@/data/tools'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -64,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${baseUrl}/dispensaries`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/strains`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/deals`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${baseUrl}/deals`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/delivery`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/doctors`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/marketplace`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
@@ -95,12 +103,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ==================== STRAIN TYPE PAGES ====================
   const typeSlugs = ['indica', 'sativa', 'hybrid']
-  const typePages: MetadataRoute.Sitemap = typeSlugs.map((slug) => ({
-    url: `${baseUrl}/strains/type/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
+  const typePages: MetadataRoute.Sitemap = typeSlugs.flatMap((slug) => [
+    {
+      url: `${baseUrl}/strains/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/strains/type/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+  ])
 
   // ==================== TYPE + EFFECT COMBO PAGES ====================
   const typeEffectPages: MetadataRoute.Sitemap = typeSlugs.flatMap((typeSlug) =>
@@ -182,6 +198,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // State delivery index pages: /delivery/[state] (only for delivery-legal states)
+  const deliveryStatePages: MetadataRoute.Sitemap = Array.from(
+    new Set(deliveryCities.map((c) => c.state.slug))
+  ).map((stateSlug) => ({
+    url: `${baseUrl}/delivery/${stateSlug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
   // ==================== DOCTORS+STATE PAGES ====================
   const doctorStatePages: MetadataRoute.Sitemap = doctorStates.map((s) => ({
     url: `${baseUrl}/doctors/${s.slug}`,
@@ -214,6 +240,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // Blog category pages: /blog/category/[slug]
+  const blogCategoryPages: MetadataRoute.Sitemap = getAllCategorySlugs().map((slug) => ({
+    url: `${baseUrl}/blog/category/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Static pillar article pages (may overlap with DB blog posts — deduplicated by URL)
+  const dbBlogSlugs = new Set(blogPosts.map((p) => p.slug))
+  const staticArticlePages: MetadataRoute.Sitemap = getAllStaticArticleSlugs()
+    .filter((slug) => !dbBlogSlugs.has(slug))
+    .map((slug) => ({
+      url: `${baseUrl}/blog/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }))
+
   const newsPages: MetadataRoute.Sitemap = newsArticles.map((a) => ({
     url: `${baseUrl}/news/${a.slug}`,
     lastModified: a.updatedAt || new Date(),
@@ -236,6 +281,140 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
+  // ==================== NEAR ME + NEIGHBORHOOD PAGES ====================
+  // Near Me landing page
+  const nearMeStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/near-me`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.9 },
+  ]
+
+  // Zip code pages: /near-me/[zipcode]
+  const distinctZips = await prisma.dispensary.findMany({
+    where: { isActive: true },
+    select: { zipCode: true },
+    distinct: ['zipCode'],
+  })
+  const zipCodePages: MetadataRoute.Sitemap = distinctZips.map((d) => ({
+    url: `${baseUrl}/near-me/${d.zipCode}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // Neighborhood pages: /dispensaries/[state]/[city]/[zipcode] (cities with pop >= 50K)
+  const neighborhoodCities = await prisma.city.findMany({
+    where: { dispensaryCount: { gt: 0 }, population: { gte: 50000 } },
+    select: { id: true, slug: true, state: { select: { slug: true } } },
+  })
+  const neighborhoodPages: MetadataRoute.Sitemap = []
+  for (const nc of neighborhoodCities) {
+    const cityZips = await prisma.dispensary.findMany({
+      where: { cityId: nc.id, isActive: true },
+      select: { zipCode: true },
+      distinct: ['zipCode'],
+    })
+    for (const d of cityZips) {
+      neighborhoodPages.push({
+        url: `${baseUrl}/dispensaries/${nc.state.slug}/${nc.slug}/${d.zipCode}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.5,
+      })
+    }
+  }
+
+  // ==================== LAW PAGES ====================
+  const lawStateSlugs = getStateLawSlugs()
+  const lawStatePages: MetadataRoute.Sitemap = lawStateSlugs.map((slug) => ({
+    url: `${baseUrl}/laws/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+  const lawStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/laws`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.9 },
+    { url: `${baseUrl}/laws/recreational-states`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/laws/medical-states`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/laws/federal`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+  ]
+
+  // ==================== STRAIN PURPOSE PAGES (/strains/for/[slug]) ====================
+  const forPageSlugs = getAllForPageSlugs()
+  const strainForPages: MetadataRoute.Sitemap = forPageSlugs.map((slug) => ({
+    url: `${baseUrl}/strains/for/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  // ==================== CROSS-REFERENCE PAGES (/strains/[category]/for/[purpose]) ====================
+  const crossRefParams = getAllCrossRefParams()
+  const crossRefPages: MetadataRoute.Sitemap = crossRefParams.map((cr) => ({
+    url: `${baseUrl}/strains/${cr.category}/for/${cr.purpose}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  // ==================== DEAL TYPE + PRODUCT PAGES ====================
+  const dealPageSlugs = getAllDealPageSlugs()
+  const dealTypePages: MetadataRoute.Sitemap = dealPageSlugs.map((slug) => ({
+    url: `${baseUrl}/deals/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
+  // City deal pages: /deals/[state]/[city]
+  const cityDealsDistinct = await prisma.deal.findMany({
+    where: { isActive: true },
+    select: { stateSlug: true, citySlug: true },
+    distinct: ['stateSlug', 'citySlug'],
+  })
+  const cityDealPages: MetadataRoute.Sitemap = cityDealsDistinct
+    .filter((d) => d.stateSlug && d.citySlug)
+    .map((d) => ({
+      url: `${baseUrl}/deals/${d.stateSlug}/${d.citySlug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    }))
+
+  // ==================== MEDICAL CARD GUIDE PAGES ====================
+  const medicalCardSlugs = getAllMedicalCardGuideSlugs()
+  const medicalCardPages: MetadataRoute.Sitemap = medicalCardSlugs.map((slug) => ({
+    url: `${baseUrl}/medical-card/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
+  const medicalCardStaticPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/medical-card/qualifying-conditions`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+  ]
+
+  // Doctor city pages: /doctors/[state]/[city] (cities with 3+ doctors)
+  const doctorCityData = await prisma.doctor.groupBy({
+    by: ['state', 'city'],
+    where: { isActive: true },
+    _count: { id: true },
+  })
+  const doctorCityPages: MetadataRoute.Sitemap = []
+  for (const d of doctorCityData.filter((g) => g._count.id >= 3 && g.state && g.city)) {
+    const stateRecord = states.find((s) => s.abbreviation === d.state)
+    if (!stateRecord) continue
+    const cityRecord = await prisma.city.findFirst({
+      where: { name: { equals: d.city!, mode: 'insensitive' }, state: { abbreviation: d.state! } },
+      select: { slug: true },
+    })
+    if (cityRecord) {
+      doctorCityPages.push({
+        url: `${baseUrl}/doctors/${stateRecord.slug}/${cityRecord.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      })
+    }
+  }
+
   // ==================== COMBINE ALL ====================
   return [
     ...staticPages,
@@ -250,12 +429,76 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...statePages,
     ...cityPages,
     ...deliveryPages,
+    ...deliveryStatePages,
     ...doctorStatePages,
     ...dispensaryPages,
     ...strainPages,
     ...blogPages,
+    ...blogCategoryPages,
+    ...staticArticlePages,
     ...newsPages,
     ...doctorPages,
     ...productPages,
+    ...lawStatePages,
+    ...lawStaticPages,
+    ...nearMeStaticPages,
+    ...zipCodePages,
+    ...neighborhoodPages,
+    ...strainForPages,
+    ...crossRefPages,
+    ...dealTypePages,
+    ...cityDealPages,
+    ...medicalCardPages,
+    ...medicalCardStaticPages,
+    ...doctorCityPages,
+    // ==================== COMPARISON PAGES (/compare) ====================
+    { url: `${baseUrl}/compare`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...getAllCategoryComparisonSlugs().map((slug) => ({
+      url: `${baseUrl}/compare/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    ...getAllPlatformComparisonSlugs().map((slug) => ({
+      url: `${baseUrl}/compare/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    ...TOP_STRAIN_PAIRS.map((pair) => ({
+      url: `${baseUrl}/compare/${pair}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    })),
+    // ==================== INTERACTIVE TOOLS (/tools) ====================
+    { url: `${baseUrl}/tools`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    ...getAllToolSlugs().map((slug) => ({
+      url: `${baseUrl}/tools/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    // ==================== BADGE PAGES (/badges) ====================
+    { url: `${baseUrl}/badges`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${baseUrl}/badges/all`, lastModified: new Date(), changeFrequency: 'weekly' as const, priority: 0.7 },
+    // ==================== API DOCS (/api-docs) ====================
+    { url: `${baseUrl}/api-docs`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${baseUrl}/api-docs/keys`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${baseUrl}/api-docs/quickstart`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${baseUrl}/api-docs/examples`, lastModified: new Date(), changeFrequency: 'monthly' as const, priority: 0.7 },
+    // ==================== NEWS CATEGORY & STATE PAGES ====================
+    ...getAllNewsCategorySlugs().map((slug) => ({
+      url: `${baseUrl}/news/category/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    })),
+    ...['florida', 'california', 'colorado', 'new-york', 'texas', 'illinois', 'ohio', 'michigan', 'arizona', 'new-jersey', 'pennsylvania', 'virginia', 'oklahoma', 'hawaii', 'new-hampshire'].map((slug) => ({
+      url: `${baseUrl}/news/state/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    })),
   ]
 }
