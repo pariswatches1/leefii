@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 type VerificationState = {
   level: 'today' | 'week' | 'month' | 'unverified'
@@ -159,6 +160,17 @@ export default function VerificationModal({
               )}
             </div>
           )}
+
+          {/* Learn more link */}
+          <div className="pt-3 mt-3 border-t border-gray-100 text-center">
+            <Link
+              href="/how-we-verify"
+              className="text-sm text-green-600 hover:text-green-700 hover:underline font-medium"
+              onClick={() => onClose()}
+            >
+              Learn how we verify dispensaries →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

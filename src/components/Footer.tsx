@@ -40,6 +40,7 @@ export default function Footer() {
               <li><Link href="/tools" className="hover:text-white transition">Tools</Link></li>
               <li><Link href="/compare" className="hover:text-white transition">Comparisons</Link></li>
               <li><Link href="/badges" className="hover:text-white transition">Dispensary Badges</Link></li>
+              <li><Link href="/how-we-verify" className="hover:text-white transition">How We Verify</Link></li>
             </ul>
           </div>
 
