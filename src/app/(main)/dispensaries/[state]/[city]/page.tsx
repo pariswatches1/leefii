@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
+import DispensaryListFilters from '@/components/DispensaryListFilters'
 
 type Props = {
   params: Promise<{ state: string; city: string }>
@@ -158,47 +159,30 @@ export default async function CityPage({ params }: Props) {
 
       {/* Dispensary Listings */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid gap-4">
-          {dispensaries.map((dispensary) => {
+        <DispensaryListFilters
+          dispensaries={dispensaries.map((dispensary) => {
             const status = isCurrentlyOpen(dispensary.BusinessHours)
-            return (
-              <Link key={dispensary.id} href={`/dispensary/${dispensary.slug}`} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition block">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      {dispensary.isPremium && (
-                        <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Featured</span>
-                      )}
-                      <h2 className="text-xl font-semibold text-gray-900">{dispensary.name}</h2>
-                      {status.open ? (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">Open · Closes {status.closeTime}</span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">Closed</span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 mb-1">{dispensary.address}</p>
-                    <div className="flex flex-wrap gap-2 text-xs mt-2">
-                      <span className="text-gray-500">
-                        {dispensary.licenseType === 'BOTH' ? 'Rec & Med' : dispensary.licenseType === 'RECREATIONAL' ? 'Recreational' : 'Medical'}
-                      </span>
-                      {dispensary.hasDelivery && <span className="text-blue-600 font-medium">🚗 Delivers</span>}
-                      {dispensary.acceptsCreditCard && <span className="text-gray-500">💳 Cards</span>}
-                      {dispensary.hasCurbside && <span className="text-gray-500">🅿️ Curbside</span>}
-                    </div>
-                  </div>
-                  <div className="text-right ml-4">
-                    {dispensary.rating && dispensary.rating > 0 ? (
-                      <>
-                        <span className="text-yellow-500 font-bold text-lg">★ {dispensary.rating.toFixed(1)}</span>
-                        <p className="text-xs text-gray-400">{dispensary.reviewsCount} reviews</p>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </Link>
-            )
+            return {
+              id: dispensary.id,
+              name: dispensary.name,
+              slug: dispensary.slug,
+              address: dispensary.address,
+              isPremium: dispensary.isPremium,
+              rating: dispensary.rating,
+              reviewsCount: dispensary.reviewsCount,
+              licenseType: dispensary.licenseType,
+              hasDelivery: dispensary.hasDelivery,
+              hasCurbside: dispensary.hasCurbside,
+              acceptsCreditCard: dispensary.acceptsCreditCard,
+              verificationDate: dispensary.verificationDate?.toISOString() ?? null,
+              verificationMethod: dispensary.verificationMethod,
+              verificationStatus: dispensary.verificationStatus,
+              isClaimed: dispensary.isClaimed,
+              isOpen: status.open,
+              closeTime: status.closeTime,
+            }
           })}
-        </div>
+        />
       </div>
 
       {/* Nearby Cities */}

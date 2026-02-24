@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import ShopNowButton from '@/components/ShopNowButton'
 import Reviews from '@/components/Reviews'
+import TrustBadge from '@/components/TrustBadge'
 
 type Props = {
   params: { slug: string }
@@ -257,8 +258,37 @@ export default async function DispensaryPage({ params }: Props) {
                   )}
                 </div>
 
+                {/* Trust Badge */}
+                <div className="mt-3 flex items-center gap-3 flex-wrap">
+                  <TrustBadge
+                    verificationDate={dispensary.verificationDate?.toISOString() ?? null}
+                    verificationMethod={dispensary.verificationMethod}
+                    verificationStatus={dispensary.verificationStatus}
+                    verifiedBy={dispensary.verifiedBy}
+                    isClaimed={dispensary.isClaimed}
+                    claimedDate={dispensary.claimedDate?.toISOString() ?? null}
+                    menuAccuracyScore={dispensary.menuAccuracyScore}
+                    inaccuracyReportsCount={dispensary.inaccuracyReportsCount}
+                    lastReportedInaccuracy={dispensary.lastReportedInaccuracy?.toISOString() ?? null}
+                    size="full"
+                  />
+                  {dispensary.isClaimed && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Claimed by owner
+                    </span>
+                  )}
+                  {dispensary.verificationDate && (
+                    <span className="text-xs text-gray-500">
+                      Menu last verified: {dispensary.verificationDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {dispensary.verificationDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} via {dispensary.verificationMethod?.replace(/_/g, ' ').toLowerCase() ?? 'unknown'}
+                    </span>
+                  )}
+                </div>
+
                 {/* Status Badge */}
-                <div className="mt-4 flex items-center space-x-4">
+                <div className="mt-3 flex items-center space-x-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {open ? 'Open Now' : 'Closed'}
                   </span>
@@ -302,6 +332,31 @@ export default async function DispensaryPage({ params }: Props) {
                     </div>
                   ) : (
                     <p className="text-gray-500">Hours not available. Please call for hours.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification History */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Verification History</h2>
+                <div className="bg-gray-50 rounded-xl p-5">
+                  {dispensary.verificationDate ? (
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Verified via {dispensary.verificationMethod?.replace(/_/g, ' ').toLowerCase() ?? 'unknown method'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {dispensary.verificationDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {dispensary.verificationDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            {dispensary.verifiedBy && ` by ${dispensary.verifiedBy}`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No verification history yet. We&apos;re working on verifying all dispensaries.</p>
                   )}
                 </div>
               </div>
