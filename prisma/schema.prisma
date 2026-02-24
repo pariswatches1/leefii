@@ -95,8 +95,10 @@ model Dispensary {
   isPremium              Boolean            @default(false)
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
+  communityConfirmations Int                @default(0)
   analytics              AnalyticsEvent[]
   BusinessHours          BusinessHours[]
+  inaccuracyReports      InaccuracyReport[]
   city                   City               @relation(fields: [cityId], references: [id])
   state                  State              @relation(fields: [stateId], references: [id])
 
@@ -781,6 +783,38 @@ model ReviewHelpful {
 }
 
 // ==========================================
+// INACCURACY REPORTS
+// ==========================================
+
+model InaccuracyReport {
+  id             String          @id @default(cuid())
+  dispensaryId   String
+  dispensary     Dispensary      @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
+
+  // Reporter (optional — anonymous reports allowed)
+  userId         String?
+  reporterEmail  String?
+
+  // What's wrong
+  category       ReportCategory
+  description    String
+
+  // Admin handling
+  status         ReportStatus    @default(PENDING)
+  adminNotes     String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([dispensaryId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([category])
+}
+
+// ==========================================
 // CANNABIS JOURNAL
 // ==========================================
 
@@ -1032,4 +1066,24 @@ enum EmailStatus {
   DELIVERED
   BOUNCED
   FAILED
+}
+
+// ==========================================
+// INACCURACY REPORT ENUMS
+// ==========================================
+
+enum ReportCategory {
+  WRONG_HOURS
+  WRONG_PHONE
+  WRONG_ADDRESS
+  WRONG_MENU
+  PERMANENTLY_CLOSED
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
 }

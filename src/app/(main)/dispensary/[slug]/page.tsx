@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import ShopNowButton from '@/components/ShopNowButton'
 import Reviews from '@/components/Reviews'
 import TrustBadge from '@/components/TrustBadge'
+import ReportInaccuracyButton from '@/components/ReportInaccuracyButton'
 
 type Props = {
   params: { slug: string }
@@ -270,6 +271,7 @@ export default async function DispensaryPage({ params }: Props) {
                     menuAccuracyScore={dispensary.menuAccuracyScore}
                     inaccuracyReportsCount={dispensary.inaccuracyReportsCount}
                     lastReportedInaccuracy={dispensary.lastReportedInaccuracy?.toISOString() ?? null}
+                    communityConfirmations={dispensary.communityConfirmations}
                     size="full"
                   />
                   {dispensary.isClaimed && (
@@ -311,7 +313,15 @@ export default async function DispensaryPage({ params }: Props) {
 
               {/* Hours */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Hours of Operation</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Hours of Operation</h2>
+                  <ReportInaccuracyButton
+                    dispensaryId={dispensary.id}
+                    dispensaryName={dispensary.name}
+                    variant="inline"
+                    preselectedCategory="WRONG_HOURS"
+                  />
+                </div>
                 <div className="bg-gray-50 rounded-xl p-5">
                   {sortedHours.length > 0 ? (
                     <div className="space-y-2">
@@ -392,7 +402,15 @@ export default async function DispensaryPage({ params }: Props) {
                 {/* Contact Info */}
                 <div className="space-y-4 mb-6">
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Address</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500 mb-1">Address</div>
+                      <ReportInaccuracyButton
+                        dispensaryId={dispensary.id}
+                        dispensaryName={dispensary.name}
+                        variant="inline"
+                        preselectedCategory="WRONG_ADDRESS"
+                      />
+                    </div>
                     <div className="font-medium text-gray-900">
                       {dispensary.address}
                       {dispensary.address2 && <>, {dispensary.address2}</>}
@@ -401,7 +419,15 @@ export default async function DispensaryPage({ params }: Props) {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 mb-1">Phone</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500 mb-1">Phone</div>
+                      <ReportInaccuracyButton
+                        dispensaryId={dispensary.id}
+                        dispensaryName={dispensary.name}
+                        variant="inline"
+                        preselectedCategory="WRONG_PHONE"
+                      />
+                    </div>
                     <a href={`tel:${dispensary.phone?.replace(/[^0-9]/g, '')}`} className="font-medium text-green-600 hover:text-green-700">
                       {dispensary.phone}
                     </a>
@@ -524,6 +550,13 @@ export default async function DispensaryPage({ params }: Props) {
             </div>
           )}
         </div>
+
+        {/* Floating Report Button */}
+        <ReportInaccuracyButton
+          dispensaryId={dispensary.id}
+          dispensaryName={dispensary.name}
+          variant="floating"
+        />
       </div>
     </>
   )
