@@ -121,11 +121,11 @@ export default async function StatePage({ params }: Props) {
 
   const faqData = [
     {
-      q: `Is cannabis legal in ${state.name}?`,
+      q: `What is the cannabis status in ${state.name}?`,
       a: state.isLegal && !state.medicalOnly
-        ? `Yes. Both recreational and medical cannabis are legal in ${state.name}. Adults 21+ can purchase from licensed dispensaries.`
+        ? `${state.name} allows both recreational and medical cannabis. Adults 21+ can purchase from licensed dispensaries.`
         : state.medicalOnly
-        ? `Medical cannabis is legal in ${state.name} with a valid MMJ card. Recreational use is not currently legal.`
+        ? `${state.name} has a medical cannabis program. A valid MMJ card is required to purchase. Recreational use is not currently permitted.`
         : `Cannabis laws in ${state.name} vary. Check current state and local regulations.`,
     },
     {
@@ -347,9 +347,9 @@ export default async function StatePage({ params }: Props) {
             <p className="text-gray-600">
               {state.lawSummary || (
                 state.isLegal && !state.medicalOnly
-                  ? `Cannabis is legal for both recreational and medical use in ${state.name}. Adults 21+ can purchase from licensed dispensaries. Medical patients may access higher potency products with a valid MMJ card.`
+                  ? `${state.name} allows both recreational and medical cannabis. Adults 21+ can purchase from licensed dispensaries. Medical patients may access higher potency products with a valid MMJ card.`
                   : state.medicalOnly
-                  ? `Medical cannabis is legal in ${state.name} with a valid medical marijuana card. Recreational cannabis is not currently legal.`
+                  ? `${state.name} has a medical cannabis program. A valid medical marijuana card is required to purchase. Recreational cannabis is not currently permitted.`
                   : `Cannabis laws in ${state.name} vary. Check current state and local regulations.`
               )}
             </p>

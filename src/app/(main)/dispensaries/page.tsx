@@ -59,7 +59,7 @@ export default async function DispensariesPage() {
             </div>
             <div className="bg-white/10 rounded-lg px-4 py-2">
               <span className="text-2xl font-bold">{otherStates.length}</span>
-              <span className="text-primary-200 text-sm ml-2">Pending Legalization</span>
+              <span className="text-primary-200 text-sm ml-2">Other States</span>
             </div>
           </div>
         </div>
@@ -112,12 +112,12 @@ export default async function DispensariesPage() {
                 Pending
               </span>
               <h2 className="text-2xl font-bold text-gray-900">
-                Pending Legalization ({otherStates.length})
+                Other States ({otherStates.length})
               </h2>
             </div>
             <p className="text-gray-500 mb-6">
-              These states have not yet legalized recreational or comprehensive medical cannabis.
-              Check each state&apos;s page for the latest law updates and any limited programs.
+              These states do not currently have recreational or comprehensive medical cannabis programs.
+              Check each state&apos;s page for the latest updates and any limited programs.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {otherStates.map((state) => (
@@ -132,13 +132,13 @@ export default async function DispensariesPage() {
       <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            About Cannabis Legalization in the US
+            About Cannabis in the US
           </h2>
           <div className="prose prose-gray max-w-none">
             <p>
               Cannabis laws vary significantly across the United States. {recStates.length} states
-              have legalized both recreational and medical marijuana, {medStates.length} states
-              permit medical use only, and {otherStates.length} states have not yet legalized.
+              allow both recreational and medical marijuana, {medStates.length} states
+              permit medical use only, and {otherStates.length} states do not currently have cannabis programs.
               Leefii helps you find licensed dispensaries in every state, track law changes, and
               shop at verified, compliant locations.
             </p>
