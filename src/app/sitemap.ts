@@ -8,6 +8,7 @@ import { getAllCategorySlugs, getAllStaticArticleSlugs } from '@/data/blog'
 import { getAllNewsCategorySlugs } from '@/data/news-categories'
 import { getAllCategoryComparisonSlugs, getAllPlatformComparisonSlugs, TOP_STRAIN_PAIRS } from '@/data/comparison-pages'
 import { getAllToolSlugs } from '@/data/tools'
+import { PHOENIX_NEIGHBORHOODS, PHOENIX_STRAINS, PHOENIX_BEST_FOR } from '@/data/phoenix'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
@@ -500,6 +501,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/news/state/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
+      priority: 0.6,
+    })),
+    // ==================== PHOENIX SEO DOMINATION PAGES ====================
+    // Phoenix neighborhood pages (20 pages)
+    ...PHOENIX_NEIGHBORHOODS.map((n) => ({
+      url: `${baseUrl}/dispensaries/arizona/phoenix/${n.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    })),
+    // Strain × Phoenix pages (15 pages)
+    ...PHOENIX_STRAINS.map((s) => ({
+      url: `${baseUrl}/strains/${s.slug}/phoenix-az`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    })),
+    // "Best For" × Phoenix pages (10 pages)
+    ...PHOENIX_BEST_FOR.map((b) => ({
+      url: `${baseUrl}/best/${b.slug}/phoenix-az`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
       priority: 0.6,
     })),
   ]

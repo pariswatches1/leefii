@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import DispensaryListFilters from '@/components/DispensaryListFilters'
+import { PHOENIX_NEIGHBORHOODS, PHOENIX_STRAINS, PHOENIX_BEST_FOR, PHOENIX_GUIDE, PHOENIX_FAQS } from '@/data/phoenix'
 
 type Props = {
   params: Promise<{ state: string; city: string }>
@@ -17,8 +18,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = await prisma.city.findFirst({ where: { slug: citySlug, stateId: state.id } })
   if (!city) return {}
 
-  const title = city.metaTitle || `Dispensaries in ${city.name}, ${state.abbreviation} | ${city.dispensaryCount} Dispensaries | Leefii`
-  const description = city.metaDescription || `Find ${city.dispensaryCount} cannabis dispensaries in ${city.name}, ${state.abbreviation}. Compare ratings, hours, deals, and delivery options.`
+  // Phoenix-specific SEO override
+  const isPhoenix = stateSlug === 'arizona' && citySlug === 'phoenix'
+  const title = isPhoenix
+    ? 'Verified Dispensaries in Phoenix, AZ — Menus Updated Daily | Leefii'
+    : city.metaTitle || `Dispensaries in ${city.name}, ${state.abbreviation} | ${city.dispensaryCount} Dispensaries | Leefii`
+  const description = isPhoenix
+    ? `Find ${city.dispensaryCount}+ verified cannabis dispensaries in Phoenix, AZ. Every listing verified for accuracy. Compare menus, hours, delivery, and deals. Unlike other directories, Leefii manually verifies every Phoenix dispensary.`
+    : city.metaDescription || `Find ${city.dispensaryCount} cannabis dispensaries in ${city.name}, ${state.abbreviation}. Compare ratings, hours, deals, and delivery options.`
 
   return {
     title,
@@ -66,6 +73,7 @@ export default async function CityPage({ params }: Props) {
   })
 
   const deliveryCount = dispensaries.filter((d) => d.hasDelivery).length
+  const isPhoenix = stateSlug === 'arizona' && citySlug === 'phoenix'
 
   // JSON-LD
   const jsonLd = {
@@ -202,12 +210,107 @@ export default async function CityPage({ params }: Props) {
         </section>
       )}
 
-      {/* FAQ */}
+      {/* Phoenix Trust Banner */}
+      {isPhoenix && (
+        <section className="py-4 bg-green-50 border-y border-green-100">
+          <div className="max-w-7xl mx-auto px-4 flex items-center gap-2 text-sm text-green-800">
+            <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            <span>Unlike other directories, Leefii manually verifies every Phoenix dispensary listing. See the green ✓ badge for dispensaries confirmed within 24 hours. <Link href="/how-we-verify" className="font-medium underline hover:text-green-900">Learn how →</Link></span>
+          </div>
+        </section>
+      )}
+
+      {/* Phoenix Neighborhoods Grid */}
+      {isPhoenix && (
+        <section className="py-12 bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Browse by Phoenix Neighborhood</h2>
+            <p className="text-gray-600 mb-6">Find dispensaries in your area of the Phoenix metro.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {PHOENIX_NEIGHBORHOODS.map((n) => (
+                <Link key={n.slug} href={`/dispensaries/arizona/phoenix/${n.slug}`} className="bg-gray-50 rounded-xl p-4 border hover:shadow-md hover:border-green-500 transition">
+                  <p className="font-medium text-gray-900">{n.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">{n.highlights[0]}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Phoenix Popular Strains */}
+      {isPhoenix && (
+        <section className="py-12 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Popular Strains in Phoenix</h2>
+            <p className="text-gray-600 mb-6">Find where to buy the most popular cannabis strains in the Phoenix metro area.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {PHOENIX_STRAINS.slice(0, 9).map((s) => (
+                <Link key={s.slug} href={`/strains/${s.slug}/phoenix-az`} className="bg-white rounded-xl p-5 border hover:shadow-md hover:border-green-500 transition">
+                  <h3 className="font-bold text-gray-900">{s.name}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{s.tagline}</p>
+                  <span className="text-green-600 text-sm font-medium mt-2 inline-block">Find in Phoenix →</span>
+                </Link>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-6">
+              {PHOENIX_STRAINS.slice(9).map((s) => (
+                <Link key={s.slug} href={`/strains/${s.slug}/phoenix-az`} className="px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-green-50 hover:text-green-700 transition border">
+                  {s.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Phoenix "Best For" Links */}
+      {isPhoenix && (
+        <section className="py-12 bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Find the Best Cannabis in Phoenix</h2>
+            <p className="text-gray-600 mb-6">Curated recommendations for specific needs and occasions.</p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {PHOENIX_BEST_FOR.map((b) => (
+                <Link key={b.slug} href={`/best/${b.slug}/phoenix-az`} className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 hover:shadow-md hover:border-green-400 transition text-center">
+                  <p className="font-semibold text-gray-900">Best for {b.name}</p>
+                  <span className="text-green-600 text-xs font-medium mt-1 inline-block">View guide →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Phoenix Cannabis Guide (2000+ words) */}
+      {isPhoenix && (
+        <section className="py-12 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">{PHOENIX_GUIDE.title}</h2>
+            <div className="space-y-8">
+              {PHOENIX_GUIDE.sections.map((section, i) => (
+                <div key={i} className="bg-white rounded-xl p-6 md:p-8 border">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">{section.heading}</h3>
+                  <div className="text-gray-600 space-y-4">
+                    {section.content.split('\n\n').map((paragraph, j) => (
+                      <p key={j}>{paragraph}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* FAQ — Enhanced for Phoenix */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">FAQ</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
           <div className="space-y-3">
-            {faqData.map((f, i) => (
+            {(isPhoenix ? PHOENIX_FAQS : faqData).map((f, i) => (
               <details key={i} className="bg-white rounded-xl border">
                 <summary className="p-4 font-semibold cursor-pointer hover:text-green-700">{f.q}</summary>
                 <p className="px-4 pb-4 text-gray-600">{f.a}</p>
@@ -216,6 +319,38 @@ export default async function CityPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {/* Phoenix Explore More */}
+      {isPhoenix && (
+        <section className="py-12 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Explore More Phoenix Cannabis</h2>
+              <p className="text-gray-600 mb-4">Delivery, deals, doctors, and cannabis laws in Phoenix and Arizona.</p>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/delivery/arizona/phoenix" className="px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium hover:bg-purple-200 transition">
+                  Phoenix Delivery
+                </Link>
+                <Link href="/deals/arizona/phoenix" className="px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium hover:bg-amber-200 transition">
+                  Phoenix Deals
+                </Link>
+                <Link href="/doctors/arizona/phoenix" className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium hover:bg-blue-200 transition">
+                  Phoenix MMJ Doctors
+                </Link>
+                <Link href="/laws/arizona" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition">
+                  Arizona Cannabis Laws
+                </Link>
+                <Link href="/how-we-verify" className="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium hover:bg-green-200 transition">
+                  How We Verify
+                </Link>
+                <Link href="/accuracy-guarantee" className="px-4 py-2 bg-white text-green-700 rounded-full text-sm font-medium hover:bg-green-50 transition border border-green-200">
+                  Accuracy Guarantee
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
