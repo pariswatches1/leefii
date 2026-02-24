@@ -234,6 +234,19 @@ export default function SellPage() {
         </div>
       </div>
 
+      {/* Verification Trust Banner */}
+      <div className="bg-green-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Every Listing Verified for Accuracy</h3>
+          <p className="text-gray-600 mb-4">
+            Our team verifies every dispensary listing. If anything is wrong, we fix it within 24 hours.
+          </p>
+          <Link href="/how-we-verify" className="text-green-600 font-semibold hover:underline">
+            Learn how we verify →
+          </Link>
+        </div>
+      </div>
+
       {/* CTA */}
       <div className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
