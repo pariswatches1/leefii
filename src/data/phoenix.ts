@@ -258,7 +258,7 @@ export const PHOENIX_STRAINS: PhoenixStrain[] = [
   { slug: 'girl-scout-cookies', name: 'Girl Scout Cookies', tagline: 'Sweet and potent hybrid — one of Phoenix\'s top-selling strains' },
   { slug: 'wedding-cake', name: 'Wedding Cake', tagline: 'Rich, tangy indica-hybrid with heavy relaxation effects' },
   { slug: 'northern-lights', name: 'Northern Lights', tagline: 'Classic indica for Phoenix residents seeking deep sleep and pain relief' },
-  { slug: 'gorilla-glue', name: 'Gorilla Glue', tagline: 'Potent hybrid known for couch-lock effects — Phoenix\'s go-to for unwinding' },
+  { slug: 'gorilla-glue-4', name: 'Gorilla Glue #4', tagline: 'Potent hybrid known for couch-lock effects — Phoenix\'s go-to for unwinding' },
   { slug: 'jack-herer', name: 'Jack Herer', tagline: 'Legendary sativa for creativity and focus in the desert heat' },
   { slug: 'purple-punch', name: 'Purple Punch', tagline: 'Grape-flavored indica that\'s a favorite at Phoenix dispensaries' },
   { slug: 'runtz', name: 'Runtz', tagline: 'Candy-flavored hybrid that\'s taken the Phoenix market by storm' },
