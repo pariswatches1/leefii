@@ -93,25 +93,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ==================== PAGE ====================
 export default async function DoctorCityPage({ params }: Props) {
   const { state: stateSlug, city: citySlug } = await params
-  const data = await getStateAndCity(stateSlug, citySlug)
-  if (!data) notFound()
 
+  let data, doctors
+  try {
+    data = await getStateAndCity(stateSlug, citySlug)
+    if (!data) notFound()
+
+    doctors = await prisma.doctor.findMany({
+      where: {
+        state: data.state.abbreviation,
+        city: { equals: data.city.name, mode: 'insensitive' },
+        isActive: true,
+      },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { subscriptionTier: 'desc' },
+        { rating: 'desc' },
+      ],
+    })
+
+    if (doctors.length === 0) notFound()
+  } catch {
+    notFound()
+  }
+
+  if (!data || !doctors || doctors.length === 0) notFound()
   const { state, city } = data
-
-  const doctors = await prisma.doctor.findMany({
-    where: {
-      state: state.abbreviation,
-      city: { equals: city.name, mode: 'insensitive' },
-      isActive: true,
-    },
-    orderBy: [
-      { isFeatured: 'desc' },
-      { subscriptionTier: 'desc' },
-      { rating: 'desc' },
-    ],
-  })
-
-  if (doctors.length === 0) notFound()
 
   const telehealthCount = doctors.filter((d) => d.telemedicine).length
   const verifiedCount = doctors.filter((d) => d.isVerified).length

@@ -47,27 +47,37 @@ export default async function DeliveryStatePage({ params }: Props) {
   const isDeliveryLegal = deliveryAllowed.startsWith('Yes') || deliveryAllowed.toLowerCase().includes('delivery')
   if (!isDeliveryLegal) notFound()
 
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
+  let state: Awaited<ReturnType<typeof prisma.state.findUnique>>
+  let citiesWithDelivery: { id: string; name: string; slug: string; _count: { dispensaries: number } }[] = []
+  let totalDeliveryDispensaries = 0
+
+  try {
+    state = await prisma.state.findUnique({ where: { slug: stateSlug } })
+    if (!state) notFound()
+
+    citiesWithDelivery = await prisma.city.findMany({
+      where: {
+        stateId: state.id,
+        dispensaries: { some: { isActive: true, hasDelivery: true } },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: { select: { dispensaries: { where: { isActive: true, hasDelivery: true } } } },
+      },
+    })
+
+    citiesWithDelivery.sort((a, b) => b._count.dispensaries - a._count.dispensaries)
+
+    totalDeliveryDispensaries = await prisma.dispensary.count({
+      where: { stateId: state.id, isActive: true, hasDelivery: true },
+    })
+  } catch {
+    notFound()
+  }
+
   if (!state) notFound()
-
-  const citiesWithDelivery = await prisma.city.findMany({
-    where: {
-      stateId: state.id,
-      dispensaries: { some: { isActive: true, hasDelivery: true } },
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      _count: { select: { dispensaries: { where: { isActive: true, hasDelivery: true } } } },
-    },
-  })
-
-  citiesWithDelivery.sort((a, b) => b._count.dispensaries - a._count.dispensaries)
-
-  const totalDeliveryDispensaries = await prisma.dispensary.count({
-    where: { stateId: state.id, isActive: true, hasDelivery: true },
-  })
 
   const faqData = [
     {

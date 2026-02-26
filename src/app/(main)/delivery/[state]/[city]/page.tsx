@@ -31,34 +31,43 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DeliveryCityPage({ params }: Props) {
   const { state: stateSlug, city: citySlug } = await params
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
-  if (!state) notFound()
-  const city = await prisma.city.findFirst({ where: { slug: citySlug, stateId: state.id } })
-  if (!city) notFound()
 
-  const dispensaries = await prisma.dispensary.findMany({
-    where: { cityId: city.id, isActive: true, hasDelivery: true },
-    orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
-    include: { BusinessHours: true },
-  })
+  let state, city, dispensaries, totalInCity, nearbyCities
 
-  if (dispensaries.length === 0) notFound()
+  try {
+    state = await prisma.state.findUnique({ where: { slug: stateSlug } })
+    if (!state) notFound()
+    city = await prisma.city.findFirst({ where: { slug: citySlug, stateId: state.id } })
+    if (!city) notFound()
 
-  const totalInCity = await prisma.dispensary.count({ where: { cityId: city.id, isActive: true } })
+    dispensaries = await prisma.dispensary.findMany({
+      where: { cityId: city.id, isActive: true, hasDelivery: true },
+      orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
+      include: { BusinessHours: true },
+    })
 
-  const nearbyCities = await prisma.city.findMany({
-    where: {
-      stateId: state.id,
-      NOT: { id: city.id },
-      dispensaries: { some: { isActive: true, hasDelivery: true } },
-    },
-    take: 6,
-    select: {
-      name: true,
-      slug: true,
-      _count: { select: { dispensaries: { where: { isActive: true, hasDelivery: true } } } },
-    },
-  })
+    if (dispensaries.length === 0) notFound()
+
+    totalInCity = await prisma.dispensary.count({ where: { cityId: city.id, isActive: true } })
+
+    nearbyCities = await prisma.city.findMany({
+      where: {
+        stateId: state.id,
+        NOT: { id: city.id },
+        dispensaries: { some: { isActive: true, hasDelivery: true } },
+      },
+      take: 6,
+      select: {
+        name: true,
+        slug: true,
+        _count: { select: { dispensaries: { where: { isActive: true, hasDelivery: true } } } },
+      },
+    })
+  } catch {
+    notFound()
+  }
+
+  if (!state || !city || !dispensaries || dispensaries.length === 0) notFound()
 
   const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
   const today = days[new Date().getDay()]

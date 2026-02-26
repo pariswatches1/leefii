@@ -72,39 +72,15 @@ export default async function ZipCodePage({ params }: Props) {
   if (!/^\d{5}$/.test(zipcode)) notFound()
 
   // Dispensaries in this exact zip code
-  const exactDispensaries = await prisma.dispensary.findMany({
-    where: { zipCode: zipcode, isActive: true },
-    orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
-    include: {
-      city: { select: { name: true, slug: true } },
-      state: { select: { name: true, slug: true, abbreviation: true, isLegal: true, medicalOnly: true } },
-      BusinessHours: true,
-    },
-  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let exactDispensaries: any[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let nearbyDispensaries: (any & { distance: number })[] = []
 
-  // If no dispensaries in this exact zip, find nearby
-  let centerLat = 0
-  let centerLng = 0
-  let nearbyDispensaries: (typeof exactDispensaries[0] & { distance: number })[] = []
-
-  if (exactDispensaries.length > 0) {
-    centerLat = exactDispensaries.reduce((sum, d) => sum + d.latitude, 0) / exactDispensaries.length
-    centerLng = exactDispensaries.reduce((sum, d) => sum + d.longitude, 0) / exactDispensaries.length
-  }
-
-  // Always find nearby dispensaries (in other zip codes within 10 miles)
-  if (centerLat !== 0 && centerLng !== 0) {
-    // Rough lat/lng bounding box for 10 miles
-    const latDelta = 10 / 69 // ~1 degree latitude = 69 miles
-    const lngDelta = 10 / (69 * Math.cos((centerLat * Math.PI) / 180))
-
-    const allNearby = await prisma.dispensary.findMany({
-      where: {
-        isActive: true,
-        NOT: { zipCode: zipcode },
-        latitude: { gte: centerLat - latDelta, lte: centerLat + latDelta },
-        longitude: { gte: centerLng - lngDelta, lte: centerLng + lngDelta },
-      },
+  try {
+    exactDispensaries = await prisma.dispensary.findMany({
+      where: { zipCode: zipcode, isActive: true },
+      orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
       include: {
         city: { select: { name: true, slug: true } },
         state: { select: { name: true, slug: true, abbreviation: true, isLegal: true, medicalOnly: true } },
@@ -112,11 +88,42 @@ export default async function ZipCodePage({ params }: Props) {
       },
     })
 
-    nearbyDispensaries = allNearby
-      .map((d) => ({ ...d, distance: haversineDistance(centerLat, centerLng, d.latitude, d.longitude) }))
-      .filter((d) => d.distance <= 10)
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 20)
+    // If no dispensaries in this exact zip, find nearby
+    let centerLat = 0
+    let centerLng = 0
+
+    if (exactDispensaries.length > 0) {
+      centerLat = exactDispensaries.reduce((sum, d) => sum + d.latitude, 0) / exactDispensaries.length
+      centerLng = exactDispensaries.reduce((sum, d) => sum + d.longitude, 0) / exactDispensaries.length
+    }
+
+    // Always find nearby dispensaries (in other zip codes within 10 miles)
+    if (centerLat !== 0 && centerLng !== 0) {
+      const latDelta = 10 / 69
+      const lngDelta = 10 / (69 * Math.cos((centerLat * Math.PI) / 180))
+
+      const allNearby = await prisma.dispensary.findMany({
+        where: {
+          isActive: true,
+          NOT: { zipCode: zipcode },
+          latitude: { gte: centerLat - latDelta, lte: centerLat + latDelta },
+          longitude: { gte: centerLng - lngDelta, lte: centerLng + lngDelta },
+        },
+        include: {
+          city: { select: { name: true, slug: true } },
+          state: { select: { name: true, slug: true, abbreviation: true, isLegal: true, medicalOnly: true } },
+          BusinessHours: true,
+        },
+      })
+
+      nearbyDispensaries = allNearby
+        .map((d) => ({ ...d, distance: haversineDistance(centerLat, centerLng, d.latitude, d.longitude) }))
+        .filter((d) => d.distance <= 10)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 20)
+    }
+  } catch {
+    notFound()
   }
 
   if (exactDispensaries.length === 0 && nearbyDispensaries.length === 0) notFound()
