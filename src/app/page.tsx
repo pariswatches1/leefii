@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import Footer from '@/components/Footer';
 
 // Import HeroSearchV2 directly - it handles its own client-side features
 import { HeroSearchV2 } from '@/components/search-v2/HeroSearchV2';
@@ -239,29 +240,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        <div className="bg-white/20 backdrop-blur-lg rounded-2xl px-6 py-6 border border-white/30">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-lime-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
-                </svg>
-              </div>
-              <span className="font-semibold text-gray-900">Leefii</span>
-            </div>
-            <div className="flex gap-6 text-sm text-gray-700">
-              <Link href="/about" className="hover:text-gray-900 transition">About</Link>
-              <Link href="/contact" className="hover:text-gray-900 transition">Contact</Link>
-              <Link href="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
-              <Link href="/terms" className="hover:text-gray-900 transition">Terms</Link>
-            </div>
-            <div className="text-sm text-gray-600">
-              © 2026 Leefii. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
