@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Reviews from '@/components/Reviews';
 import FavoriteButton from '@/components/FavoriteButton';
+import ShareButtons from '@/components/ShareButtons';
 
 export const revalidate = 86400;
 
@@ -322,6 +323,14 @@ export default async function StrainPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+
+                <ShareButtons
+                  url={`https://leefii.com/strains/${strain.slug}`}
+                  title={`${strain.name} Strain`}
+                  variant="inline"
+                  heading="Share This Strain"
+                  dark
+                />
               </div>
             </div>
           </div>
