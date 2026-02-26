@@ -60,30 +60,23 @@ export default async function StrainComparePage({ params }: Props) {
   const parsed = parsePair(pair)
   if (!parsed) notFound()
 
-  const [strain1, strain2] = await Promise.all([
-    prisma.strain.findFirst({
-      where: { slug: parsed.slug1, isActive: true },
-      select: {
-        slug: true, name: true, type: true, thcMin: true, thcMax: true,
-        cbdMin: true, cbdMax: true, rating: true, reviewsCount: true,
-        effects: true, flavors: true, conditions: true, description: true,
-        terpMyrcene: true, terpLimonene: true, terpCaryophyllene: true,
-        terpPinene: true, terpLinalool: true, terpHumulene: true,
-        terpTerpinolene: true, terpOcimene: true,
-      },
-    }),
-    prisma.strain.findFirst({
-      where: { slug: parsed.slug2, isActive: true },
-      select: {
-        slug: true, name: true, type: true, thcMin: true, thcMax: true,
-        cbdMin: true, cbdMax: true, rating: true, reviewsCount: true,
-        effects: true, flavors: true, conditions: true, description: true,
-        terpMyrcene: true, terpLimonene: true, terpCaryophyllene: true,
-        terpPinene: true, terpLinalool: true, terpHumulene: true,
-        terpTerpinolene: true, terpOcimene: true,
-      },
-    }),
-  ])
+  let strain1, strain2
+  try {
+    const strainSelect = {
+      slug: true, name: true, type: true, thcMin: true, thcMax: true,
+      cbdMin: true, cbdMax: true, rating: true, reviewsCount: true,
+      effects: true, flavors: true, conditions: true, description: true,
+      terpMyrcene: true, terpLimonene: true, terpCaryophyllene: true,
+      terpPinene: true, terpLinalool: true, terpHumulene: true,
+      terpTerpinolene: true, terpOcimene: true,
+    } as const
+    ;[strain1, strain2] = await Promise.all([
+      prisma.strain.findFirst({ where: { slug: parsed.slug1, isActive: true }, select: strainSelect }),
+      prisma.strain.findFirst({ where: { slug: parsed.slug2, isActive: true }, select: strainSelect }),
+    ])
+  } catch {
+    notFound()
+  }
 
   if (!strain1 || !strain2) notFound()
 

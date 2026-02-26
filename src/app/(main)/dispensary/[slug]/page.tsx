@@ -97,14 +97,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DispensaryPage({ params }: Props) {
-  const dispensary = await prisma.dispensary.findUnique({
-    where: { slug: params.slug },
-    include: {
-      city: true,
-      state: true,
-      BusinessHours: { orderBy: { dayOfWeek: 'asc' } }
-    }
-  })
+  let dispensary
+  try {
+    dispensary = await prisma.dispensary.findUnique({
+      where: { slug: params.slug },
+      include: {
+        city: true,
+        state: true,
+        BusinessHours: { orderBy: { dayOfWeek: 'asc' } }
+      }
+    })
+  } catch {
+    notFound()
+  }
 
   if (!dispensary) {
     notFound()

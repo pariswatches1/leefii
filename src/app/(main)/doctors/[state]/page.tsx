@@ -69,34 +69,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DoctorsPage({ params }: Props) {
   const { state: slug } = await params
 
-  // 1. Try state listing first
-  const state = await prisma.state.findUnique({ where: { slug } })
-  if (state) {
-    return <StateDoctorsPage stateSlug={slug} state={state} />
-  }
+  try {
+    // 1. Try state listing first
+    const state = await prisma.state.findUnique({ where: { slug } })
+    if (state) {
+      return <StateDoctorsPage stateSlug={slug} state={state} />
+    }
 
-  // 2. Try individual doctor
-  const doctor = await prisma.doctor.findUnique({
-    where: { slug },
-    include: { businessHours: true },
-  })
-
-  if (doctor) {
-    // Increment view count (non-blocking)
-    prisma.doctor.update({ where: { id: doctor.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
-
-    // Find related doctors in same state
-    const relatedDoctors = await prisma.doctor.findMany({
-      where: {
-        state: doctor.state || undefined,
-        isActive: true,
-        id: { not: doctor.id },
-      },
-      take: 4,
-      orderBy: { rating: 'desc' },
+    // 2. Try individual doctor
+    const doctor = await prisma.doctor.findUnique({
+      where: { slug },
+      include: { businessHours: true },
     })
 
-    return <DoctorDetailPage doctor={doctor} relatedDoctors={relatedDoctors} />
+    if (doctor) {
+      // Increment view count (non-blocking)
+      prisma.doctor.update({ where: { id: doctor.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
+
+      // Find related doctors in same state
+      const relatedDoctors = await prisma.doctor.findMany({
+        where: {
+          state: doctor.state || undefined,
+          isActive: true,
+          id: { not: doctor.id },
+        },
+        take: 4,
+        orderBy: { rating: 'desc' },
+      })
+
+      return <DoctorDetailPage doctor={doctor} relatedDoctors={relatedDoctors} />
+    }
+  } catch {
+    notFound()
   }
 
   // 3. Neither state nor doctor found

@@ -45,38 +45,45 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StatePage({ params }: Props) {
   const { state: stateSlug } = await params
-  const state = await prisma.state.findUnique({
-    where: { slug: stateSlug },
-    include: {
-      cities: {
-        where: { dispensaryCount: { gt: 0 } },
-        orderBy: { dispensaryCount: 'desc' },
-        select: { name: true, slug: true, dispensaryCount: true },
+
+  let state, topDispensaries, deliveryCount, doctorsCount, verifiedCount
+  try {
+    state = await prisma.state.findUnique({
+      where: { slug: stateSlug },
+      include: {
+        cities: {
+          where: { dispensaryCount: { gt: 0 } },
+          orderBy: { dispensaryCount: 'desc' },
+          select: { name: true, slug: true, dispensaryCount: true },
+        },
+        _count: { select: { dispensaries: { where: { isActive: true } } } },
       },
-      _count: { select: { dispensaries: { where: { isActive: true } } } },
-    },
-  })
+    })
+
+    if (!state) notFound()
+
+    ;[topDispensaries, deliveryCount, doctorsCount, verifiedCount] = await Promise.all([
+      prisma.dispensary.findMany({
+        where: { stateId: state.id, isActive: true },
+        orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
+        take: 10,
+        include: { city: { select: { name: true, slug: true } } },
+      }),
+      prisma.dispensary.count({
+        where: { stateId: state.id, isActive: true, hasDelivery: true },
+      }),
+      prisma.doctor.count({
+        where: { state: state.abbreviation, isActive: true },
+      }),
+      prisma.dispensary.count({
+        where: { stateId: state.id, isActive: true, verificationDate: { not: null } },
+      }),
+    ])
+  } catch {
+    notFound()
+  }
 
   if (!state) notFound()
-
-  const topDispensaries = await prisma.dispensary.findMany({
-    where: { stateId: state.id, isActive: true },
-    orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
-    take: 10,
-    include: { city: { select: { name: true, slug: true } } },
-  })
-
-  const deliveryCount = await prisma.dispensary.count({
-    where: { stateId: state.id, isActive: true, hasDelivery: true },
-  })
-
-  const doctorsCount = await prisma.doctor.count({
-    where: { state: state.abbreviation, isActive: true },
-  })
-
-  const verifiedCount = await prisma.dispensary.count({
-    where: { stateId: state.id, isActive: true, verificationDate: { not: null } },
-  })
 
   const totalDispensaries = state._count.dispensaries
   const popularCities = state.cities.slice(0, 8)

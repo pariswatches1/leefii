@@ -51,26 +51,33 @@ function isCurrentlyOpen(businessHours: any[]): { open: boolean; closeTime?: str
 export default async function CityPage({ params }: Props) {
   const { state: stateSlug, city: citySlug } = await params
 
-  const state = await prisma.state.findUnique({ where: { slug: stateSlug } })
-  if (!state) notFound()
+  let state, city, dispensaries, nearbyCities
+  try {
+    state = await prisma.state.findUnique({ where: { slug: stateSlug } })
+    if (!state) notFound()
 
-  const city = await prisma.city.findFirst({ where: { slug: citySlug, stateId: state.id } })
-  if (!city) notFound()
+    city = await prisma.city.findFirst({ where: { slug: citySlug, stateId: state.id } })
+    if (!city) notFound()
 
-  const dispensaries = await prisma.dispensary.findMany({
-    where: { cityId: city.id, isActive: true },
-    orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
-    include: { BusinessHours: true },
-  })
+    dispensaries = await prisma.dispensary.findMany({
+      where: { cityId: city.id, isActive: true },
+      orderBy: [{ isPremium: 'desc' }, { rating: 'desc' }, { reviewsCount: 'desc' }],
+      include: { BusinessHours: true },
+    })
 
-  if (dispensaries.length === 0) notFound()
+    if (dispensaries.length === 0) notFound()
 
-  const nearbyCities = await prisma.city.findMany({
-    where: { stateId: state.id, dispensaryCount: { gt: 0 }, NOT: { id: city.id } },
-    orderBy: { dispensaryCount: 'desc' },
-    take: 8,
-    select: { name: true, slug: true, dispensaryCount: true },
-  })
+    nearbyCities = await prisma.city.findMany({
+      where: { stateId: state.id, dispensaryCount: { gt: 0 }, NOT: { id: city.id } },
+      orderBy: { dispensaryCount: 'desc' },
+      take: 8,
+      select: { name: true, slug: true, dispensaryCount: true },
+    })
+  } catch {
+    notFound()
+  }
+
+  if (!state || !city || !dispensaries || dispensaries.length === 0) notFound()
 
   const deliveryCount = dispensaries.filter((d) => d.hasDelivery).length
   const isPhoenix = stateSlug === 'arizona' && citySlug === 'phoenix'

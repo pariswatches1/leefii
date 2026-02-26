@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
-import { getStateLawSlugs } from '@/data/cannabis-laws'
+import { getStateLawSlugs, getStateLawBySlug } from '@/data/cannabis-laws'
 import { getAllForPageSlugs, getAllCrossRefParams } from '@/data/strain-purposes'
 import { getAllDealPageSlugs } from '@/data/deal-categories'
 import { getAllMedicalCardGuideSlugs } from '@/data/medical-card-guides'
@@ -13,12 +13,13 @@ import { PHOENIX_NEIGHBORHOODS, PHOENIX_STRAINS, PHOENIX_BEST_FOR } from '@/data
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://leefii.com'
 
+  try {
   // ==================== QUERIES ====================
   const [
     states,
     cities,
     dispensaries,
-    strains,
+    activeStrains,
     blogPosts,
     newsArticles,
     doctors,
@@ -35,6 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
     }),
     prisma.strain.findMany({
+      where: { isActive: true },
       select: { slug: true, updatedAt: true },
     }),
     prisma.blogPost.findMany({
@@ -159,15 +161,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // ==================== STRAIN COMPARISON PAGES ====================
+  // Only generate comparisons for strains that actually exist and are popular
+  // Reduced from 4950 to max 500 to avoid Google crawl budget waste
   const topComparableStrains = await prisma.strain.findMany({
     where: { isActive: true, rating: { gte: 4.0 }, reviewsCount: { gte: 10 } },
     orderBy: [{ reviewsCount: 'desc' }, { rating: 'desc' }],
-    take: 100,
+    take: 32,
     select: { slug: true },
   })
   const comparisonUrls: MetadataRoute.Sitemap = []
   for (let i = 0; i < topComparableStrains.length; i++) {
-    for (let j = i + 1; j < topComparableStrains.length && comparisonUrls.length < 4950; j++) {
+    for (let j = i + 1; j < topComparableStrains.length && comparisonUrls.length < 500; j++) {
       comparisonUrls.push({
         url: `${baseUrl}/strains/compare/${topComparableStrains[i].slug}-vs-${topComparableStrains[j].slug}`,
         lastModified: new Date(),
@@ -194,22 +198,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // ==================== DELIVERY+CITY PAGES ====================
-  const deliveryPages: MetadataRoute.Sitemap = deliveryCities.map((c) => ({
-    url: `${baseUrl}/delivery/${c.state.slug}/${c.slug}`,
-    lastModified: c.updatedAt || new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.6,
-  }))
+  // Only include cities in states where delivery is legally allowed (fixes 404s)
+  const deliveryPages: MetadataRoute.Sitemap = deliveryCities
+    .filter((c) => {
+      const law = getStateLawBySlug(c.state.slug)
+      return law && law.deliveryAllowed.startsWith('Yes')
+    })
+    .map((c) => ({
+      url: `${baseUrl}/delivery/${c.state.slug}/${c.slug}`,
+      lastModified: c.updatedAt || new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    }))
 
   // State delivery index pages: /delivery/[state] (only for delivery-legal states)
-  const deliveryStatePages: MetadataRoute.Sitemap = Array.from(
-    new Set(deliveryCities.map((c) => c.state.slug))
-  ).map((stateSlug) => ({
-    url: `${baseUrl}/delivery/${stateSlug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
+  // Filter out states where law data says delivery is NOT legal (fixes 404s)
+  const deliveryStateSlugs = Array.from(new Set(deliveryCities.map((c) => c.state.slug)))
+  const deliveryStatePages: MetadataRoute.Sitemap = deliveryStateSlugs
+    .filter((stateSlug) => {
+      const law = getStateLawBySlug(stateSlug)
+      return law && law.deliveryAllowed.startsWith('Yes')
+    })
+    .map((stateSlug) => ({
+      url: `${baseUrl}/delivery/${stateSlug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
 
   // ==================== DOCTORS+STATE PAGES ====================
   const doctorStatePages: MetadataRoute.Sitemap = doctorStates.map((s) => ({
@@ -228,7 +243,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // ==================== STRAIN DETAIL PAGES ====================
-  const strainPages: MetadataRoute.Sitemap = strains.map((s) => ({
+  const strainPages: MetadataRoute.Sitemap = activeStrains.map((s) => ({
     url: `${baseUrl}/strains/${s.slug}`,
     lastModified: s.updatedAt || new Date(),
     changeFrequency: 'monthly' as const,
@@ -526,4 +541,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
   ]
+  } catch (error) {
+    // If DB fails, return minimal sitemap with static pages only to prevent 5xx
+    console.error('[Sitemap] Error generating sitemap:', error)
+    return [
+      { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+      { url: `${baseUrl}/dispensaries`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${baseUrl}/strains`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${baseUrl}/deals`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+      { url: `${baseUrl}/doctors`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+      { url: `${baseUrl}/delivery`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+      { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+      { url: `${baseUrl}/news`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    ]
+  }
 }
