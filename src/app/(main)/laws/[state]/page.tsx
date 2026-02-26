@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getStateLawBySlug, getStateLawSlugs, generateStateFaq } from '@/data/cannabis-laws'
+import ShareButtons from '@/components/ShareButtons'
 
 type Props = {
   params: Promise<{ state: string }>
@@ -143,6 +144,12 @@ export default async function StateLawPage({ params }: Props) {
               {statusConfig.label}
             </div>
           </div>
+          <ShareButtons
+            url={`https://leefii.com/laws/${law.slug}`}
+            title={`Cannabis Laws in ${law.name} 2026`}
+            variant="inline"
+            heading="Share This Guide"
+          />
         </div>
       </section>
 

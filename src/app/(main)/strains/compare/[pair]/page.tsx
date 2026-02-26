@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import ShareButtons from '@/components/ShareButtons'
 
 interface Props {
   params: Promise<{ pair: string }>
@@ -131,6 +132,13 @@ export default async function StrainComparePage({ params }: Props) {
             {strain1.name} vs {strain2.name}
           </h1>
           <p className="text-lg text-gray-600">Side-by-side strain comparison</p>
+          <div className="mt-4 flex justify-center">
+            <ShareButtons
+              url={`https://leefii.com/strains/compare/${pair}`}
+              title={`${strain1.name} vs ${strain2.name} — Strain Comparison`}
+              variant="compact"
+            />
+          </div>
         </div>
 
         {/* Main Comparison Table */}

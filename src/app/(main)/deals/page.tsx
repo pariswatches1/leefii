@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { DEAL_TYPES, PRODUCT_CATEGORIES } from '@/data/deal-categories'
+import ShareButtons from '@/components/ShareButtons'
 
 export const revalidate = 3600
 
@@ -184,6 +185,14 @@ export default async function DealsPage() {
             <span className="bg-green-500/30 border border-green-300/40 text-white px-4 py-2 rounded-full text-sm font-medium">
               Updated Hourly
             </span>
+          </div>
+          <div className="mt-6">
+            <ShareButtons
+              url="https://leefii.com/deals"
+              title="Cannabis Deals & Discounts"
+              variant="compact"
+              dark
+            />
           </div>
         </div>
       </section>

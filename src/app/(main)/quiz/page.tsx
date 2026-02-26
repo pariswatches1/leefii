@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ShareButtons from '@/components/ShareButtons';
 
 interface QuizAnswer {
   id: string;
@@ -336,6 +337,16 @@ export default function QuizPage() {
               <p className="text-gray-500 text-lg">No exact matches found. Try exploring all strains!</p>
             </div>
           )}
+
+          {/* Share Results */}
+          <div className="text-center mb-8">
+            <ShareButtons
+              url="https://leefii.com/quiz"
+              title="I found my perfect cannabis strains on Leefii!"
+              variant="full"
+              heading="Share Your Results"
+            />
+          </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

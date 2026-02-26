@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllStateLaws, getRecreationalStates, getMedicalOnlyStates, getIllegalStates } from '@/data/cannabis-laws'
 import USMap from '@/components/USMap'
+import ShareButtons from '@/components/ShareButtons'
 
 export const revalidate = 86400
 
@@ -83,6 +84,14 @@ export default function LawsIndexPage() {
               <div className="text-3xl font-bold">{illegalStates.length}</div>
               <div className="text-green-200 text-sm">Illegal</div>
             </div>
+          </div>
+          <div className="mt-6">
+            <ShareButtons
+              url="https://leefii.com/laws"
+              title="Cannabis Laws by State 2026"
+              variant="compact"
+              dark
+            />
           </div>
         </div>
       </section>

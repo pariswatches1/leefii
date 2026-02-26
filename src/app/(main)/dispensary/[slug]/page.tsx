@@ -6,6 +6,7 @@ import ShopNowButton from '@/components/ShopNowButton'
 import Reviews from '@/components/Reviews'
 import TrustBadge from '@/components/TrustBadge'
 import ReportInaccuracyButton from '@/components/ReportInaccuracyButton'
+import ShareButtons from '@/components/ShareButtons'
 
 type Props = {
   params: { slug: string }
@@ -521,6 +522,16 @@ export default async function DispensaryPage({ params }: Props) {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Share */}
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <ShareButtons
+                    url={`https://leefii.com/dispensary/${dispensary.slug}`}
+                    title={dispensary.name}
+                    variant="inline"
+                    heading="Share This Dispensary"
+                  />
                 </div>
               </div>
             </div>

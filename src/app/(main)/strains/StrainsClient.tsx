@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import FavoriteButton from '@/components/FavoriteButton';
+import ShareButtons from '@/components/ShareButtons';
 
 interface Strain {
   id: string;
@@ -233,6 +234,14 @@ export default function StrainsClient({
               <span className="text-2xl font-bold">{counts.hybrid.toLocaleString()}</span>
               <span className="text-green-200 ml-2">Hybrid</span>
             </div>
+          </div>
+          <div className="mt-6">
+            <ShareButtons
+              url="https://leefii.com/strains"
+              title="Cannabis Strains — Explore 5,600+ Varieties"
+              variant="compact"
+              dark
+            />
           </div>
         </div>
       </div>

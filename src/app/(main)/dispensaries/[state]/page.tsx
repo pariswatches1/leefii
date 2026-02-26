@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getVerificationTier } from '@/lib/verification'
+import ShareButtons from '@/components/ShareButtons'
 
 type Props = {
   params: Promise<{ state: string }>
@@ -228,6 +229,13 @@ export default async function StatePage({ params }: Props) {
           <p className="text-sm text-gray-400 mt-4">
             Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </p>
+          <div className="mt-4">
+            <ShareButtons
+              url={`https://leefii.com/dispensaries/${state.slug}`}
+              title={`Cannabis Dispensaries in ${state.name}`}
+              variant="compact"
+            />
+          </div>
         </div>
       </section>
 
