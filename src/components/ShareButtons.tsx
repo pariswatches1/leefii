@@ -2,6 +2,22 @@
 
 import { useState, useRef, useEffect } from 'react';
 
+/* ─── Pulse animation styles (injected once) ─── */
+const pulseCSS = `
+@keyframes share-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); filter: brightness(1); }
+  50% { transform: scale(1.12); box-shadow: 0 0 18px 4px rgba(255,255,255,0.35); filter: brightness(1.3); }
+}
+@keyframes share-glow {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  50% { transform: scale(1.08); box-shadow: 0 0 16px 4px rgba(34,197,94,0.4); }
+}
+.share-btn-pulse { animation: share-pulse 1.5s ease-in-out infinite; }
+.share-btn-pulse:hover { animation: none; transform: scale(1.1); filter: brightness(1.2); }
+.share-glow { animation: share-glow 1.5s ease-in-out infinite; }
+.share-glow:hover { animation: none; transform: scale(1.05); }
+`;
+
 type ShareVariant = 'full' | 'inline' | 'compact';
 
 interface ShareButtonsProps {
@@ -208,6 +224,7 @@ function FullShare({ url, title, heading, dark }: ShareButtonsProps) {
 
   return (
     <div className={dark ? '' : 'mt-6 pt-6 border-t border-gray-200'}>
+      <style dangerouslySetInnerHTML={{ __html: pulseCSS }} />
       {heading && (
         <h3
           className={`text-sm font-semibold uppercase tracking-wide mb-4 ${
@@ -218,15 +235,16 @@ function FullShare({ url, title, heading, dark }: ShareButtonsProps) {
         </h3>
       )}
       <div className="flex flex-wrap gap-2">
-        {targets.map((t) => (
+        {targets.map((t, i) => (
           <a
             key={t.name}
             href={t.href}
             target={t.isEmail ? undefined : '_blank'}
             rel={t.isEmail ? undefined : 'noopener noreferrer'}
-            className={`inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
+            className={`share-btn-pulse inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-all ${
               dark ? t.darkColor : t.color
             }`}
+            style={{ animationDelay: `${i * 0.15}s` }}
           >
             <t.icon />
             {t.name}
@@ -244,6 +262,7 @@ function InlineShare({ url, title, heading, dark }: ShareButtonsProps) {
 
   return (
     <div className="mt-4">
+      <style dangerouslySetInnerHTML={{ __html: pulseCSS }} />
       {heading && (
         <div
           className={`text-xs font-medium mb-2 ${
@@ -254,15 +273,16 @@ function InlineShare({ url, title, heading, dark }: ShareButtonsProps) {
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        {targets.map((t) => (
+        {targets.map((t, i) => (
           <a
             key={t.name}
             href={t.href}
             target={t.isEmail ? undefined : '_blank'}
             rel={t.isEmail ? undefined : 'noopener noreferrer'}
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-colors ${
+            className={`share-btn-pulse w-9 h-9 rounded-full flex items-center justify-center text-white transition-all ${
               dark ? t.darkColor : t.color
             }`}
+            style={{ animationDelay: `${i * 0.15}s` }}
             title={`Share on ${t.name}`}
           >
             <t.icon />
@@ -294,9 +314,10 @@ function CompactShare({ url, title, dark }: ShareButtonsProps) {
 
   return (
     <div className="relative inline-block" ref={ref}>
+      <style dangerouslySetInnerHTML={{ __html: pulseCSS }} />
       <button
         onClick={() => setOpen(!open)}
-        className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+        className={`share-glow inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
           dark
             ? 'bg-white/20 hover:bg-white/30 text-white'
             : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -310,14 +331,15 @@ function CompactShare({ url, title, dark }: ShareButtonsProps) {
       {open && (
         <div className="absolute z-50 mt-2 left-0 bg-white rounded-xl shadow-lg border border-gray-200 p-3 min-w-[200px]">
           <div className="grid grid-cols-4 gap-2 mb-2">
-            {targets.map((t) => (
+            {targets.map((t, i) => (
               <a
                 key={t.name}
                 href={t.href}
                 target={t.isEmail ? undefined : '_blank'}
                 rel={t.isEmail ? undefined : 'noopener noreferrer'}
                 onClick={() => setOpen(false)}
-                className={`w-10 h-10 rounded-lg flex items-center justify-center text-white transition-colors ${t.color}`}
+                className={`share-btn-pulse w-10 h-10 rounded-lg flex items-center justify-center text-white transition-all ${t.color}`}
+                style={{ animationDelay: `${i * 0.1}s` }}
                 title={t.name}
               >
                 <t.icon className="w-5 h-5" />
