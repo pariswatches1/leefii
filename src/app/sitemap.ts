@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     activeStrains,
     blogPosts,
     newsArticles,
-    doctors,
+    , // doctors query removed — no individual doctor detail route exists
     products,
     deliveryCities,
   ] = await Promise.all([
@@ -284,13 +284,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  // ==================== DOCTOR DETAIL & PRODUCT PAGES ====================
-  const doctorPages: MetadataRoute.Sitemap = doctors.map((d) => ({
-    url: `${baseUrl}/doctors/${d.slug}`,
-    lastModified: d.updatedAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.6,
-  }))
+  // ==================== PRODUCT PAGES ====================
+  // NOTE: Individual doctor detail pages (/doctors/{slug}) were removed — no such route exists.
+  // Doctor pages are only /doctors/[state] and /doctors/[state]/[city], handled above.
 
   const productPages: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${baseUrl}/marketplace/product/${p.slug}`,
@@ -455,7 +451,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogCategoryPages,
     ...staticArticlePages,
     ...newsPages,
-    ...doctorPages,
     ...productPages,
     ...lawStatePages,
     ...lawStaticPages,
