@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 interface FavoriteButtonProps {
-  entityType: 'STRAIN' | 'DISPENSARY' | 'PRODUCT' | 'strain' | 'dispensary' | 'product';
+  entityType: 'STRAIN' | 'DISPENSARY' | 'PRODUCT' | 'DEAL' | 'strain' | 'dispensary' | 'product' | 'deal';
   entityId: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -24,7 +24,7 @@ export default function FavoriteButton({
   const { data: session, status } = useSession();
   const router = useRouter();
   // Normalize entityType to uppercase
-  const entityType = rawEntityType.toUpperCase() as 'STRAIN' | 'DISPENSARY' | 'PRODUCT';
+  const entityType = rawEntityType.toUpperCase() as 'STRAIN' | 'DISPENSARY' | 'PRODUCT' | 'DEAL';
   const [isFavorited, setIsFavorited] = useState(initialIsFavorited ?? false);
   const [isLoading, setIsLoading] = useState(false);
 

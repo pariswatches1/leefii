@@ -473,6 +473,7 @@ enum FavoriteType {
   STRAIN
   DISPENSARY
   PRODUCT
+  DEAL
 }
 
 model Account {
