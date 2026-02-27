@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       select: { title: true, description: true, dispensaryName: true },
     })
     if (deal) {
-      const title = `${deal.title}${deal.dispensaryName ? ` — ${deal.dispensaryName}` : ''} | Leefii`
+      const title = `${deal.title}${deal.dispensaryName ? ` — ${deal.dispensaryName}` : ''}`
       const description = deal.description || `${deal.title} — find this cannabis deal and more dispensary discounts on Leefii.`
       return {
         title,
