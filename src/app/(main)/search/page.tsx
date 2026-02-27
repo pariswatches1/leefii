@@ -6,7 +6,18 @@ import { Sparkles, MapPin } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Search | Leefii',
-  description: 'Search for cannabis dispensaries, strains, and cities.',
+  description: 'Search for cannabis dispensaries, strains, and cities across all 51 states on Leefii.',
+  alternates: {
+    canonical: 'https://leefii.com/search',
+  },
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
+  },
 }
 
 type Props = {
