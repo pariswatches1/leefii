@@ -1,5 +1,19 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+
+export const metadata: Metadata = {
+  title: 'Find Cannabis Doctors & MMJ Recommendations Near You',
+  description: 'Browse medical marijuana doctors by state. Get your MMJ card recommendation from licensed cannabis physicians. Find doctors near you on Leefii.',
+  alternates: {
+    canonical: 'https://leefii.com/doctors',
+  },
+  openGraph: {
+    title: 'Find Cannabis Doctors & MMJ Recommendations Near You',
+    description: 'Browse medical marijuana doctors by state. Get your MMJ card recommendation from licensed cannabis physicians.',
+    url: 'https://leefii.com/doctors',
+  },
+}
 
 export const revalidate = 3600
 

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import Footer from '@/components/Footer';
+import HomepageSeoLinks from '@/components/HomepageSeoLinks';
 
 // Import HeroSearchV2 directly - it handles its own client-side features
 import { HeroSearchV2 } from '@/components/search-v2/HeroSearchV2';
@@ -101,6 +102,9 @@ export default function Home() {
               <Link href="/deals" className="text-gray-700 hover:text-gray-900 transition">
                 Deals
               </Link>
+              <Link href="/shop" className="text-gray-700 hover:text-gray-900 transition">
+                Shop
+              </Link>
               <Link href="/news" className="text-gray-700 hover:text-gray-900 transition">
                 News
               </Link>
@@ -123,6 +127,7 @@ export default function Home() {
                 { href: '/doctors', label: 'Doctors' },
                 { href: '/strains', label: 'Strains' },
                 { href: '/deals', label: 'Deals' },
+                { href: '/shop', label: 'Shop' },
                 { href: '/news', label: 'News' },
                 { href: '/blog', label: 'Blog' },
                 { href: '/sell', label: 'Sell on Leefii', highlight: true },
@@ -180,11 +185,11 @@ export default function Home() {
         {/* Secondary Content - Below the fold, accessible by scrolling */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           {/* Quick Actions - de-emphasized grid */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
             {/* Strain Quiz Card */}
             <Link
               href="/quiz"
-              className="col-span-2 md:col-span-1 bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
             >
               <div className="text-2xl mb-2">🎯</div>
               <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Strain Quiz</div>
@@ -206,6 +211,15 @@ export default function Home() {
             >
               <div className="text-2xl mb-2">🌿</div>
               <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Strains</div>
+            </Link>
+
+            {/* Shop & Compare Card */}
+            <Link
+              href="/shop"
+              className="bg-white/30 backdrop-blur rounded-xl p-4 border border-white/40 hover:bg-white/50 transition cursor-pointer group"
+            >
+              <div className="text-2xl mb-2">🛒</div>
+              <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">Shop</div>
             </Link>
 
             {/* Best Deals Card */}
@@ -235,6 +249,11 @@ export default function Home() {
           {/* Medical Marijuana Card Doctors Section */}
           <div className="mb-8">
             <NearbyDoctors />
+          </div>
+
+          {/* SEO Internal Links Section - server-rendered for crawlers */}
+          <div className="mb-8">
+            <HomepageSeoLinks />
           </div>
         </div>
       </main>
