@@ -1,8 +1,25 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { prisma } from '@/lib/prisma'
 import { DEAL_TYPES, PRODUCT_CATEGORIES } from '@/data/deal-categories'
 import ShareButtons from '@/components/ShareButtons'
+
+const NearbyDeals = dynamic(() => import('@/components/NearbyDeals'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="animate-pulse">
+        <div className="h-6 bg-gray-100 rounded w-48 mb-4"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-36 bg-gray-100 rounded-xl"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ),
+})
 
 export const revalidate = 300
 
@@ -203,6 +220,11 @@ export default async function DealsPage() {
           Leefii lists {totalDeals.toLocaleString()} active cannabis deals and dispensary discounts across {dealsByState.length} US states. Browse daily specials, first-time patient offers, BOGO deals, veteran discounts, and more from licensed dispensaries nationwide.
         </p>
         <p className="text-sm text-gray-500">Deals updated in real-time. Last checked: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+      </section>
+
+      {/* Deals Near You — geo-located, client-side */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <NearbyDeals />
       </section>
 
       {/* Featured Deals */}
