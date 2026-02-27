@@ -8,6 +8,7 @@ import TrustBadge from '@/components/TrustBadge'
 import ReportInaccuracyButton from '@/components/ReportInaccuracyButton'
 import ShareButtons from '@/components/ShareButtons'
 import DispensaryMenu from '@/components/dispensary/DispensaryMenu'
+import BrowseLinks from '@/components/BrowseLinks'
 
 type Props = {
   params: { slug: string }
@@ -724,6 +725,39 @@ export default async function DispensaryPage({ params }: Props) {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Internal cross-links for SEO */}
+        <div className="mt-12 pt-8 border-t border-gray-100">
+          <BrowseLinks
+            groups={[
+              {
+                title: `More in ${dispensary.city.name}`,
+                links: [
+                  { href: `/dispensaries/${dispensary.state.slug}/${dispensary.city.slug}`, label: `All ${dispensary.city.name} Dispensaries` },
+                  { href: `/delivery/${dispensary.state.slug}/${dispensary.city.slug}`, label: `${dispensary.city.name} Delivery` },
+                  { href: `/deals/${dispensary.state.slug}/${dispensary.city.slug}`, label: `${dispensary.city.name} Deals` },
+                ],
+              },
+              {
+                title: `${dispensary.state.name}`,
+                links: [
+                  { href: `/dispensaries/${dispensary.state.slug}`, label: `All ${dispensary.state.name} Dispensaries` },
+                  { href: `/laws/${dispensary.state.slug}`, label: `${dispensary.state.name} Cannabis Laws` },
+                  { href: `/doctors/${dispensary.state.slug}`, label: `${dispensary.state.name} MMJ Doctors` },
+                ],
+              },
+              {
+                title: 'Explore',
+                links: [
+                  { href: '/shop', label: 'Compare Cannabis Prices' },
+                  { href: '/strains', label: 'Browse All Strains' },
+                  { href: '/deals', label: 'Today\'s Best Deals' },
+                  { href: '/near-me', label: 'Dispensaries Near Me' },
+                ],
+              },
+            ]}
+          />
         </div>
 
         {/* Floating Report Button */}
