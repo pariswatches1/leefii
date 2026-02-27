@@ -47,6 +47,9 @@ export default function Header() {
             <Link href="/deals" className="text-gray-600 hover:text-green-600 transition text-sm">
               Deals
             </Link>
+            <Link href="/shop" className="text-gray-600 hover:text-green-600 transition text-sm">
+              Shop
+            </Link>
             <Link href="/blog" className="text-gray-600 hover:text-green-600 transition text-sm">
               Blog
             </Link>
@@ -111,6 +114,7 @@ export default function Header() {
                 { href: '/doctors', label: 'Doctors' },
                 { href: '/strains', label: 'Strains' },
                 { href: '/deals', label: 'Deals' },
+                { href: '/shop', label: 'Shop' },
                 { href: '/blog', label: 'Blog' },
                 { href: '/news', label: 'News' },
                 { href: '/laws', label: 'Cannabis Laws' },

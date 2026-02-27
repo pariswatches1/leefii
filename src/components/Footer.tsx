@@ -127,6 +127,7 @@ export default function Footer() {
               <li><Link href="/dispensaries" className="text-sm hover:text-gray-900 transition">Dispensaries</Link></li>
               <li><Link href="/strains" className="text-sm hover:text-gray-900 transition">Strains</Link></li>
               <li><Link href="/deals" className="text-sm hover:text-gray-900 transition">Deals</Link></li>
+              <li><Link href="/shop" className="text-sm hover:text-gray-900 transition">Shop</Link></li>
               <li><Link href="/delivery" className="text-sm hover:text-gray-900 transition">Delivery</Link></li>
               <li><Link href="/doctors" className="text-sm hover:text-gray-900 transition">Doctors</Link></li>
               <li><Link href="/marketplace" className="text-sm hover:text-gray-900 transition">Marketplace</Link></li>
