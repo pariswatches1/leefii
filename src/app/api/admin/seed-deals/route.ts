@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -250,6 +251,10 @@ export async function POST() {
 
     // Batch insert
     const result = await prisma.deal.createMany({ data: deals })
+
+    // Revalidate deals pages so ISR cache shows fresh data
+    revalidatePath('/deals')
+    revalidatePath('/deals/[...slug]', 'page')
 
     return NextResponse.json({
       success: true,

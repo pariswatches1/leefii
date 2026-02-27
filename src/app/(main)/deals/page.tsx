@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { DEAL_TYPES, PRODUCT_CATEGORIES } from '@/data/deal-categories'
 import ShareButtons from '@/components/ShareButtons'
 
-export const revalidate = 3600
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Cannabis Deals & Discounts — Save at Dispensaries Near You | Leefii',
