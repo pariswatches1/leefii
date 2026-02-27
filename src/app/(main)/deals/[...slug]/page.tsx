@@ -85,17 +85,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (slugArr.length === 1) {
     const pageData = getDealPageBySlug(slugArr[0])
-    if (!pageData) return { title: 'Not Found | Leefii' }
-    const { data } = pageData
-    const title = `${data.name} — Cannabis Dispensary Discounts | Leefii`
-    const description = data.description
-    return {
-      title,
-      description,
-      openGraph: { title, description, url: `https://leefii.com/deals/${slugArr[0]}`, siteName: 'Leefii' },
-      twitter: { card: 'summary_large_image', title, description },
-      alternates: { canonical: `https://leefii.com/deals/${slugArr[0]}` },
+    if (pageData) {
+      const { data } = pageData
+      const title = `${data.name} — Cannabis Dispensary Discounts | Leefii`
+      const description = data.description
+      return {
+        title,
+        description,
+        openGraph: { title, description, url: `https://leefii.com/deals/${slugArr[0]}`, siteName: 'Leefii' },
+        twitter: { card: 'summary_large_image', title, description },
+        alternates: { canonical: `https://leefii.com/deals/${slugArr[0]}` },
+      }
     }
+
+    // Individual deal page
+    const deal = await prisma.deal.findFirst({
+      where: { slug: slugArr[0], isActive: true },
+      select: { title: true, description: true, dispensaryName: true },
+    })
+    if (deal) {
+      const title = `${deal.title}${deal.dispensaryName ? ` — ${deal.dispensaryName}` : ''} | Leefii`
+      const description = deal.description || `${deal.title} — find this cannabis deal and more dispensary discounts on Leefii.`
+      return {
+        title,
+        description,
+        openGraph: { title, description, url: `https://leefii.com/deals/${slugArr[0]}`, siteName: 'Leefii' },
+        twitter: { card: 'summary_large_image', title, description },
+        alternates: { canonical: `https://leefii.com/deals/${slugArr[0]}` },
+      }
+    }
+
+    return { title: 'Not Found | Leefii' }
   }
 
   if (slugArr.length === 2) {
@@ -313,7 +333,7 @@ export default async function DealsCatchAllPage({ params }: Props) {
 // ================================================================
 async function renderDealTypePage(slug: string) {
   const pageData = getDealPageBySlug(slug)
-  if (!pageData) notFound()
+  if (!pageData) return renderIndividualDealPage(slug)
   const { type, data } = pageData
 
   const now = new Date()
@@ -535,6 +555,446 @@ async function renderDealTypePage(slug: string) {
             </div>
           </section>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ================================================================
+// INDIVIDUAL DEAL PAGE (1-segment: /deals/[deal-slug])
+// ================================================================
+async function renderIndividualDealPage(slug: string) {
+  const deal = await prisma.deal.findFirst({
+    where: { slug, isActive: true },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      description: true,
+      discountType: true,
+      discountValue: true,
+      code: true,
+      dispensaryName: true,
+      dispensarySlug: true,
+      stateSlug: true,
+      citySlug: true,
+      endDate: true,
+      isOngoing: true,
+      isFeatured: true,
+      minPurchase: true,
+      createdAt: true,
+    },
+  })
+
+  if (!deal) notFound()
+
+  // Get dispensary info if available
+  const dispensary = deal.dispensarySlug
+    ? await prisma.dispensary.findUnique({
+        where: { slug: deal.dispensarySlug },
+        select: {
+          name: true,
+          slug: true,
+          address: true,
+          phone: true,
+          rating: true,
+          reviewsCount: true,
+          imageUrl: true,
+          hasDelivery: true,
+          hasStorefront: true,
+          hasCurbside: true,
+          city: { select: { name: true, slug: true } },
+          state: { select: { name: true, slug: true, abbreviation: true } },
+        },
+      })
+    : null
+
+  // Related deals from same dispensary
+  const relatedDeals = deal.dispensarySlug
+    ? await prisma.deal.findMany({
+        where: {
+          isActive: true,
+          dispensarySlug: deal.dispensarySlug,
+          id: { not: deal.id },
+          OR: [
+            { endDate: { gte: new Date() } },
+            { isOngoing: true },
+            { endDate: null },
+          ],
+        },
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 6,
+        select: {
+          id: true, title: true, slug: true, description: true,
+          discountType: true, discountValue: true, code: true,
+          dispensaryName: true, dispensarySlug: true,
+          stateSlug: true, citySlug: true,
+          endDate: true, isOngoing: true, isFeatured: true, minPurchase: true,
+        },
+      })
+    : []
+
+  // Nearby deals in same city
+  const nearbyDeals = deal.stateSlug && deal.citySlug
+    ? await prisma.deal.findMany({
+        where: {
+          isActive: true,
+          stateSlug: deal.stateSlug,
+          citySlug: deal.citySlug,
+          id: { not: deal.id },
+          dispensarySlug: deal.dispensarySlug ? { not: deal.dispensarySlug } : undefined,
+          OR: [
+            { endDate: { gte: new Date() } },
+            { isOngoing: true },
+            { endDate: null },
+          ],
+        },
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 6,
+        select: {
+          id: true, title: true, slug: true, description: true,
+          discountType: true, discountValue: true, code: true,
+          dispensaryName: true, dispensarySlug: true,
+          stateSlug: true, citySlug: true,
+          endDate: true, isOngoing: true, isFeatured: true, minPurchase: true,
+        },
+      })
+    : []
+
+  const discount = formatDiscount(deal.discountValue, deal.discountType)
+  const expiry = formatExpiry(deal.endDate, deal.isOngoing)
+
+  const cityName = dispensary?.city?.name || (deal.citySlug ? deal.citySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : null)
+  const stateAbbr = dispensary?.state?.abbreviation || (deal.stateSlug ? deal.stateSlug.toUpperCase().slice(0, 2) : null)
+  const stateName = dispensary?.state?.name || null
+
+  // JSON-LD
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://leefii.com' },
+      { '@type': 'ListItem', position: 2, name: 'Deals', item: 'https://leefii.com/deals' },
+      ...(deal.stateSlug && stateName
+        ? [{ '@type': 'ListItem', position: 3, name: stateName, item: `https://leefii.com/deals/${deal.stateSlug}` }]
+        : []),
+      { '@type': 'ListItem', position: deal.stateSlug && stateName ? 4 : 3, name: deal.title },
+    ],
+  }
+
+  const offerLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Offer',
+    name: deal.title,
+    description: deal.description || undefined,
+    ...(deal.dispensaryName ? { seller: { '@type': 'Organization', name: deal.dispensaryName } } : {}),
+    availability: deal.isOngoing || !deal.endDate || deal.endDate >= new Date()
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/Discontinued',
+    ...(deal.endDate ? { validThrough: deal.endDate.toISOString() } : {}),
+    url: `https://leefii.com/deals/${slug}`,
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(offerLd) }} />
+
+      {/* Hero */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+          <nav aria-label="Breadcrumb" className="text-sm text-green-100 mb-6">
+            <Link href="/" className="hover:text-white">Home</Link>
+            <span className="mx-2">/</span>
+            <Link href="/deals" className="hover:text-white">Deals</Link>
+            {deal.stateSlug && (
+              <>
+                <span className="mx-2">/</span>
+                <Link href={`/deals/${deal.stateSlug}`} className="hover:text-white">
+                  {stateName || deal.stateSlug}
+                </Link>
+              </>
+            )}
+            {deal.stateSlug && deal.citySlug && (
+              <>
+                <span className="mx-2">/</span>
+                <Link href={`/deals/${deal.stateSlug}/${deal.citySlug}`} className="hover:text-white">
+                  {cityName}
+                </Link>
+              </>
+            )}
+            <span className="mx-2">/</span>
+            <span className="text-white font-medium truncate max-w-xs inline-block align-bottom">
+              {deal.title}
+            </span>
+          </nav>
+
+          <div className="flex flex-wrap items-start gap-3 mb-4">
+            {discount && (
+              <span className="bg-red-500 text-white rounded-full px-4 py-1.5 text-lg font-bold shadow-sm">
+                {discount}
+              </span>
+            )}
+            {deal.isFeatured && (
+              <span className="bg-yellow-400 text-yellow-900 rounded-full px-3 py-1 text-sm font-bold">
+                ★ Featured
+              </span>
+            )}
+          </div>
+
+          <h1 className="text-3xl md:text-5xl font-bold mb-4">{deal.title}</h1>
+
+          {deal.dispensaryName && (
+            <p className="text-xl text-green-50">
+              at{' '}
+              {deal.dispensarySlug ? (
+                <Link href={`/dispensary/${deal.dispensarySlug}`} className="underline decoration-dotted underline-offset-4 hover:text-white">
+                  {deal.dispensaryName}
+                </Link>
+              ) : (
+                deal.dispensaryName
+              )}
+              {cityName && stateAbbr && ` — ${cityName}, ${stateAbbr}`}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-3 mt-6">
+            <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+              expiry.label === 'Ongoing' ? 'bg-white/20 text-white' :
+              expiry.label === 'Expired' ? 'bg-red-400/30 text-white' :
+              'bg-amber-400/30 text-white'
+            }`}>
+              {expiry.label}
+            </span>
+            {deal.code && (
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-mono font-medium bg-white/20 text-white">
+                Code: {deal.code}
+              </span>
+            )}
+            {deal.minPurchase && deal.minPurchase > 0 && (
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white">
+                Min. ${deal.minPurchase}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Deal Details Card */}
+        <section className="mb-10">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8">
+            {deal.description && (
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">Deal Details</h2>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{deal.description}</p>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Deal info */}
+              <div className="space-y-3">
+                {discount && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-500 w-28">Discount</span>
+                    <span className="text-lg font-bold text-green-600">{discount}</span>
+                  </div>
+                )}
+                {deal.code && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-500 w-28">Promo Code</span>
+                    <span className="bg-gray-100 border border-dashed border-gray-300 rounded px-3 py-1 font-mono text-gray-900 font-semibold">
+                      {deal.code}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-500 w-28">Status</span>
+                  <span className={`text-sm px-2.5 py-1 rounded-full font-medium ${expiry.style}`}>
+                    {expiry.label}
+                  </span>
+                </div>
+                {deal.minPurchase && deal.minPurchase > 0 && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-500 w-28">Min. Purchase</span>
+                    <span className="text-gray-900">${deal.minPurchase}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Dispensary quick info */}
+              {dispensary && (
+                <div className="bg-gray-50 rounded-xl p-5">
+                  <h3 className="font-semibold text-gray-900 mb-2">{dispensary.name}</h3>
+                  {dispensary.address && (
+                    <p className="text-sm text-gray-600 mb-1">{dispensary.address}</p>
+                  )}
+                  {dispensary.city && dispensary.state && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      {dispensary.city.name}, {dispensary.state.abbreviation}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {(dispensary.rating ?? 0) > 0 && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                        ★ {dispensary.rating!.toFixed(1)} ({dispensary.reviewsCount} reviews)
+                      </span>
+                    )}
+                    {dispensary.hasStorefront && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Storefront</span>
+                    )}
+                    {dispensary.hasDelivery && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Delivery</span>
+                    )}
+                    {dispensary.hasCurbside && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Curbside</span>
+                    )}
+                  </div>
+                  <Link
+                    href={`/dispensary/${dispensary.slug}`}
+                    className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-700"
+                  >
+                    View Dispensary →
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* CTA */}
+            {deal.dispensarySlug && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <Link
+                  href={`/dispensary/${deal.dispensarySlug}`}
+                  className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white text-base font-medium rounded-lg hover:bg-green-700 transition"
+                >
+                  View at {deal.dispensaryName || 'Dispensary'}
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Related Deals from Same Dispensary */}
+        {relatedDeals.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              More Deals from {deal.dispensaryName}
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedDeals.map((d) => (
+                <Link
+                  key={d.id}
+                  href={`/deals/${d.slug}`}
+                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-green-200 transition flex flex-col"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-sm text-green-600 font-medium truncate mr-2">
+                      {d.dispensaryName}
+                    </span>
+                    {formatDiscount(d.discountValue, d.discountType) && (
+                      <span className="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {formatDiscount(d.discountValue, d.discountType)}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2">{d.title}</h3>
+                  {d.description && (
+                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">{d.description}</p>
+                  )}
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
+                      {formatExpiry(d.endDate, d.isOngoing).label}
+                    </span>
+                    {d.code && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border border-dashed border-gray-300 font-mono text-gray-700">
+                        {d.code}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Nearby Deals */}
+        {nearbyDeals.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              More Deals in {cityName}{stateAbbr ? `, ${stateAbbr}` : ''}
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {nearbyDeals.map((d) => (
+                <Link
+                  key={d.id}
+                  href={`/deals/${d.slug}`}
+                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-green-200 transition flex flex-col"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    {d.dispensaryName && (
+                      <span className="text-sm text-green-600 font-medium truncate mr-2">
+                        {d.dispensaryName}
+                      </span>
+                    )}
+                    {formatDiscount(d.discountValue, d.discountType) && (
+                      <span className="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {formatDiscount(d.discountValue, d.discountType)}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2">{d.title}</h3>
+                  {d.description && (
+                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">{d.description}</p>
+                  )}
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
+                      {formatExpiry(d.endDate, d.isOngoing).label}
+                    </span>
+                    {d.code && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border border-dashed border-gray-300 font-mono text-gray-700">
+                        {d.code}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Browse More CTA */}
+        <section className="mb-10">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Find More Deals</h2>
+            <p className="text-gray-600 mb-4">
+              Browse thousands of cannabis deals and dispensary discounts across the US.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/deals"
+                className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition"
+              >
+                All Deals
+              </Link>
+              {deal.stateSlug && deal.citySlug && (
+                <Link
+                  href={`/deals/${deal.stateSlug}/${deal.citySlug}`}
+                  className="px-4 py-2 bg-white text-green-700 border border-green-300 rounded-full text-sm font-medium hover:bg-green-50 transition"
+                >
+                  {cityName} Deals
+                </Link>
+              )}
+              {deal.dispensarySlug && (
+                <Link
+                  href={`/dispensary/${deal.dispensarySlug}`}
+                  className="px-4 py-2 bg-white text-green-700 border border-green-300 rounded-full text-sm font-medium hover:bg-green-50 transition"
+                >
+                  {deal.dispensaryName || 'Dispensary'}
+                </Link>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )
