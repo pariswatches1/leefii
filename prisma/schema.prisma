@@ -96,9 +96,13 @@ model Dispensary {
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
   communityConfirmations Int                @default(0)
+  menuPlatform           String?            // "dutchie", "jane", "weedmaps", "custom", null
+  menuUrl                String?            // embedded menu URL discovered on their site
+  lastMenuScrape         DateTime?
   analytics              AnalyticsEvent[]
   BusinessHours          BusinessHours[]
   inaccuracyReports      InaccuracyReport[]
+  menuProducts           MenuProduct[]
   city                   City               @relation(fields: [cityId], references: [id])
   state                  State              @relation(fields: [stateId], references: [id])
 
@@ -109,6 +113,7 @@ model Dispensary {
   @@index([isActive, isPremium])
   @@index([verificationStatus])
   @@index([verificationDate])
+  @@index([menuPlatform])
 }
 
 model AnalyticsEvent {
@@ -302,6 +307,61 @@ model Deal {
   @@index([isActive])
   @@index([stateSlug])
   @@index([endDate])
+}
+
+// ==========================================
+// MENU PRODUCTS (scraped from dispensary sites)
+// ==========================================
+
+model MenuProduct {
+  id              String     @id @default(cuid())
+  dispensaryId    String
+  dispensary      Dispensary @relation(fields: [dispensaryId], references: [id], onDelete: Cascade)
+  name            String
+  category        String     // "flower", "edibles", "pre-rolls", "concentrates", "vapes", "tinctures", "topicals"
+  subcategory     String?    // "gummies", "chocolate", "indica", "sativa", "hybrid"
+  brand           String?
+  strain          String?
+  strainType      String?    // "indica", "sativa", "hybrid"
+  price           Float
+  originalPrice   Float?     // for showing sale/discount
+  weight          String?    // "1g", "3.5g", "1oz", "10pk"
+  thcContent      String?
+  cbdContent      String?
+  imageUrl        String?
+  isOnSale        Boolean    @default(false)
+  sourceUrl       String?    // URL we scraped it from
+  sourcePlatform  String?    // "dutchie", "jane", "weedmaps", "website"
+  lastScrapedAt   DateTime   @default(now())
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([dispensaryId])
+  @@index([category])
+  @@index([isOnSale])
+  @@index([price])
+  @@index([sourcePlatform])
+  @@unique([dispensaryId, name, weight])
+}
+
+model ScrapeJob {
+  id            String    @id @default(cuid())
+  type          String    // "menu", "deals", "detection"
+  platform      String    // "dutchie", "jane", "weedmaps", "all", "detection"
+  status        String    // "running", "completed", "failed"
+  totalTargets  Int       @default(0)
+  processed     Int       @default(0)
+  succeeded     Int       @default(0)
+  failed        Int       @default(0)
+  newProducts   Int       @default(0)
+  newDeals      Int       @default(0)
+  errorLog      String?
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+
+  @@index([status])
+  @@index([startedAt])
 }
 
 // ==========================================
