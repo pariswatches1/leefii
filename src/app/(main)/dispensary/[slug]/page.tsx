@@ -7,6 +7,7 @@ import Reviews from '@/components/Reviews'
 import TrustBadge from '@/components/TrustBadge'
 import ReportInaccuracyButton from '@/components/ReportInaccuracyButton'
 import ShareButtons from '@/components/ShareButtons'
+import DispensaryMenu from '@/components/dispensary/DispensaryMenu'
 
 type Props = {
   params: { slug: string }
@@ -32,28 +33,28 @@ function formatTime(time: string): string {
 
 function isOpenNow(hours: any[]): { open: boolean; nextChange: string } {
   if (!hours || hours.length === 0) return { open: false, nextChange: '' }
-  
+
   const now = new Date()
   const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
   const today = days[now.getDay()]
   const currentTime = now.getHours() * 100 + now.getMinutes()
-  
+
   const todayHours = hours.find(h => h.dayOfWeek === today)
   if (!todayHours || todayHours.isClosed) {
     return { open: false, nextChange: 'Closed today' }
   }
-  
+
   const openTime = parseInt(todayHours.openTime.replace(':', ''))
   const closeTime = parseInt(todayHours.closeTime.replace(':', ''))
-  
+
   if (currentTime < openTime) {
     return { open: false, nextChange: `Opens at ${formatTime(todayHours.openTime)}` }
   }
-  
+
   if (currentTime >= openTime && currentTime <= closeTime) {
     return { open: true, nextChange: `Closes at ${formatTime(todayHours.closeTime)}` }
   }
-  
+
   return { open: false, nextChange: 'Closed' }
 }
 
@@ -67,22 +68,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Dispensary Not Found' }
   }
 
-  const title = `${dispensary.name} - Hours, Address & Phone | Leefii`
-  const description = `${dispensary.name} at ${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}. ${dispensary.hasDelivery ? 'Delivery available.' : ''} ${dispensary.licenseType === 'MEDICAL' ? 'Medical marijuana dispensary.' : 'Recreational dispensary.'}`
+  // Count menu products for enriched description
+  let productCount = 0
+  try {
+    productCount = await prisma.menuProduct.count({
+      where: { dispensaryId: dispensary.id, isActive: true }
+    })
+  } catch {
+    // Table may not exist yet
+  }
+
+  const menuSnippet = productCount > 0
+    ? ` Browse ${productCount} products with live prices.`
+    : ''
+
+  const title = productCount > 0
+    ? `${dispensary.name} - Menu, Prices, Hours & Address | Leefii`
+    : `${dispensary.name} - Hours, Address & Phone | Leefii`
+  const description = `${dispensary.name} at ${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}.${menuSnippet} ${dispensary.hasDelivery ? 'Delivery available.' : ''} ${dispensary.licenseType === 'MEDICAL' ? 'Medical marijuana dispensary.' : 'Recreational dispensary.'}`
 
   return {
     title,
     description,
     keywords: [
       dispensary.name,
+      `${dispensary.name} menu`,
       `${dispensary.city.name} dispensary`,
       `${dispensary.state.name} dispensary`,
       dispensary.licenseType === 'MEDICAL' ? 'medical marijuana' : 'recreational cannabis',
       dispensary.hasDelivery ? 'cannabis delivery' : '',
+      productCount > 0 ? `${dispensary.name} prices` : '',
     ].filter(Boolean),
     openGraph: {
       title: dispensary.name,
-      description: `${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}.`,
+      description: `${dispensary.address}, ${dispensary.city.name}, ${dispensary.state.abbreviation}. Call ${dispensary.phone}.${menuSnippet}`,
       url: `https://leefii.com/dispensary/${dispensary.slug}`,
       type: 'website',
     },
@@ -124,10 +143,67 @@ export default async function DispensaryPage({ params }: Props) {
   // Get open status
   const { open, nextChange } = isOpenNow(dispensary.BusinessHours)
 
+  // Fetch menu products for this dispensary
+  let menuProducts: {
+    id: string
+    name: string
+    brand: string | null
+    category: string
+    subcategory: string | null
+    price: number
+    originalPrice: number | null
+    weight: string | null
+    thcContent: string | null
+    cbdContent: string | null
+    strainType: string | null
+    strain: string | null
+    imageUrl: string | null
+    isOnSale: boolean
+    lastScrapedAt: Date
+  }[] = []
+  try {
+    menuProducts = await prisma.menuProduct.findMany({
+      where: { dispensaryId: dispensary.id, isActive: true },
+      orderBy: { price: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        brand: true,
+        category: true,
+        subcategory: true,
+        price: true,
+        originalPrice: true,
+        weight: true,
+        thcContent: true,
+        cbdContent: true,
+        strainType: true,
+        strain: true,
+        imageUrl: true,
+        isOnSale: true,
+        lastScrapedAt: true,
+      },
+    })
+  } catch {
+    // MenuProduct table may not exist yet
+  }
+
+  // Compute the most recent scrape time
+  const latestScrapeAt = menuProducts.length > 0
+    ? menuProducts.reduce((latest, p) =>
+        p.lastScrapedAt > latest ? p.lastScrapedAt : latest,
+        menuProducts[0].lastScrapedAt
+      )
+    : null
+
+  // Compute menu price stats
+  const menuPrices = menuProducts.map((p) => p.price)
+  const lowestPrice = menuPrices.length > 0 ? Math.min(...menuPrices) : null
+  const highestPrice = menuPrices.length > 0 ? Math.max(...menuPrices) : null
+
   // Related dispensaries in same city
   const relatedDispensaries = await prisma.dispensary.findMany({
-    where: { 
-      cityId: dispensary.cityId, 
+    where: {
+      cityId: dispensary.cityId,
       isActive: true,
       id: { not: dispensary.id }
     },
@@ -135,10 +211,11 @@ export default async function DispensaryPage({ params }: Props) {
     orderBy: { rating: 'desc' }
   })
 
-  // JSON-LD Schema for MedicalBusiness
-  const jsonLd = {
+  // JSON-LD Schema for LocalBusiness (upgraded from MedicalBusiness)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonLd: Record<string, any> = {
     '@context': 'https://schema.org',
-    '@type': 'MedicalBusiness',
+    '@type': 'LocalBusiness',
     additionalType: 'https://schema.org/Store',
     name: dispensary.name,
     description: dispensary.description,
@@ -172,6 +249,40 @@ export default async function DispensaryPage({ params }: Props) {
         worstRating: 1
       }
     } : {})
+  }
+
+  // Add hasMenu with product offers if we have menu data
+  if (menuProducts.length > 0) {
+    jsonLd.hasMenu = {
+      '@type': 'Menu',
+      name: `${dispensary.name} Menu`,
+      url: `https://leefii.com/dispensary/${dispensary.slug}#menu`,
+      hasMenuSection: Array.from(
+        menuProducts.reduce((cats, p) => {
+          if (!cats.has(p.category)) cats.set(p.category, [])
+          cats.get(p.category)!.push(p)
+          return cats
+        }, new Map<string, typeof menuProducts>())
+      ).map(([category, items]) => ({
+        '@type': 'MenuSection',
+        name: category.charAt(0).toUpperCase() + category.slice(1),
+        hasMenuItem: items.slice(0, 5).map((item) => ({
+          '@type': 'MenuItem',
+          name: item.name,
+          offers: {
+            '@type': 'Offer',
+            price: item.price,
+            priceCurrency: 'USD',
+            availability: 'https://schema.org/InStock',
+          },
+        })),
+      })),
+    }
+
+    // Add priceRange for LocalBusiness
+    if (lowestPrice !== null && highestPrice !== null) {
+      jsonLd.priceRange = `$${lowestPrice.toFixed(0)} - $${highestPrice.toFixed(0)}`
+    }
   }
 
   // BreadcrumbList Schema
@@ -317,6 +428,23 @@ export default async function DispensaryPage({ params }: Props) {
                 </div>
               )}
 
+              {/* Menu & Prices Section */}
+              {menuProducts.length > 0 && (
+                <div className="mb-8" id="menu">
+                  <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <DispensaryMenu
+                      products={menuProducts.map((p) => ({
+                        ...p,
+                        lastScrapedAt: p.lastScrapedAt.toISOString(),
+                      }))}
+                      dispensaryName={dispensary.name}
+                      dispensarySlug={dispensary.slug}
+                      lastScrapedAt={latestScrapeAt ? latestScrapeAt.toISOString() : null}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Hours */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
@@ -334,7 +462,7 @@ export default async function DispensaryPage({ params }: Props) {
                       {sortedHours.map((h) => {
                         const isToday = new Date().toLocaleString('en-US', { weekday: 'long' }).toUpperCase() === h.dayOfWeek
                         return (
-                          <div 
+                          <div
                             key={h.dayOfWeek}
                             className={`flex justify-between py-2 ${isToday ? 'font-semibold text-green-600' : 'text-gray-600'}`}
                           >
@@ -441,7 +569,7 @@ export default async function DispensaryPage({ params }: Props) {
                   {dispensary.website && (
                     <div>
                       <div className="text-sm text-gray-500 mb-1">Website</div>
-                      <a 
+                      <a
                         href={dispensary.website}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -523,6 +651,37 @@ export default async function DispensaryPage({ params }: Props) {
                     )}
                   </div>
                 </div>
+
+                {/* Menu summary in sidebar */}
+                {menuProducts.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    <div className="text-sm text-gray-500 mb-3">Menu</div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Products</span>
+                        <span className="font-medium text-gray-900">{menuProducts.length}</span>
+                      </div>
+                      {lowestPrice !== null && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Starting at</span>
+                          <span className="font-medium text-green-600">${lowestPrice.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {menuProducts.filter((p) => p.isOnSale).length > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>On sale</span>
+                          <span className="font-medium text-red-500">{menuProducts.filter((p) => p.isOnSale).length} items</span>
+                        </div>
+                      )}
+                    </div>
+                    <a
+                      href="#menu"
+                      className="mt-3 block text-center text-sm text-green-600 hover:text-green-700 font-medium"
+                    >
+                      View Full Menu ↓
+                    </a>
+                  </div>
+                )}
 
                 {/* Share */}
                 <div className="mt-6 pt-6 border-t border-gray-100">
