@@ -20,6 +20,7 @@ interface ProductResult {
     slug: string
     distance: number
     rating: number
+    reviewsCount: number
     city: string
     state: string
     phone: string | null
@@ -27,6 +28,12 @@ interface ProductResult {
     zipCode: string
     latitude: number
     longitude: number
+    hasDelivery: boolean
+    hasStorefront: boolean
+    hasCurbside: boolean
+    acceptsCreditCard: boolean
+    hasATM: boolean
+    licenseType: string
     isOpen: boolean
   }
 }
@@ -62,43 +69,49 @@ const STRAIN_COLORS: Record<string, string> = {
   sativa: 'bg-amber-100 text-amber-800',
 }
 
+const LICENSE_LABELS: Record<string, { label: string; color: string }> = {
+  MEDICAL: { label: 'Medical', color: 'bg-blue-100 text-blue-700' },
+  RECREATIONAL: { label: 'Recreational', color: 'bg-green-100 text-green-700' },
+  BOTH: { label: 'Medical & Rec', color: 'bg-purple-100 text-purple-700' },
+}
+
 // Sample data shown when no real products are available nearby
 const SAMPLE_PRODUCTS: ProductResult[] = [
   {
     id: 'sample-1', name: 'Blue Dream', brand: 'Cookies', category: 'flower',
     price: 25.00, originalPrice: 35.00, weight: '3.5g', thcContent: '24.3%',
     cbdContent: '0.1%', strainType: 'hybrid', isOnSale: true,
-    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 545-1234', address: '3251 E Colonial Dr', zipCode: '32803', latitude: 28.5505, longitude: -81.3464 },
+    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, reviewsCount: 312, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 545-1234', address: '3251 E Colonial Dr', zipCode: '32803', latitude: 28.5505, longitude: -81.3464, hasDelivery: true, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'MEDICAL' },
   },
   {
     id: 'sample-2', name: 'Blue Dream', brand: 'Trulieve', category: 'flower',
     price: 32.00, originalPrice: null, weight: '3.5g', thcContent: '22.8%',
     cbdContent: '0.2%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 237-0018', address: '4117 S Orange Blossom Trail', zipCode: '32839', latitude: 28.5123, longitude: -81.3992 },
+    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, reviewsCount: 187, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 237-0018', address: '4117 S Orange Blossom Trail', zipCode: '32839', latitude: 28.5123, longitude: -81.3992, hasDelivery: true, hasStorefront: true, hasCurbside: false, acceptsCreditCard: true, hasATM: false, licenseType: 'MEDICAL' },
   },
   {
     id: 'sample-3', name: 'Blue Dream Gummies 100mg', brand: 'Wana', category: 'edibles',
     price: 35.00, originalPrice: null, weight: '10pk', thcContent: '100mg total',
     cbdContent: null, strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, city: 'Orlando', state: 'FL', isOpen: false, phone: '(407) 545-5678', address: '551 N Semoran Blvd', zipCode: '32807', latitude: 28.5555, longitude: -81.3076 },
+    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, reviewsCount: 94, city: 'Orlando', state: 'FL', isOpen: false, phone: '(407) 545-5678', address: '551 N Semoran Blvd', zipCode: '32807', latitude: 28.5555, longitude: -81.3076, hasDelivery: true, hasStorefront: true, hasCurbside: true, acceptsCreditCard: false, hasATM: true, licenseType: 'MEDICAL' },
   },
   {
     id: 'sample-4', name: 'Blue Dream Live Resin Cart', brand: 'Select', category: 'vapes',
     price: 40.00, originalPrice: 55.00, weight: '0.5g', thcContent: '85.2%',
     cbdContent: null, strainType: 'hybrid', isOnSale: true,
-    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 613-2800', address: '993 N Semoran Blvd', zipCode: '32807', latitude: 28.5611, longitude: -81.3073 },
+    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, reviewsCount: 256, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 613-2800', address: '993 N Semoran Blvd', zipCode: '32807', latitude: 28.5611, longitude: -81.3073, hasDelivery: false, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'MEDICAL' },
   },
   {
     id: 'sample-5', name: 'Blue Dream', brand: 'Fluent', category: 'flower',
     price: 42.00, originalPrice: null, weight: '3.5g', thcContent: '21.5%',
     cbdContent: '0.3%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Fluent Cannabis', slug: '', distance: 5.4, rating: 3.9, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 988-5420', address: '8015 Turkey Lake Rd', zipCode: '32819', latitude: 28.4698, longitude: -81.4637 },
+    dispensary: { name: 'Fluent Cannabis', slug: '', distance: 5.4, rating: 3.9, reviewsCount: 68, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 988-5420', address: '8015 Turkey Lake Rd', zipCode: '32819', latitude: 28.4698, longitude: -81.4637, hasDelivery: true, hasStorefront: true, hasCurbside: false, acceptsCreditCard: true, hasATM: false, licenseType: 'MEDICAL' },
   },
   {
     id: 'sample-6', name: 'Blue Dream Premium', brand: 'Jungle Boys', category: 'flower',
     price: 48.00, originalPrice: null, weight: '3.5g', thcContent: '28.1%',
     cbdContent: '0.1%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 476-5000', address: '3812 W Colonial Dr', zipCode: '32808', latitude: 28.5484, longitude: -81.4203 },
+    dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, reviewsCount: 145, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 476-5000', address: '3812 W Colonial Dr', zipCode: '32808', latitude: 28.5484, longitude: -81.4203, hasDelivery: false, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'BOTH' },
   },
 ]
 
@@ -121,24 +134,38 @@ function ProductDrawer({ product, onClose }: { product: ProductResult; onClose: 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null
 
-  const dispensary = product.dispensary
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${dispensary.latitude},${dispensary.longitude}`
-  const profileUrl = dispensary.slug
-    ? `/dispensary/${dispensary.slug}`
-    : `/dispensaries/${dispensary.state.toLowerCase()}/${dispensary.city.toLowerCase().replace(/\s+/g, '-')}`
+  const d = product.dispensary
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${d.latitude},${d.longitude}`
+  // State slugs use full name (e.g. "florida"), not abbreviation
+  const STATE_SLUG_MAP: Record<string, string> = {
+    'AL': 'alabama', 'AK': 'alaska', 'AZ': 'arizona', 'AR': 'arkansas', 'CA': 'california',
+    'CO': 'colorado', 'CT': 'connecticut', 'DE': 'delaware', 'FL': 'florida', 'GA': 'georgia',
+    'HI': 'hawaii', 'ID': 'idaho', 'IL': 'illinois', 'IN': 'indiana', 'IA': 'iowa',
+    'KS': 'kansas', 'KY': 'kentucky', 'LA': 'louisiana', 'ME': 'maine', 'MD': 'maryland',
+    'MA': 'massachusetts', 'MI': 'michigan', 'MN': 'minnesota', 'MS': 'mississippi', 'MO': 'missouri',
+    'MT': 'montana', 'NE': 'nebraska', 'NV': 'nevada', 'NH': 'new-hampshire', 'NJ': 'new-jersey',
+    'NM': 'new-mexico', 'NY': 'new-york', 'NC': 'north-carolina', 'ND': 'north-dakota', 'OH': 'ohio',
+    'OK': 'oklahoma', 'OR': 'oregon', 'PA': 'pennsylvania', 'RI': 'rhode-island', 'SC': 'south-carolina',
+    'SD': 'south-dakota', 'TN': 'tennessee', 'TX': 'texas', 'UT': 'utah', 'VT': 'vermont',
+    'VA': 'virginia', 'WA': 'washington', 'WV': 'west-virginia', 'WI': 'wisconsin', 'WY': 'wyoming',
+    'DC': 'district-of-columbia',
+  }
+  const stateSlug = STATE_SLUG_MAP[d.state.toUpperCase()] || d.state.toLowerCase()
+  const citySlug = d.city.toLowerCase().replace(/\s+/g, '-')
+  const profileUrl = d.slug
+    ? `/dispensary/${d.slug}`
+    : `/dispensaries/${stateSlug}/${citySlug}`
+  const license = LICENSE_LABELS[d.licenseType] || LICENSE_LABELS.MEDICAL
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[24px] shadow-2xl max-h-[85vh] overflow-y-auto animate-slideUp">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[24px] shadow-2xl max-h-[88vh] overflow-y-auto animate-slideUp">
         {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-white rounded-t-[24px] z-10">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
@@ -185,7 +212,7 @@ function ProductDrawer({ product, onClose }: { product: ProductResult; onClose: 
             )}
 
             {/* Product specs */}
-            <div className="flex justify-center gap-4 mt-3 flex-wrap">
+            <div className="flex justify-center gap-3 mt-3 flex-wrap">
               {product.thcContent && (
                 <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">THC: <strong>{product.thcContent}</strong></span>
               )}
@@ -200,37 +227,79 @@ function ProductDrawer({ product, onClose }: { product: ProductResult; onClose: 
 
           {/* ── Dispensary Info Card ── */}
           <div className="bg-gray-50 rounded-2xl p-4 mb-4">
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <div>
-                <h4 className="text-base font-bold text-gray-900">{dispensary.name}</h4>
-                <p className="text-sm text-gray-600 mt-0.5">{dispensary.address}</p>
-                <p className="text-sm text-gray-600">{dispensary.city}, {dispensary.state} {dispensary.zipCode}</p>
+                <h4 className="text-base font-bold text-gray-900">{d.name}</h4>
+                <p className="text-sm text-gray-600 mt-0.5">{d.address}</p>
+                <p className="text-sm text-gray-600">{d.city}, {d.state} {d.zipCode}</p>
               </div>
               <div className="text-right flex-shrink-0 ml-3">
                 <div className="flex items-center gap-1">
                   <span className="text-yellow-500">★</span>
-                  <span className="text-sm font-bold text-gray-900">{dispensary.rating?.toFixed(1)}</span>
+                  <span className="text-sm font-bold text-gray-900">{d.rating?.toFixed(1)}</span>
                 </div>
-                <div className="text-xs text-gray-500">{dispensary.distance} mi away</div>
+                <div className="text-xs text-gray-500">{d.reviewsCount} reviews</div>
+                <div className="text-xs text-gray-500">{d.distance} mi away</div>
               </div>
             </div>
 
-            {/* Open/Closed badge */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-              dispensary.isOpen
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${dispensary.isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-              {dispensary.isOpen ? 'Open Now' : 'Closed'}
+            {/* Status badges row */}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {/* Open/Closed */}
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                d.isOpen ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${d.isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                {d.isOpen ? 'Open Now' : 'Closed'}
+              </span>
+
+              {/* License type */}
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${license.color}`}>
+                {license.label}
+              </span>
+
+              {/* Delivery */}
+              {d.hasDelivery && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
+                  🚗 Delivery
+                </span>
+              )}
+
+              {/* Storefront */}
+              {d.hasStorefront && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700">
+                  🏪 Storefront
+                </span>
+              )}
+
+              {/* Curbside */}
+              {d.hasCurbside && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-700">
+                  🅿️ Curbside
+                </span>
+              )}
+
+              {/* Credit Cards */}
+              {d.acceptsCreditCard && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                  💳 Cards
+                </span>
+              )}
+
+              {/* ATM */}
+              {d.hasATM && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                  🏧 ATM
+                </span>
+              )}
             </div>
           </div>
 
           {/* ── Action Buttons ── */}
           <div className="flex gap-3 mb-4">
-            {dispensary.phone && (
+            {d.phone && (
               <a
-                href={`tel:${dispensary.phone.replace(/[^\d+]/g, '')}`}
+                href={`tel:${d.phone.replace(/[^\d+]/g, '')}`}
                 className="flex-1 flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base hover:bg-green-700 transition no-underline shadow-lg shadow-green-600/20"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
@@ -248,23 +317,68 @@ function ProductDrawer({ product, onClose }: { product: ProductResult; onClose: 
             </a>
           </div>
 
+          {/* Delivery CTA if available */}
+          {d.hasDelivery && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 mb-4 flex items-center gap-3">
+              <span className="text-2xl">🚗</span>
+              <div className="flex-1">
+                <h5 className="text-sm font-bold text-blue-900">Delivery Available</h5>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  {d.name} delivers! Call to ask about delivery options for this product.
+                </p>
+              </div>
+              {d.phone && (
+                <a
+                  href={`tel:${d.phone.replace(/[^\d+]/g, '')}`}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold no-underline hover:bg-blue-700 transition flex-shrink-0"
+                >
+                  Call for Delivery
+                </a>
+              )}
+            </div>
+          )}
+
           {/* ── How to Get This Deal ── */}
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
             <h5 className="text-sm font-bold text-amber-900 mb-1.5">💡 How to get this deal</h5>
             <p className="text-sm text-amber-800 leading-relaxed">
               {product.isOnSale
-                ? `Visit ${dispensary.name} and ask your budtender about their ${product.name} special. This product is currently on sale — limited availability.`
-                : `Visit ${dispensary.name} and ask for ${product.name} by ${product.brand || 'name'}. Call ahead to confirm availability.`
+                ? `Visit ${d.name} and ask your budtender about their ${product.name} special. This product is currently on sale — limited availability.`
+                : `Visit ${d.name} and ask for ${product.name} by ${product.brand || 'name'}. Call ahead to confirm availability.`
               }
             </p>
           </div>
+
+          {/* ── Reviews Summary ── */}
+          {d.reviewsCount > 0 && (
+            <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <h5 className="text-sm font-bold text-gray-900">Customer Reviews</h5>
+              </div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span key={star} className={`text-lg ${star <= Math.round(d.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+                  ))}
+                </div>
+                <span className="text-sm font-bold text-gray-900">{d.rating?.toFixed(1)}</span>
+                <span className="text-sm text-gray-500">({d.reviewsCount} reviews)</span>
+              </div>
+              <Link
+                href={profileUrl}
+                className="text-sm text-green-700 font-semibold hover:text-green-800 transition no-underline"
+              >
+                Read all reviews →
+              </Link>
+            </div>
+          )}
 
           {/* ── View Dispensary Profile Link ── */}
           <Link
             href={profileUrl}
             className="block text-center text-sm text-green-700 font-semibold hover:text-green-800 transition py-2 no-underline"
           >
-            View full {dispensary.name} profile →
+            View full {d.name} profile →
           </Link>
         </div>
       </div>
@@ -322,7 +436,6 @@ export default function PriceIntelligence() {
         const first = data.products[0]
         setLocationLabel(`${first.dispensary.city}, ${first.dispensary.state}`)
       } else {
-        // No real data — show sample preview
         setProducts(SAMPLE_PRODUCTS)
         setMeta(SAMPLE_META)
         setFilters(SAMPLE_FILTERS)
@@ -330,7 +443,6 @@ export default function PriceIntelligence() {
         if (!locationLabel) setLocationLabel('Orlando, FL')
       }
     } catch {
-      // On error, show sample preview
       setProducts(SAMPLE_PRODUCTS)
       setMeta(SAMPLE_META)
       setFilters(SAMPLE_FILTERS)
@@ -550,7 +662,7 @@ export default function PriceIntelligence() {
             <div className="flex flex-col gap-2">
               {products.map((product, idx) => {
                 const isBest = bestPrice?.id === product.id
-                const savings = product.originalPrice && product.originalPrice > product.price
+                const cardSavings = product.originalPrice && product.originalPrice > product.price
                   ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                   : null
                 const isHighest = idx === products.length - 1 && products.length > 2
@@ -613,6 +725,9 @@ export default function PriceIntelligence() {
                         <span className={`text-[10px] font-semibold ${product.dispensary.isOpen ? 'text-green-600' : 'text-red-500'}`}>
                           {product.dispensary.isOpen ? 'Open' : 'Closed'}
                         </span>
+                        {product.dispensary.hasDelivery && (
+                          <span className="text-[10px] font-semibold text-blue-600">🚗 Delivers</span>
+                        )}
                       </div>
                     </div>
 
@@ -629,12 +744,12 @@ export default function PriceIntelligence() {
                       {product.weight && (
                         <div className="text-[10px] text-gray-500 mt-0.5">per {product.weight}</div>
                       )}
-                      {savings && (
+                      {cardSavings && (
                         <div className="inline-block mt-1 px-2 py-0.5 rounded bg-green-100 text-green-800 text-[10px] font-bold">
-                          SAVE {savings}%
+                          SAVE {cardSavings}%
                         </div>
                       )}
-                      {isHighest && !savings && (
+                      {isHighest && !cardSavings && (
                         <div className="text-[10px] font-semibold text-red-500 mt-1">92% more than best</div>
                       )}
                     </div>
