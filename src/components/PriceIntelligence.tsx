@@ -113,16 +113,40 @@ const SAMPLE_PRODUCTS: ProductResult[] = [
     cbdContent: '0.1%', strainType: 'hybrid', isOnSale: false,
     dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, reviewsCount: 145, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 476-5000', address: '3812 W Colonial Dr', zipCode: '32808', latitude: 28.5484, longitude: -81.4203, hasDelivery: false, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'BOTH' },
   },
+  {
+    id: 'sample-7', name: 'Blue Dream Shatter', brand: 'MPX', category: 'concentrates',
+    price: 55.00, originalPrice: 70.00, weight: '1g', thcContent: '82.4%',
+    cbdContent: null, strainType: 'hybrid', isOnSale: true,
+    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, reviewsCount: 312, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 545-1234', address: '3251 E Colonial Dr', zipCode: '32803', latitude: 28.5505, longitude: -81.3464, hasDelivery: true, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'MEDICAL' },
+  },
+  {
+    id: 'sample-8', name: 'Blue Dream Live Rosin', brand: 'Blue River', category: 'concentrates',
+    price: 65.00, originalPrice: null, weight: '1g', thcContent: '78.9%',
+    cbdContent: null, strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, reviewsCount: 256, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 613-2800', address: '993 N Semoran Blvd', zipCode: '32807', latitude: 28.5611, longitude: -81.3073, hasDelivery: false, hasStorefront: true, hasCurbside: true, acceptsCreditCard: true, hasATM: true, licenseType: 'MEDICAL' },
+  },
+  {
+    id: 'sample-9', name: 'Blue Dream Pre-Roll 5pk', brand: 'Cookies', category: 'pre-rolls',
+    price: 30.00, originalPrice: 38.00, weight: '3.5g', thcContent: '23.1%',
+    cbdContent: '0.1%', strainType: 'hybrid', isOnSale: true,
+    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, reviewsCount: 187, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 237-0018', address: '4117 S Orange Blossom Trail', zipCode: '32839', latitude: 28.5123, longitude: -81.3992, hasDelivery: true, hasStorefront: true, hasCurbside: false, acceptsCreditCard: true, hasATM: false, licenseType: 'MEDICAL' },
+  },
+  {
+    id: 'sample-10', name: 'Blue Dream King Size', brand: 'Jeeter', category: 'pre-rolls',
+    price: 18.00, originalPrice: null, weight: '1g', thcContent: '25.7%',
+    cbdContent: null, strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, reviewsCount: 94, city: 'Orlando', state: 'FL', isOpen: false, phone: '(407) 545-5678', address: '551 N Semoran Blvd', zipCode: '32807', latitude: 28.5555, longitude: -81.3076, hasDelivery: true, hasStorefront: true, hasCurbside: true, acceptsCreditCard: false, hasATM: true, licenseType: 'MEDICAL' },
+  },
 ]
 
-const SAMPLE_META = { total: 142, cheapest: 25, average: 37 }
+const SAMPLE_META = { total: 10, cheapest: 18, average: 37 }
 const SAMPLE_FILTERS: ApiResponse['filters'] = {
   categories: [
-    { name: 'flower', count: 48 },
-    { name: 'edibles', count: 36 },
-    { name: 'vapes', count: 28 },
-    { name: 'concentrates', count: 18 },
-    { name: 'pre-rolls', count: 12 },
+    { name: 'flower', count: 4 },
+    { name: 'edibles', count: 1 },
+    { name: 'vapes', count: 1 },
+    { name: 'concentrates', count: 2 },
+    { name: 'pre-rolls', count: 2 },
   ],
   brands: [],
   weights: [],
@@ -488,8 +512,48 @@ export default function PriceIntelligence() {
     }
   }
 
+  // Local filtering & sorting for sample/preview data
+  const filterAndSortSamples = useCallback((cat: string | null, sortBy: string) => {
+    let filtered = cat
+      ? SAMPLE_PRODUCTS.filter(p => p.category === cat)
+      : [...SAMPLE_PRODUCTS]
+
+    // Sort
+    switch (sortBy) {
+      case 'price_asc':
+        filtered.sort((a, b) => a.price - b.price)
+        break
+      case 'distance':
+        filtered.sort((a, b) => a.dispensary.distance - b.dispensary.distance)
+        break
+      case 'rating':
+        filtered.sort((a, b) => (b.dispensary.rating || 0) - (a.dispensary.rating || 0))
+        break
+      case 'price_drop':
+        filtered.sort((a, b) => {
+          const dropA = a.originalPrice ? ((a.originalPrice - a.price) / a.originalPrice) : 0
+          const dropB = b.originalPrice ? ((b.originalPrice - b.price) / b.originalPrice) : 0
+          return dropB - dropA
+        })
+        break
+    }
+
+    setProducts(filtered)
+    // Update meta to reflect filtered count
+    const cheapest = filtered.length > 0 ? Math.min(...filtered.map(p => p.price)) : null
+    const average = filtered.length > 0 ? Math.round(filtered.reduce((s, p) => s + p.price, 0) / filtered.length) : null
+    setMeta({ total: SAMPLE_PRODUCTS.length, cheapest, average })
+  }, [])
+
   const handleCategoryFilter = (cat: string | null) => {
     setActiveCategory(cat)
+
+    // If in preview mode, filter sample data locally
+    if (isPreview) {
+      filterAndSortSamples(cat, sort)
+      return
+    }
+
     const stored = sessionStorage.getItem('leefii_user_location')
     if (stored) {
       try {
@@ -505,6 +569,13 @@ export default function PriceIntelligence() {
 
   const handleSort = (sortBy: string) => {
     setSort(sortBy)
+
+    // If in preview mode, sort sample data locally
+    if (isPreview) {
+      filterAndSortSamples(activeCategory, sortBy)
+      return
+    }
+
     const stored = sessionStorage.getItem('leefii_user_location')
     if (stored) {
       try {
