@@ -50,7 +50,8 @@ export default async function ConditionPage({ params }: Props) {
   const meta = CONDITION_META[conditionSlug]
   if (!meta) notFound()
 
-  const strains = await prisma.strain.findMany({
+  // Try condition-specific strains first, fall back to popular strains
+  let strains = await prisma.strain.findMany({
     where: { conditions: { has: meta.name }, isActive: true },
     orderBy: [{ rating: 'desc' }, { reviewsCount: 'desc' }],
     take: 50,
@@ -61,9 +62,24 @@ export default async function ConditionPage({ params }: Props) {
     },
   })
 
-  if (strains.length === 0) notFound()
+  let totalCount = await prisma.strain.count({ where: { conditions: { has: meta.name }, isActive: true } })
+  let showingPopular = false
 
-  const totalCount = await prisma.strain.count({ where: { conditions: { has: meta.name }, isActive: true } })
+  // If no condition-specific strains, show popular strains instead
+  if (strains.length === 0) {
+    strains = await prisma.strain.findMany({
+      where: { isActive: true },
+      orderBy: [{ rating: 'desc' }, { reviewsCount: 'desc' }],
+      take: 20,
+      select: {
+        slug: true, name: true, type: true, thcMin: true, thcMax: true,
+        cbdMin: true, cbdMax: true, rating: true, reviewsCount: true,
+        effects: true, conditions: true, description: true,
+      },
+    })
+    totalCount = strains.length
+    showingPopular = true
+  }
 
   const typeBreakdown = {
     indica: strains.filter((s) => s.type === 'INDICA').length,
@@ -135,6 +151,13 @@ export default async function ConditionPage({ params }: Props) {
         </div>
 
         <section className="mb-12">
+          {showingPopular && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-center">
+              <p className="text-sm text-amber-800">
+                <strong>Coming soon:</strong> We&apos;re building our strain data for {meta.name}. In the meantime, browse these popular strains — many users report they may help with {meta.name.toLowerCase()}.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {strains.map((s) => (
               <Link key={s.slug} href={`/strains/${s.slug}`} className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-100">

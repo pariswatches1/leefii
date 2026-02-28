@@ -47,7 +47,8 @@ export default async function TerpenePage({ params }: Props) {
   const meta = TERPENE_META[terpeneSlug]
   if (!meta) notFound()
 
-  const strains = await prisma.strain.findMany({
+  // Try terpene-specific strains first, fall back to popular strains
+  let strains = await prisma.strain.findMany({
     where: { [meta.field]: { not: null, gt: 0 }, isActive: true },
     orderBy: { [meta.field]: 'desc' },
     take: 50,
@@ -60,9 +61,26 @@ export default async function TerpenePage({ params }: Props) {
     },
   })
 
-  if (strains.length === 0) notFound()
+  let totalCount = await prisma.strain.count({ where: { [meta.field]: { not: null, gt: 0 }, isActive: true } })
+  let showingPopular = false
 
-  const totalCount = await prisma.strain.count({ where: { [meta.field]: { not: null, gt: 0 }, isActive: true } })
+  // If no terpene-specific strains, show popular strains instead
+  if (strains.length === 0) {
+    strains = await prisma.strain.findMany({
+      where: { isActive: true },
+      orderBy: [{ rating: 'desc' }, { reviewsCount: 'desc' }],
+      take: 20,
+      select: {
+        slug: true, name: true, type: true, thcMin: true, thcMax: true,
+        rating: true, reviewsCount: true, effects: true, description: true,
+        terpMyrcene: true, terpLimonene: true, terpCaryophyllene: true,
+        terpPinene: true, terpLinalool: true, terpHumulene: true,
+        terpTerpinolene: true, terpOcimene: true,
+      },
+    })
+    totalCount = strains.length
+    showingPopular = true
+  }
 
   const typeBreakdown = {
     indica: strains.filter((s) => s.type === 'INDICA').length,
@@ -141,6 +159,13 @@ export default async function TerpenePage({ params }: Props) {
         </div>
 
         <section className="mb-12">
+          {showingPopular && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-center">
+              <p className="text-sm text-amber-800">
+                <strong>Coming soon:</strong> We&apos;re building our terpene data for {meta.name}. In the meantime, browse these popular strains.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {strains.map((s) => {
               const terpValue = (s as any)[meta.field] as number | null
