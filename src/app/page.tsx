@@ -47,6 +47,11 @@ const NearbyDoctors = dynamic(
   }
 );
 
+const PriceIntelligence = dynamic(
+  () => import('@/components/PriceIntelligence'),
+  { ssr: false }
+);
+
 export default function Home() {
   const websiteLd = {
     '@context': 'https://schema.org',
@@ -64,12 +69,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-400 via-green-400 to-emerald-500 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(165deg, #34d399 0%, #4ade80 18%, #a3e635 42%, #d4e026 62%, #facc15 78%, #fb923c 100%)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }} />
       {/* Background blur effects */}
-      <div className="absolute top-10 left-1/4 w-80 h-80 bg-yellow-300/30 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-lime-200/40 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute top-1/2 right-10 w-64 h-64 bg-green-300/30 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-10 left-1/4 w-80 h-80 bg-yellow-300/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-lime-200/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/2 right-10 w-64 h-64 bg-orange-300/15 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Header - kept but visually lighter */}
       <header className="relative z-10 px-6 lg:px-8 py-4">
@@ -99,11 +104,11 @@ export default function Home() {
               <Link href="/strains" className="text-gray-700 hover:text-gray-900 transition">
                 Strains
               </Link>
+              <Link href="/shop" className="text-green-700 font-semibold hover:text-green-800 transition">
+                Prices
+              </Link>
               <Link href="/deals" className="text-gray-700 hover:text-gray-900 transition">
                 Deals
-              </Link>
-              <Link href="/shop" className="text-gray-700 hover:text-gray-900 transition">
-                Shop
               </Link>
               <Link href="/news" className="text-gray-700 hover:text-gray-900 transition">
                 News
@@ -126,8 +131,8 @@ export default function Home() {
                 { href: '/delivery', label: 'Delivery' },
                 { href: '/doctors', label: 'Doctors' },
                 { href: '/strains', label: 'Strains' },
+                { href: '/shop', label: 'Prices' },
                 { href: '/deals', label: 'Deals' },
-                { href: '/shop', label: 'Shop' },
                 { href: '/news', label: 'News' },
                 { href: '/blog', label: 'Blog' },
                 { href: '/sell', label: 'Sell on Leefii', highlight: true },
@@ -239,6 +244,11 @@ export default function Home() {
               <div className="text-2xl mb-2">📰</div>
               <div className="font-medium text-gray-900 text-sm group-hover:text-lime-800 transition">News</div>
             </Link>
+          </div>
+
+          {/* Price Intelligence Section */}
+          <div className="mb-8">
+            <PriceIntelligence />
           </div>
 
           {/* Nearby Dispensaries Section */}
