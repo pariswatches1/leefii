@@ -27,10 +27,26 @@ type Props = {
 // Default location for development (Miami, FL)
 const DEV_DEFAULT_LOCATION = { lat: 25.7617, lng: -80.1918, city: 'Miami', state: 'Florida' }
 
-// Get location from IP address
+// Get location from Vercel geo headers (fast) or IP lookup (fallback)
 async function getLocationFromIP(): Promise<{ lat: number; lng: number; city: string; state: string } | null> {
   try {
     const headersList = await headers()
+
+    // Try Vercel geolocation headers first (instant, no API call)
+    const vercelLat = headersList.get('x-vercel-ip-latitude')
+    const vercelLng = headersList.get('x-vercel-ip-longitude')
+    const vercelCity = headersList.get('x-vercel-ip-city')
+    const vercelRegion = headersList.get('x-vercel-ip-country-region')
+
+    if (vercelLat && vercelLng) {
+      return {
+        lat: parseFloat(vercelLat),
+        lng: parseFloat(vercelLng),
+        city: vercelCity ? decodeURIComponent(vercelCity) : '',
+        state: vercelRegion || '',
+      }
+    }
+
     const forwardedFor = headersList.get('x-forwarded-for')
     const realIp = headersList.get('x-real-ip')
     const ip = forwardedFor?.split(',')[0]?.trim() || realIp || ''
@@ -359,10 +375,33 @@ export default async function SearchPage({ searchParams }: Props) {
           take: 20,
           orderBy: { name: 'asc' }
         })
+
+        // If we found strains but no dispensaries by name, show nearby dispensaries
+        // so users can call/visit them for the strain they searched
+        if (strains.length > 0 && dispensaries.length === 0 && userLat && userLng) {
+          const nearbyRaw = await prisma.dispensary.findMany({
+            where: {
+              isActive: true,
+              ...(userLocation?.state ? { state: { name: userLocation.state } } : {}),
+            },
+            include: { city: true, state: true },
+            take: 200,
+          })
+
+          dispensaries = nearbyRaw
+            .map(d => ({
+              ...d,
+              distance: calculateDistance(userLat!, userLng!, d.latitude, d.longitude)
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 12)
+        }
       }
     }
   }
 
+  // Flag: did we find strains (to show "dispensaries near you that may carry X")
+  const strainSearched = strains.length > 0 && !aiMode
   const hasResults = dispensaries.length > 0 || cities.length > 0 || strains.length > 0
 
   return (
@@ -507,29 +546,79 @@ export default async function SearchPage({ searchParams }: Props) {
 
           {/* Regular Strains Results */}
           {!aiMode && strains.length > 0 && (
-            <div className="mb-10">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Strains</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {strains.map((strain) => (
-                  <Link
-                    key={strain.id}
-                    href={`/strains/${strain.slug}`}
-                    className="block p-4 bg-white border border-gray-200 rounded-xl hover:border-primary-500 hover:shadow transition-all"
-                  >
-                    <div className="font-semibold text-gray-900 hover:text-primary-600">{strain.name}</div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                        strain.type === 'SATIVA' ? 'bg-yellow-100 text-yellow-800' :
-                        strain.type === 'INDICA' ? 'bg-purple-100 text-purple-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {strain.type}
-                      </span>
-                      {strain.thcContent && <span className="ml-2">THC: {strain.thcContent}%</span>}
+            <div className="mb-6">
+              {strains.length === 1 && dispensaries.length > 0 ? (
+                /* Single strain match with nearby dispensaries → compact strain info card */
+                <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-2xl p-5 mb-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-3xl">🌿</span>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">{strains[0].name}</h2>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          strains[0].type === 'SATIVA' ? 'bg-yellow-100 text-yellow-800' :
+                          strains[0].type === 'INDICA' ? 'bg-purple-100 text-purple-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {strains[0].type?.charAt(0) + strains[0].type?.slice(1).toLowerCase()}
+                        </span>
+                        {strains[0].thcMax && <span className="text-sm text-gray-600">THC: {strains[0].thcMax}%</span>}
+                        {strains[0].rating > 0 && (
+                          <span className="text-sm text-gray-600">
+                            <span className="text-yellow-500">★</span> {strains[0].rating.toFixed(1)}
+                          </span>
+                        )}
+                        {strains[0].effects?.slice(0, 3).map((e: string) => (
+                          <span key={e} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{e}</span>
+                        ))}
+                      </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
+                    <Link
+                      href={`/strains/${strains[0].slug}`}
+                      className="ml-auto text-sm text-green-700 font-semibold hover:text-green-800 transition"
+                    >
+                      View full strain details →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                /* Multiple strains or no dispensaries → grid view */
+                <>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Strains</h2>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {strains.map((strain) => (
+                      <Link
+                        key={strain.id}
+                        href={`/strains/${strain.slug}`}
+                        className="block p-4 bg-white border border-gray-200 rounded-xl hover:border-green-500 hover:shadow transition-all"
+                      >
+                        <div className="font-semibold text-gray-900 hover:text-green-600">{strain.name}</div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                            strain.type === 'SATIVA' ? 'bg-yellow-100 text-yellow-800' :
+                            strain.type === 'INDICA' ? 'bg-purple-100 text-purple-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {strain.type}
+                          </span>
+                          {strain.thcContent && <span className="ml-2">THC: {strain.thcContent}%</span>}
+                          {strain.thcMax && !strain.thcContent && <span className="ml-2">THC: {strain.thcMax}%</span>}
+                          {strain.rating > 0 && (
+                            <span className="ml-2">★ {strain.rating.toFixed(1)}</span>
+                          )}
+                        </div>
+                        {strain.effects && strain.effects.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {strain.effects.slice(0, 3).map((e: string) => (
+                              <span key={e} className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{e}</span>
+                            ))}
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -558,49 +647,111 @@ export default async function SearchPage({ searchParams }: Props) {
           {!aiMode && dispensaries.length > 0 && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                Dispensaries
-                {userLocation && (
-                  <span className="text-sm font-normal text-gray-500 flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    near {userLocation.city}, {userLocation.state}
-                  </span>
+                {strainSearched ? (
+                  <>
+                    <span>🏪</span>
+                    Dispensaries near you
+                    {strains[0] && (
+                      <span className="text-sm font-normal text-gray-500">
+                        that may carry {strains[0].name}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    Dispensaries
+                    {userLocation && (
+                      <span className="text-sm font-normal text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        near {userLocation.city}, {userLocation.state}
+                      </span>
+                    )}
+                  </>
                 )}
               </h2>
-              <div className="space-y-4">
-                {dispensaries.map((dispensary) => (
-                  <Link
-                    key={dispensary.id}
-                    href={`/dispensary/${dispensary.slug}`}
-                    className="block p-5 bg-white border border-gray-200 rounded-xl hover:border-primary-500 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="text-lg font-semibold text-gray-900 hover:text-primary-600">
-                          {dispensary.name}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-1">
-                          {dispensary.address}, {dispensary.city.name}, {dispensary.state.abbreviation} {dispensary.zipCode}
-                        </div>
-                        {dispensary.phone && (
-                          <div className="text-sm text-gray-500 mt-1">{dispensary.phone}</div>
-                        )}
-                        {dispensary.distance !== undefined && (
-                          <div className="text-sm text-lime-600 font-medium mt-1">
-                            {dispensary.distance.toFixed(1)} miles away
+
+              {strainSearched && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+                  <p className="text-sm text-green-800">
+                    <strong>Tip:</strong> Call ahead to confirm they have <strong>{strains[0]?.name}</strong> in stock. Mention you found them on Leefii!
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {dispensaries.map((dispensary) => {
+                  const mapsUrl = dispensary.latitude && dispensary.longitude
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${dispensary.latitude},${dispensary.longitude}`
+                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dispensary.address + ', ' + dispensary.city.name + ', ' + dispensary.state.abbreviation)}`
+
+                  return (
+                    <div
+                      key={dispensary.id}
+                      className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <Link
+                            href={`/dispensary/${dispensary.slug}`}
+                            className="text-lg font-semibold text-gray-900 hover:text-green-600 transition"
+                          >
+                            {dispensary.name}
+                          </Link>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {dispensary.address}, {dispensary.city.name}, {dispensary.state.abbreviation} {dispensary.zipCode}
                           </div>
-                        )}
+                          <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            {dispensary.distance !== undefined && (
+                              <span className="text-sm text-green-600 font-semibold">
+                                📍 {dispensary.distance.toFixed(1)} mi
+                              </span>
+                            )}
+                            {dispensary.rating > 0 && (
+                              <span className="text-sm text-gray-600">
+                                <span className="text-yellow-500">★</span> {dispensary.rating.toFixed(1)}
+                                {dispensary.reviewsCount > 0 && (
+                                  <span className="text-gray-400"> ({dispensary.reviewsCount})</span>
+                                )}
+                              </span>
+                            )}
+                            {dispensary.hasDelivery && (
+                              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">🚗 Delivery</span>
+                            )}
+                            {dispensary.isOpen !== undefined && (
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                dispensary.isOpen ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50'
+                              }`}>
+                                {dispensary.isOpen ? '● Open' : '● Closed'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          {dispensary.phone && (
+                            <a
+                              href={`tel:${dispensary.phone.replace(/[^\d+]/g, '')}`}
+                              className="flex items-center gap-1.5 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition no-underline shadow-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              📞 Call
+                            </a>
+                          )}
+                          <a
+                            href={mapsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition no-underline shadow-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            🗺️ Directions
+                          </a>
+                        </div>
                       </div>
-                      {dispensary.rating > 0 && (
-                        <div className="text-right">
-                          <div className="inline-flex items-center px-2 py-1 bg-yellow-50 rounded-lg">
-                            <span className="text-yellow-500">★</span>
-                            <span className="ml-1 font-semibold">{dispensary.rating.toFixed(1)}</span>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </Link>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
