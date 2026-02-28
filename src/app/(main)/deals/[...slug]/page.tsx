@@ -1,8 +1,14 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getDealPageBySlug, getAllDealPageSlugs } from '@/data/deal-categories'
+
+const CopyCodeButton = dynamic(() => import('@/components/CopyCodeButton'), { ssr: false })
+const DealViewTracker = dynamic(() => import('@/components/DealViewTracker'), { ssr: false })
+const FavoriteButton = dynamic(() => import('@/components/FavoriteButton'), { ssr: false })
+const ShareButtons = dynamic(() => import('@/components/ShareButtons'), { ssr: false })
 
 type Props = {
   params: Promise<{ slug: string[] }>
@@ -101,15 +107,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Individual deal page
     const deal = await prisma.deal.findFirst({
       where: { slug: slugArr[0], isActive: true },
-      select: { title: true, description: true, dispensaryName: true },
+      select: { title: true, description: true, dispensaryName: true, dispensarySlug: true, stateSlug: true, citySlug: true, discountType: true, discountValue: true },
     })
     if (deal) {
-      const title = `${deal.title}${deal.dispensaryName ? ` — ${deal.dispensaryName}` : ''}`
-      const description = deal.description || `${deal.title} — find this cannabis deal and more dispensary discounts on Leefii.`
+      const dispCity = deal.dispensarySlug
+        ? await prisma.dispensary.findUnique({
+            where: { slug: deal.dispensarySlug },
+            select: { city: { select: { name: true } }, state: { select: { abbreviation: true } }, imageUrl: true },
+          })
+        : null
+      const locationStr = dispCity ? ` in ${dispCity.city.name}, ${dispCity.state.abbreviation}` : ''
+      const discountStr = deal.discountValue
+        ? deal.discountType === 'percent' ? `${deal.discountValue}% off` :
+          deal.discountType === 'dollar' ? `$${deal.discountValue} off` :
+          deal.discountType === 'bogo' ? 'BOGO' : ''
+        : ''
+      const title = `${deal.title}${deal.dispensaryName ? ` at ${deal.dispensaryName}` : ''}${locationStr}`
+      const description = deal.description
+        || `${discountStr ? discountStr + ' — ' : ''}${deal.title}${deal.dispensaryName ? ` at ${deal.dispensaryName}` : ''}${locationStr}. Find cannabis deals and dispensary discounts on Leefii.`
       return {
         title,
         description,
-        openGraph: { title, description, url: `https://leefii.com/deals/${slugArr[0]}`, siteName: 'Leefii' },
+        openGraph: {
+          title, description,
+          url: `https://leefii.com/deals/${slugArr[0]}`,
+          siteName: 'Leefii',
+          ...(dispCity?.imageUrl ? { images: [{ url: dispCity.imageUrl }] } : {}),
+        },
         twitter: { card: 'summary_large_image', title, description },
         alternates: { canonical: `https://leefii.com/deals/${slugArr[0]}` },
       }
@@ -231,7 +255,7 @@ function formatExpiry(endDate: Date | null, isOngoing: boolean): { label: string
 function DealCard({ deal }: { deal: DealRow }) {
   const discount = formatDiscount(deal.discountValue, deal.discountType)
   const expiry = formatExpiry(deal.endDate, deal.isOngoing)
-  const href = deal.dispensarySlug ? `/dispensary/${deal.dispensarySlug}` : '/dispensaries'
+  const href = `/deals/${deal.slug}`
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition relative flex flex-col">
@@ -277,7 +301,7 @@ function DealCard({ deal }: { deal: DealRow }) {
         href={href}
         className="inline-flex items-center justify-center w-full mt-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
       >
-        View Deal
+        See Details
       </Link>
     </div>
   )
@@ -563,66 +587,84 @@ async function renderDealTypePage(slug: string) {
 // ================================================================
 // INDIVIDUAL DEAL PAGE (1-segment: /deals/[deal-slug])
 // ================================================================
+
+function formatTimeStr(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number)
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+function getRedemptionInstructions(discountType: string | null, code: string | null): string {
+  if (code) return 'Show this promo code at checkout or mention it to your budtender when you visit.'
+  if (discountType === 'bogo') return 'Ask your budtender about this buy-one-get-one offer when you visit the dispensary.'
+  return 'Mention this deal when you visit the dispensary. Show this page to your budtender for verification.'
+}
+
 async function renderIndividualDealPage(slug: string) {
   const deal = await prisma.deal.findFirst({
     where: { slug, isActive: true },
     select: {
-      id: true,
-      title: true,
-      slug: true,
-      description: true,
-      discountType: true,
-      discountValue: true,
-      code: true,
-      dispensaryName: true,
-      dispensarySlug: true,
-      stateSlug: true,
-      citySlug: true,
-      endDate: true,
-      isOngoing: true,
-      isFeatured: true,
-      minPurchase: true,
-      createdAt: true,
+      id: true, title: true, slug: true, description: true,
+      discountType: true, discountValue: true, code: true,
+      dispensaryName: true, dispensarySlug: true,
+      stateSlug: true, citySlug: true,
+      startDate: true, endDate: true, isOngoing: true,
+      isFeatured: true, minPurchase: true, terms: true,
+      viewCount: true, imageUrl: true, createdAt: true,
     },
   })
 
   if (!deal) notFound()
 
-  // Get dispensary info if available
+  // Get dispensary with hours
   const dispensary = deal.dispensarySlug
     ? await prisma.dispensary.findUnique({
         where: { slug: deal.dispensarySlug },
         select: {
-          name: true,
-          slug: true,
-          address: true,
-          phone: true,
-          rating: true,
-          reviewsCount: true,
-          imageUrl: true,
-          hasDelivery: true,
-          hasStorefront: true,
-          hasCurbside: true,
+          id: true, name: true, slug: true, address: true, phone: true, website: true,
+          rating: true, reviewsCount: true, imageUrl: true, latitude: true, longitude: true,
+          hasDelivery: true, hasStorefront: true, hasCurbside: true,
+          acceptsCreditCard: true, hasATM: true, isWheelchairAccessible: true,
+          licenseType: true,
           city: { select: { name: true, slug: true } },
           state: { select: { name: true, slug: true, abbreviation: true } },
+          BusinessHours: { orderBy: { dayOfWeek: 'asc' as const } },
         },
       })
     : null
 
   // Related deals from same dispensary
+  const now = new Date()
   const relatedDeals = deal.dispensarySlug
     ? await prisma.deal.findMany({
         where: {
-          isActive: true,
-          dispensarySlug: deal.dispensarySlug,
-          id: { not: deal.id },
-          OR: [
-            { endDate: { gte: new Date() } },
-            { isOngoing: true },
-            { endDate: null },
-          ],
+          isActive: true, dispensarySlug: deal.dispensarySlug, id: { not: deal.id },
+          OR: [{ endDate: { gte: now } }, { isOngoing: true }, { endDate: null }],
         },
         orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 6,
+        select: {
+          id: true, title: true, slug: true, description: true,
+          discountType: true, discountValue: true, code: true,
+          dispensaryName: true, dispensarySlug: true,
+          stateSlug: true, citySlug: true,
+          endDate: true, isOngoing: true, isFeatured: true, minPurchase: true,
+        },
+      })
+    : []
+
+  // Similar deals from OTHER dispensaries (KEY DIFFERENTIATOR)
+  const similarDeals = deal.stateSlug
+    ? await prisma.deal.findMany({
+        where: {
+          isActive: true, stateSlug: deal.stateSlug,
+          id: { not: deal.id },
+          ...(deal.dispensarySlug ? { dispensarySlug: { not: deal.dispensarySlug } } : {}),
+          ...(deal.discountType ? { discountType: deal.discountType } : {}),
+          OR: [{ endDate: { gte: now } }, { isOngoing: true }, { endDate: null }],
+        },
+        orderBy: [{ isFeatured: 'desc' }, { discountValue: 'desc' }, { createdAt: 'desc' }],
         take: 6,
         select: {
           id: true, title: true, slug: true, description: true,
@@ -635,19 +677,13 @@ async function renderIndividualDealPage(slug: string) {
     : []
 
   // Nearby deals in same city
-  const nearbyDeals = deal.stateSlug && deal.citySlug
+  const cityDeals = deal.stateSlug && deal.citySlug
     ? await prisma.deal.findMany({
         where: {
-          isActive: true,
-          stateSlug: deal.stateSlug,
-          citySlug: deal.citySlug,
+          isActive: true, stateSlug: deal.stateSlug, citySlug: deal.citySlug,
           id: { not: deal.id },
-          dispensarySlug: deal.dispensarySlug ? { not: deal.dispensarySlug } : undefined,
-          OR: [
-            { endDate: { gte: new Date() } },
-            { isOngoing: true },
-            { endDate: null },
-          ],
+          ...(deal.dispensarySlug ? { dispensarySlug: { not: deal.dispensarySlug } } : {}),
+          OR: [{ endDate: { gte: now } }, { isOngoing: true }, { endDate: null }],
         },
         orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
         take: 6,
@@ -661,60 +697,107 @@ async function renderIndividualDealPage(slug: string) {
       })
     : []
 
+  // Menu products preview
+  const menuProducts = dispensary
+    ? await prisma.menuProduct.findMany({
+        where: { dispensaryId: dispensary.id, isActive: true },
+        orderBy: [{ isOnSale: 'desc' }, { price: 'asc' }],
+        take: 6,
+        select: {
+          id: true, name: true, brand: true, category: true,
+          price: true, originalPrice: true, weight: true,
+          thcContent: true, strainType: true, isOnSale: true,
+        },
+      }).catch(() => [])
+    : []
+
+  const menuProductCount = dispensary
+    ? await prisma.menuProduct.count({
+        where: { dispensaryId: dispensary.id, isActive: true },
+      }).catch(() => 0)
+    : 0
+
   const discount = formatDiscount(deal.discountValue, deal.discountType)
   const expiry = formatExpiry(deal.endDate, deal.isOngoing)
-
-  const cityName = dispensary?.city?.name || (deal.citySlug ? deal.citySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : null)
+  const cityName = dispensary?.city?.name || (deal.citySlug ? deal.citySlug.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : null)
   const stateAbbr = dispensary?.state?.abbreviation || (deal.stateSlug ? deal.stateSlug.toUpperCase().slice(0, 2) : null)
   const stateName = dispensary?.state?.name || null
 
+  // Business hours helpers
+  const DAYS_ORDER = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+  const sortedHours = dispensary?.BusinessHours
+    ? [...dispensary.BusinessHours].sort((a: any, b: any) => DAYS_ORDER.indexOf(a.dayOfWeek) - DAYS_ORDER.indexOf(b.dayOfWeek))
+    : []
+  const todayDay = DAYS_ORDER[new Date().getDay()]
+  const todayHours = sortedHours.find((h: any) => h.dayOfWeek === todayDay)
+  let isOpen = false
+  let nextChange = ''
+  if (todayHours && !todayHours.isClosed) {
+    const currentTime = new Date().getHours() * 100 + new Date().getMinutes()
+    const openTime = parseInt(todayHours.openTime.replace(':', ''))
+    const closeTime = parseInt(todayHours.closeTime.replace(':', ''))
+    if (currentTime >= openTime && currentTime <= closeTime) {
+      isOpen = true
+      nextChange = `Closes at ${formatTimeStr(todayHours.closeTime)}`
+    } else if (currentTime < openTime) {
+      nextChange = `Opens at ${formatTimeStr(todayHours.openTime)}`
+    } else {
+      nextChange = 'Closed'
+    }
+  } else {
+    nextChange = 'Closed today'
+  }
+
+  // Deal type cross-links
+  const allSlugs = getAllDealPageSlugs()
+  const crossLinks = allSlugs.map((s) => {
+    const p = getDealPageBySlug(s)
+    return p ? { slug: s, name: p.data.name, icon: p.data.icon } : null
+  }).filter(Boolean) as { slug: string; name: string; icon: string }[]
+
   // JSON-LD
   const breadcrumbLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://leefii.com' },
       { '@type': 'ListItem', position: 2, name: 'Deals', item: 'https://leefii.com/deals' },
-      ...(deal.stateSlug && stateName
-        ? [{ '@type': 'ListItem', position: 3, name: stateName, item: `https://leefii.com/deals/${deal.stateSlug}` }]
+      ...(deal.stateSlug && deal.citySlug && cityName
+        ? [{ '@type': 'ListItem', position: 3, name: `${cityName} Deals`, item: `https://leefii.com/deals/${deal.stateSlug}/${deal.citySlug}` }]
         : []),
-      { '@type': 'ListItem', position: deal.stateSlug && stateName ? 4 : 3, name: deal.title },
+      { '@type': 'ListItem', position: deal.stateSlug && deal.citySlug ? 4 : 3, name: deal.title },
     ],
   }
 
   const offerLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Offer',
-    name: deal.title,
-    description: deal.description || undefined,
+    '@context': 'https://schema.org', '@type': 'Offer',
+    name: deal.title, description: deal.description || undefined,
     ...(deal.dispensaryName ? { seller: { '@type': 'Organization', name: deal.dispensaryName } } : {}),
-    availability: deal.isOngoing || !deal.endDate || deal.endDate >= new Date()
-      ? 'https://schema.org/InStock'
-      : 'https://schema.org/Discontinued',
+    availability: deal.isOngoing || !deal.endDate || deal.endDate >= now ? 'https://schema.org/InStock' : 'https://schema.org/Discontinued',
     ...(deal.endDate ? { validThrough: deal.endDate.toISOString() } : {}),
     url: `https://leefii.com/deals/${slug}`,
   }
+
+  const localBusinessLd = dispensary ? {
+    '@context': 'https://schema.org', '@type': 'LocalBusiness',
+    name: dispensary.name, address: dispensary.address,
+    telephone: dispensary.phone || undefined,
+    ...(dispensary.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: dispensary.rating, reviewCount: dispensary.reviewsCount } } : {}),
+    ...(dispensary.latitude && dispensary.longitude ? { geo: { '@type': 'GeoCoordinates', latitude: dispensary.latitude, longitude: dispensary.longitude } } : {}),
+  } : null
 
   return (
     <div className="min-h-screen bg-gray-50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(offerLd) }} />
+      {localBusinessLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessLd) }} />}
 
-      {/* Hero */}
+      {/* ===== HERO ===== */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <nav aria-label="Breadcrumb" className="text-sm text-green-100 mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          <nav aria-label="Breadcrumb" className="text-sm text-green-100 mb-5">
             <Link href="/" className="hover:text-white">Home</Link>
             <span className="mx-2">/</span>
             <Link href="/deals" className="hover:text-white">Deals</Link>
-            {deal.stateSlug && (
-              <>
-                <span className="mx-2">/</span>
-                <Link href={`/deals/${deal.stateSlug}`} className="hover:text-white">
-                  {stateName || deal.stateSlug}
-                </Link>
-              </>
-            )}
             {deal.stateSlug && deal.citySlug && (
               <>
                 <span className="mx-2">/</span>
@@ -723,278 +806,461 @@ async function renderIndividualDealPage(slug: string) {
                 </Link>
               </>
             )}
-            <span className="mx-2">/</span>
-            <span className="text-white font-medium truncate max-w-xs inline-block align-bottom">
-              {deal.title}
-            </span>
           </nav>
 
-          <div className="flex flex-wrap items-start gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
             {discount && (
-              <span className="bg-red-500 text-white rounded-full px-4 py-1.5 text-lg font-bold shadow-sm">
-                {discount}
-              </span>
+              <span className="bg-red-500 text-white rounded-full px-4 py-1.5 text-lg font-bold shadow-sm">{discount}</span>
             )}
             {deal.isFeatured && (
-              <span className="bg-yellow-400 text-yellow-900 rounded-full px-3 py-1 text-sm font-bold">
-                ★ Featured
-              </span>
+              <span className="bg-yellow-400 text-yellow-900 rounded-full px-3 py-1 text-sm font-bold">★ Featured</span>
             )}
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">{deal.title}</h1>
-
-          {deal.dispensaryName && (
-            <p className="text-xl text-green-50">
-              at{' '}
-              {deal.dispensarySlug ? (
-                <Link href={`/dispensary/${deal.dispensarySlug}`} className="underline decoration-dotted underline-offset-4 hover:text-white">
-                  {deal.dispensaryName}
-                </Link>
-              ) : (
-                deal.dispensaryName
-              )}
-              {cityName && stateAbbr && ` — ${cityName}, ${stateAbbr}`}
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-3 mt-6">
-            <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
-              expiry.label === 'Ongoing' ? 'bg-white/20 text-white' :
-              expiry.label === 'Expired' ? 'bg-red-400/30 text-white' :
-              'bg-amber-400/30 text-white'
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              expiry.label === 'Ongoing' ? 'bg-white/20' : expiry.label === 'Expired' ? 'bg-red-400/30' : 'bg-amber-400/30'
             }`}>
               {expiry.label}
             </span>
-            {deal.code && (
-              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-mono font-medium bg-white/20 text-white">
-                Code: {deal.code}
-              </span>
-            )}
-            {deal.minPurchase && deal.minPurchase > 0 && (
-              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white">
-                Min. ${deal.minPurchase}
-              </span>
-            )}
+          </div>
+
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">{deal.title}</h1>
+
+          {deal.dispensaryName && (
+            <p className="text-lg text-green-50">
+              at <span className="font-semibold text-white">{deal.dispensaryName}</span>
+              {cityName && stateAbbr && <span className="text-green-200"> — {cityName}, {stateAbbr}</span>}
+            </p>
+          )}
+
+          <div className="mt-4">
+            <DealViewTracker dealSlug={deal.slug} initialViewCount={deal.viewCount} />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Deal Details Card */}
-        <section className="mb-10">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8">
-            {deal.description && (
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">Deal Details</h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{deal.description}</p>
+      {/* ===== STICKY ACTION BAR ===== */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {deal.code && (
+              <div className="flex-1 min-w-[200px] max-w-md">
+                <CopyCodeButton code={deal.code} size="sm" />
               </div>
             )}
+            {dispensary?.phone && (
+              <a
+                href={`tel:${dispensary.phone}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Call
+              </a>
+            )}
+            {dispensary?.latitude && dispensary?.longitude && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${dispensary.latitude},${dispensary.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Directions
+              </a>
+            )}
+            <FavoriteButton entityType="DEAL" entityId={deal.id} showText size="sm" />
+            <ShareButtons url={`https://leefii.com/deals/${deal.slug}`} title={deal.title} variant="compact" />
+          </div>
+        </div>
+      </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Deal info */}
-              <div className="space-y-3">
-                {discount && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500 w-28">Discount</span>
-                    <span className="text-lg font-bold text-green-600">{discount}</span>
-                  </div>
-                )}
-                {deal.code && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500 w-28">Promo Code</span>
-                    <span className="bg-gray-100 border border-dashed border-gray-300 rounded px-3 py-1 font-mono text-gray-900 font-semibold">
-                      {deal.code}
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-500 w-28">Status</span>
-                  <span className={`text-sm px-2.5 py-1 rounded-full font-medium ${expiry.style}`}>
-                    {expiry.label}
-                  </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* ===== LEFT COLUMN (2/3) ===== */}
+          <div className="lg:col-span-2 space-y-8">
+
+            {/* Section 3: Deal Details */}
+            <section className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Deal Details</h2>
+
+              {deal.description && (
+                <p className="text-gray-700 leading-relaxed mb-5 whitespace-pre-line">{deal.description}</p>
+              )}
+
+              {deal.code && (
+                <div className="mb-5">
+                  <p className="text-sm font-medium text-gray-500 mb-2">Promo Code</p>
+                  <CopyCodeButton code={deal.code} size="md" />
                 </div>
-                {deal.minPurchase && deal.minPurchase > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500 w-28">Min. Purchase</span>
-                    <span className="text-gray-900">${deal.minPurchase}</span>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                {discount && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <p className="text-sm text-green-700 font-medium mb-1">Discount</p>
+                    <p className="text-2xl font-bold text-green-600">{discount}</p>
                   </div>
                 )}
-              </div>
-
-              {/* Dispensary quick info */}
-              {dispensary && (
-                <div className="bg-gray-50 rounded-xl p-5">
-                  <h3 className="font-semibold text-gray-900 mb-2">{dispensary.name}</h3>
-                  {dispensary.address && (
-                    <p className="text-sm text-gray-600 mb-1">{dispensary.address}</p>
-                  )}
-                  {dispensary.city && dispensary.state && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      {dispensary.city.name}, {dispensary.state.abbreviation}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 font-medium mb-1">Status</p>
+                  <p className="text-lg font-semibold text-gray-900">{expiry.label}</p>
+                  {deal.startDate && deal.endDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {deal.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {deal.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   )}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {(dispensary.rating ?? 0) > 0 && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                        ★ {dispensary.rating!.toFixed(1)} ({dispensary.reviewsCount} reviews)
-                      </span>
-                    )}
-                    {dispensary.hasStorefront && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Storefront</span>
-                    )}
-                    {dispensary.hasDelivery && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Delivery</span>
-                    )}
-                    {dispensary.hasCurbside && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Curbside</span>
-                    )}
+                </div>
+                {deal.minPurchase && deal.minPurchase > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Min. Purchase</p>
+                    <p className="text-lg font-semibold text-gray-900">${deal.minPurchase}</p>
                   </div>
-                  <Link
-                    href={`/dispensary/${dispensary.slug}`}
-                    className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-700"
-                  >
-                    View Dispensary →
-                  </Link>
+                )}
+              </div>
+
+              {deal.terms && (
+                <div className="mb-5">
+                  <p className="text-sm font-medium text-gray-500 mb-2">Terms & Restrictions</p>
+                  <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{deal.terms}</p>
                 </div>
               )}
-            </div>
 
-            {/* CTA */}
-            {deal.dispensarySlug && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <Link
-                  href={`/dispensary/${deal.dispensarySlug}`}
-                  className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white text-base font-medium rounded-lg hover:bg-green-700 transition"
-                >
-                  View at {deal.dispensaryName || 'Dispensary'}
-                </Link>
+              {/* How to Redeem */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  How to Redeem
+                </h3>
+                <p className="text-sm text-blue-800">{getRedemptionInstructions(deal.discountType, deal.code)}</p>
+              </div>
+            </section>
+
+            {/* Section 5: Menu Preview */}
+            {menuProducts.length > 0 && (
+              <section className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Menu at {dispensary?.name}</h2>
+                  {menuProductCount > 6 && dispensary && (
+                    <Link href={`/dispensary/${dispensary.slug}`} className="text-sm font-medium text-green-600 hover:text-green-700">
+                      View all {menuProductCount} products →
+                    </Link>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {menuProducts.map((p) => (
+                    <div key={p.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                      <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                        {CATEGORY_EMOJIS[p.category] || '🌱'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          {p.brand && <span>{p.brand}</span>}
+                          {p.thcContent && <span className="text-green-600 font-medium">THC: {p.thcContent}</span>}
+                          {p.weight && <span>{p.weight}</span>}
+                          {p.strainType && (
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              p.strainType === 'indica' ? 'bg-purple-100 text-purple-700' :
+                              p.strainType === 'sativa' ? 'bg-amber-100 text-amber-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>{p.strainType}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-green-600">${p.price.toFixed(2)}</p>
+                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                          <p className="text-xs text-gray-400 line-through">${p.originalPrice.toFixed(2)}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {dispensary && (
+                  <Link
+                    href={`/dispensary/${dispensary.slug}`}
+                    className="block mt-4 text-center py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                  >
+                    Browse full menu ({menuProductCount} products) →
+                  </Link>
+                )}
+              </section>
+            )}
+
+            {/* Section 6: Related Deals from Same Dispensary */}
+            {relatedDeals.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">More Deals from {deal.dispensaryName}</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {relatedDeals.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`/deals/${d.slug}`}
+                      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-green-300 transition flex flex-col"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-xs text-green-600 font-medium">{d.dispensaryName}</span>
+                        {formatDiscount(d.discountValue, d.discountType) && (
+                          <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                            {formatDiscount(d.discountValue, d.discountType)}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{d.title}</h3>
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
+                          {formatExpiry(d.endDate, d.isOngoing).label}
+                        </span>
+                        {d.code && <span className="text-[10px] px-2 py-0.5 rounded bg-gray-100 font-mono text-gray-600">{d.code}</span>}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Section 7: Similar Deals Nearby (KEY DIFFERENTIATOR) */}
+            {similarDeals.length > 0 && (
+              <section>
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Compare: Similar Deals Nearby</h2>
+                  <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">ONLY ON LEEFII</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">Other dispensaries in your area offer similar discounts. Compare before you go!</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {similarDeals.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`/deals/${d.slug}`}
+                      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-green-300 transition flex flex-col"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-xs text-green-600 font-medium">{d.dispensaryName}</span>
+                        {formatDiscount(d.discountValue, d.discountType) && (
+                          <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                            {formatDiscount(d.discountValue, d.discountType)}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{d.title}</h3>
+                      {d.citySlug && (
+                        <p className="text-xs text-gray-400">{d.citySlug.replace(/-/g, ' ')}</p>
+                      )}
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
+                          {formatExpiry(d.endDate, d.isOngoing).label}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Section 8: More Deals in City */}
+            {cityDeals.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  More Deals in {cityName}{stateAbbr ? `, ${stateAbbr}` : ''}
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {cityDeals.map((d) => (
+                    <Link
+                      key={d.id}
+                      href={`/deals/${d.slug}`}
+                      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-green-300 transition flex flex-col"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        {d.dispensaryName && <span className="text-xs text-green-600 font-medium">{d.dispensaryName}</span>}
+                        {formatDiscount(d.discountValue, d.discountType) && (
+                          <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                            {formatDiscount(d.discountValue, d.discountType)}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">{d.title}</h3>
+                      <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
+                          {formatExpiry(d.endDate, d.isOngoing).label}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                {deal.stateSlug && deal.citySlug && (
+                  <Link
+                    href={`/deals/${deal.stateSlug}/${deal.citySlug}`}
+                    className="block mt-4 text-center py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-medium hover:bg-green-100 transition"
+                  >
+                    View all deals in {cityName} →
+                  </Link>
+                )}
+              </section>
+            )}
+
+            {/* Section 9: Browse More (SEO Internal Links) */}
+            <section>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Browse More Deals</h2>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {crossLinks.slice(0, 12).map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/deals/${c.slug}`}
+                    className="bg-white rounded-xl p-3 text-center border border-gray-200 hover:shadow-sm hover:border-green-300 transition"
+                  >
+                    <span className="text-xl block mb-1">{c.icon}</span>
+                    <p className="text-xs font-medium text-gray-700 leading-tight">{c.name}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* ===== RIGHT COLUMN / SIDEBAR (1/3) ===== */}
+          <div className="space-y-6">
+            {/* Dispensary Info Card */}
+            {dispensary && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-[72px]">
+                <h3 className="font-bold text-gray-900 text-lg mb-3">{dispensary.name}</h3>
+
+                {/* Open/Closed */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`w-2.5 h-2.5 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className={`text-sm font-semibold ${isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                    {isOpen ? 'Open Now' : 'Closed'}
+                  </span>
+                  {nextChange && <span className="text-xs text-gray-500">· {nextChange}</span>}
+                </div>
+
+                {/* Address */}
+                {dispensary.address && (
+                  <div className="flex items-start gap-2 mb-2 text-sm text-gray-600">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    <span>{dispensary.address}, {dispensary.city.name}, {dispensary.state.abbreviation}</span>
+                  </div>
+                )}
+
+                {/* Phone */}
+                {dispensary.phone && (
+                  <div className="flex items-center gap-2 mb-2 text-sm">
+                    <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                    </svg>
+                    <a href={`tel:${dispensary.phone}`} className="text-green-600 font-medium hover:text-green-700">{dispensary.phone}</a>
+                  </div>
+                )}
+
+                {/* Rating */}
+                {(dispensary.rating ?? 0) > 0 && (
+                  <div className="flex items-center gap-1 mb-3 text-sm">
+                    <span className="text-amber-500">★</span>
+                    <span className="font-semibold text-gray-900">{dispensary.rating!.toFixed(1)}</span>
+                    <span className="text-gray-500">({dispensary.reviewsCount} reviews)</span>
+                  </div>
+                )}
+
+                {/* Service badges */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {dispensary.hasStorefront && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 font-medium">🏪 Storefront</span>
+                  )}
+                  {dispensary.hasDelivery && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 font-medium">🚗 Delivery</span>
+                  )}
+                  {dispensary.hasCurbside && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-teal-50 text-teal-700 font-medium">🅿️ Curbside</span>
+                  )}
+                  {dispensary.acceptsCreditCard && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">💳 Cards</span>
+                  )}
+                  {dispensary.hasATM && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">🏧 ATM</span>
+                  )}
+                  {dispensary.licenseType && (
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      dispensary.licenseType === 'BOTH' ? 'bg-green-100 text-green-700' :
+                      dispensary.licenseType === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {dispensary.licenseType === 'BOTH' ? 'Med + Rec' :
+                       dispensary.licenseType === 'MEDICAL' ? 'Medical' : 'Recreational'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="space-y-2 mb-4">
+                  {dispensary.phone && (
+                    <a
+                      href={`tel:${dispensary.phone}`}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition"
+                    >
+                      📞 Call Now
+                    </a>
+                  )}
+                  {dispensary.latitude && dispensary.longitude && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${dispensary.latitude},${dispensary.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition"
+                    >
+                      📍 Get Directions
+                    </a>
+                  )}
+                </div>
+
+                {/* Hours */}
+                {sortedHours.length > 0 && (
+                  <div className="border-t border-gray-100 pt-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Hours</h4>
+                    <div className="space-y-1">
+                      {sortedHours.map((h: any) => (
+                        <div
+                          key={h.dayOfWeek}
+                          className={`flex justify-between text-xs ${
+                            h.dayOfWeek === todayDay ? 'font-semibold text-green-700' : 'text-gray-600'
+                          }`}
+                        >
+                          <span>{h.dayOfWeek.charAt(0) + h.dayOfWeek.slice(1).toLowerCase()}{h.dayOfWeek === todayDay ? ' (Today)' : ''}</span>
+                          <span>{h.isClosed ? 'Closed' : `${formatTimeStr(h.openTime)} – ${formatTimeStr(h.closeTime)}`}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Secondary links */}
+                <div className="border-t border-gray-100 pt-3 space-y-1.5">
+                  <Link
+                    href={`/dispensary/${dispensary.slug}`}
+                    className="block text-sm text-green-600 hover:text-green-700 font-medium"
+                  >
+                    View full dispensary profile →
+                  </Link>
+                  {dispensary.website && (
+                    <a
+                      href={dispensary.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Visit dispensary website ↗
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </section>
-
-        {/* Related Deals from Same Dispensary */}
-        {relatedDeals.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              More Deals from {deal.dispensaryName}
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedDeals.map((d) => (
-                <Link
-                  key={d.id}
-                  href={`/deals/${d.slug}`}
-                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-green-200 transition flex flex-col"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-sm text-green-600 font-medium truncate mr-2">
-                      {d.dispensaryName}
-                    </span>
-                    {formatDiscount(d.discountValue, d.discountType) && (
-                      <span className="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {formatDiscount(d.discountValue, d.discountType)}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2">{d.title}</h3>
-                  {d.description && (
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">{d.description}</p>
-                  )}
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
-                      {formatExpiry(d.endDate, d.isOngoing).label}
-                    </span>
-                    {d.code && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border border-dashed border-gray-300 font-mono text-gray-700">
-                        {d.code}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Nearby Deals */}
-        {nearbyDeals.length > 0 && (
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              More Deals in {cityName}{stateAbbr ? `, ${stateAbbr}` : ''}
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nearbyDeals.map((d) => (
-                <Link
-                  key={d.id}
-                  href={`/deals/${d.slug}`}
-                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-green-200 transition flex flex-col"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    {d.dispensaryName && (
-                      <span className="text-sm text-green-600 font-medium truncate mr-2">
-                        {d.dispensaryName}
-                      </span>
-                    )}
-                    {formatDiscount(d.discountValue, d.discountType) && (
-                      <span className="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {formatDiscount(d.discountValue, d.discountType)}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2">{d.title}</h3>
-                  {d.description && (
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">{d.description}</p>
-                  )}
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${formatExpiry(d.endDate, d.isOngoing).style}`}>
-                      {formatExpiry(d.endDate, d.isOngoing).label}
-                    </span>
-                    {d.code && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border border-dashed border-gray-300 font-mono text-gray-700">
-                        {d.code}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Browse More CTA */}
-        <section className="mb-10">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Find More Deals</h2>
-            <p className="text-gray-600 mb-4">
-              Browse thousands of cannabis deals and dispensary discounts across the US.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/deals"
-                className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition"
-              >
-                All Deals
-              </Link>
-              {deal.stateSlug && deal.citySlug && (
-                <Link
-                  href={`/deals/${deal.stateSlug}/${deal.citySlug}`}
-                  className="px-4 py-2 bg-white text-green-700 border border-green-300 rounded-full text-sm font-medium hover:bg-green-50 transition"
-                >
-                  {cityName} Deals
-                </Link>
-              )}
-              {deal.dispensarySlug && (
-                <Link
-                  href={`/dispensary/${deal.dispensarySlug}`}
-                  className="px-4 py-2 bg-white text-green-700 border border-green-300 rounded-full text-sm font-medium hover:bg-green-50 transition"
-                >
-                  {deal.dispensaryName || 'Dispensary'}
-                </Link>
-              )}
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
     </div>
   )
