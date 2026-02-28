@@ -37,7 +37,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gradient-to-br from-lime-400 via-green-400 to-emerald-500 text-gray-700">
+    <footer className="text-gray-700" style={{ background: 'linear-gradient(165deg, #34d399 0%, #4ade80 18%, #a3e635 42%, #d4e026 62%, #facc15 78%, #fb923c 100%)' }}>
       {/* ─── Section 1: Newsletter + Social ─── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8 mb-10">
