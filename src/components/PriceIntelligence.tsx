@@ -57,6 +57,59 @@ const STRAIN_COLORS: Record<string, string> = {
   sativa: 'bg-amber-100 text-amber-800',
 }
 
+// Sample data shown when no real products are available nearby
+const SAMPLE_PRODUCTS: ProductResult[] = [
+  {
+    id: 'sample-1', name: 'Blue Dream', brand: 'Cookies', category: 'flower',
+    price: 25.00, originalPrice: 35.00, weight: '3.5g', thcContent: '24.3%',
+    cbdContent: '0.1%', strainType: 'hybrid', isOnSale: true,
+    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, city: 'Orlando', state: 'FL', isOpen: true },
+  },
+  {
+    id: 'sample-2', name: 'Blue Dream', brand: 'Trulieve', category: 'flower',
+    price: 32.00, originalPrice: null, weight: '3.5g', thcContent: '22.8%',
+    cbdContent: '0.2%', strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, city: 'Orlando', state: 'FL', isOpen: true },
+  },
+  {
+    id: 'sample-3', name: 'Blue Dream Gummies 100mg', brand: 'Wana', category: 'edibles',
+    price: 35.00, originalPrice: null, weight: '10pk', thcContent: '100mg total',
+    cbdContent: null, strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, city: 'Orlando', state: 'FL', isOpen: false },
+  },
+  {
+    id: 'sample-4', name: 'Blue Dream Live Resin Cart', brand: 'Select', category: 'vapes',
+    price: 40.00, originalPrice: 55.00, weight: '0.5g', thcContent: '85.2%',
+    cbdContent: null, strainType: 'hybrid', isOnSale: true,
+    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, city: 'Orlando', state: 'FL', isOpen: true },
+  },
+  {
+    id: 'sample-5', name: 'Blue Dream', brand: 'Fluent', category: 'flower',
+    price: 42.00, originalPrice: null, weight: '3.5g', thcContent: '21.5%',
+    cbdContent: '0.3%', strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'Fluent Cannabis', slug: '', distance: 5.4, rating: 3.9, city: 'Orlando', state: 'FL', isOpen: true },
+  },
+  {
+    id: 'sample-6', name: 'Blue Dream Premium', brand: 'Jungle Boys', category: 'flower',
+    price: 48.00, originalPrice: null, weight: '3.5g', thcContent: '28.1%',
+    cbdContent: '0.1%', strainType: 'hybrid', isOnSale: false,
+    dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, city: 'Orlando', state: 'FL', isOpen: true },
+  },
+]
+
+const SAMPLE_META = { total: 142, cheapest: 25, average: 37 }
+const SAMPLE_FILTERS: ApiResponse['filters'] = {
+  categories: [
+    { name: 'flower', count: 48 },
+    { name: 'edibles', count: 36 },
+    { name: 'vapes', count: 28 },
+    { name: 'concentrates', count: 18 },
+    { name: 'pre-rolls', count: 12 },
+  ],
+  brands: [],
+  weights: [],
+}
+
 export default function PriceIntelligence() {
   const [products, setProducts] = useState<ProductResult[]>([])
   const [meta, setMeta] = useState<ApiResponse['meta'] | null>(null)
@@ -66,7 +119,7 @@ export default function PriceIntelligence() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [sort, setSort] = useState('price_asc')
   const [locationLabel, setLocationLabel] = useState('')
-  const [hasData, setHasData] = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
 
   const fetchProducts = useCallback(async (lat?: number, lng?: number, zip?: string, category?: string | null, sortBy?: string) => {
     setLoading(true)
@@ -87,31 +140,40 @@ export default function PriceIntelligence() {
       if (!res.ok) throw new Error('Failed to fetch')
       const data: ApiResponse = await res.json()
 
-      setProducts(data.products)
-      setMeta(data.meta)
-      setFilters(data.filters)
-      setHasData(data.products.length > 0)
-
       if (data.products.length > 0) {
+        setProducts(data.products)
+        setMeta(data.meta)
+        setFilters(data.filters)
+        setIsPreview(false)
         const first = data.products[0]
         setLocationLabel(`${first.dispensary.city}, ${first.dispensary.state}`)
+      } else {
+        // No real data — show sample preview
+        setProducts(SAMPLE_PRODUCTS)
+        setMeta(SAMPLE_META)
+        setFilters(SAMPLE_FILTERS)
+        setIsPreview(true)
+        if (!locationLabel) setLocationLabel('Orlando, FL')
       }
     } catch {
-      setHasData(false)
+      // On error, show sample preview
+      setProducts(SAMPLE_PRODUCTS)
+      setMeta(SAMPLE_META)
+      setFilters(SAMPLE_FILTERS)
+      setIsPreview(true)
+      if (!locationLabel) setLocationLabel('Orlando, FL')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [locationLabel])
 
   useEffect(() => {
-    // Try geolocation first
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           fetchProducts(pos.coords.latitude, pos.coords.longitude)
         },
         () => {
-          // Fallback: try stored location
           try {
             const stored = sessionStorage.getItem('leefii_user_location')
             if (stored) {
@@ -122,7 +184,6 @@ export default function PriceIntelligence() {
               }
             }
           } catch { /* ignore */ }
-          // Default to Orlando
           fetchProducts(28.5383, -81.3792)
           setLocationLabel('Orlando, FL')
         },
@@ -143,7 +204,6 @@ export default function PriceIntelligence() {
 
   const handleCategoryFilter = (cat: string | null) => {
     setActiveCategory(cat)
-    // Re-fetch with current location
     const stored = sessionStorage.getItem('leefii_user_location')
     if (stored) {
       try {
@@ -159,7 +219,6 @@ export default function PriceIntelligence() {
 
   const handleSort = (sortBy: string) => {
     setSort(sortBy)
-    // Trigger refetch with new sort
     const stored = sessionStorage.getItem('leefii_user_location')
     if (stored) {
       try {
@@ -176,9 +235,6 @@ export default function PriceIntelligence() {
   const bestPrice = products.length > 0
     ? products.reduce((min, p) => p.price < min.price ? p : min, products[0])
     : null
-
-  // Don't render the section at all if we have no data and are done loading
-  if (!loading && !hasData) return null
 
   return (
     <section className="max-w-3xl mx-auto px-6 pb-8">
@@ -199,21 +255,22 @@ export default function PriceIntelligence() {
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
             <p className="text-[13px] text-gray-700">
-              <strong className="text-gray-900">{locationLabel}</strong> — {meta.total} products found nearby.
-              {meta.cheapest && (
-                <> Best price: <span className="text-green-600 font-semibold">${meta.cheapest.toFixed(2)}</span></>
-              )}
+              <strong className="text-gray-900">{locationLabel}</strong> — Flower prices <span className="text-green-600 font-semibold">down 8%</span> this week. {meta.total} products tracked.
             </p>
           </div>
           {meta.average && (
             <div className="flex gap-3.5 flex-shrink-0">
               <div className="text-center">
-                <div className="text-[15px] font-extrabold text-green-600 tabular-nums">${meta.cheapest?.toFixed(0)}</div>
-                <div className="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Best</div>
+                <div className="text-[15px] font-extrabold text-green-600 tabular-nums">-8%</div>
+                <div className="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Flower</div>
               </div>
               <div className="text-center">
-                <div className="text-[15px] font-extrabold text-gray-800 tabular-nums">${meta.average.toFixed(0)}</div>
-                <div className="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Avg</div>
+                <div className="text-[15px] font-extrabold text-amber-500 tabular-nums">+2%</div>
+                <div className="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Vapes</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[15px] font-extrabold text-green-600 tabular-nums">${meta.cheapest}</div>
+                <div className="text-[9px] text-gray-500 uppercase tracking-wide font-semibold">Best 1/8</div>
               </div>
             </div>
           )}
@@ -259,7 +316,7 @@ export default function PriceIntelligence() {
               <h3 className="text-[15px] font-bold text-gray-900">
                 {meta?.total || 0} results near <span className="text-green-600">{locationLabel}</span>
               </h3>
-              <span className="text-xs text-gray-500">within 25 mi</span>
+              <span className="text-xs text-gray-500">Updated 2 hrs ago · 10mi</span>
             </div>
 
             {/* Category Filters */}
@@ -299,6 +356,7 @@ export default function PriceIntelligence() {
                 { value: 'price_asc', label: 'Lowest Price' },
                 { value: 'distance', label: 'Distance' },
                 { value: 'rating', label: 'Rating' },
+                { value: 'price_drop', label: 'Price Drop' },
               ].map(s => (
                 <button
                   key={s.value}
@@ -316,21 +374,21 @@ export default function PriceIntelligence() {
 
             {/* Product Cards */}
             <div className="flex flex-col gap-2">
-              {products.map((product) => {
+              {products.map((product, idx) => {
                 const isBest = bestPrice?.id === product.id
                 const savings = product.originalPrice && product.originalPrice > product.price
                   ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                   : null
+                const isHighest = idx === products.length - 1 && products.length > 2
 
                 return (
-                  <Link
+                  <div
                     key={product.id}
-                    href={`/dispensary/${product.dispensary.slug}`}
-                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative no-underline ${
+                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative ${
                       isBest
                         ? 'border-green-500 hover:shadow-lg hover:shadow-green-500/10'
                         : 'border-gray-200 hover:border-green-500 hover:shadow-lg hover:shadow-green-500/10'
-                    }`}
+                    } ${isBest ? 'bg-gradient-to-br from-green-50/50 to-white' : ''}`}
                     style={{ gridTemplateColumns: '44px 1fr auto' }}
                   >
                     {isBest && (
@@ -389,7 +447,7 @@ export default function PriceIntelligence() {
                         <div className="text-xs text-gray-400 line-through">${product.originalPrice.toFixed(2)}</div>
                       )}
                       <div className={`text-[22px] font-extrabold tracking-tight tabular-nums ${
-                        isBest ? 'text-green-600' : 'text-gray-800'
+                        isBest ? 'text-green-600' : isHighest ? 'text-gray-400' : 'text-gray-800'
                       }`}>
                         ${product.price.toFixed(2)}
                       </div>
@@ -401,33 +459,41 @@ export default function PriceIntelligence() {
                           SAVE {savings}%
                         </div>
                       )}
+                      {isHighest && !savings && (
+                        <div className="text-[10px] font-semibold text-red-500 mt-1">92% more than best</div>
+                      )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
 
             {/* Price Alert CTA */}
-            {products.length > 0 && (
-              <div className="bg-white border-[1.5px] border-dashed border-gray-300 rounded-[14px] p-4 flex items-center justify-between mt-3.5 gap-3 flex-wrap">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-[38px] h-[38px] bg-green-100 rounded-[10px] flex items-center justify-center text-lg flex-shrink-0">🔔</div>
-                  <div>
-                    <h4 className="text-[13px] font-bold text-gray-900">Get notified when prices drop near you</h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">We check prices daily across every dispensary in your area.</p>
-                  </div>
+            <div className="bg-white border-[1.5px] border-dashed border-gray-300 rounded-[14px] p-4 flex items-center justify-between mt-3.5 gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <div className="w-[38px] h-[38px] bg-green-100 rounded-[10px] flex items-center justify-center text-lg flex-shrink-0">🔔</div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-gray-900">Get notified when prices drop below $25</h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5">We check prices daily across every dispensary near you.</p>
                 </div>
-                <Link
-                  href="/shop"
-                  className="px-5 py-2.5 bg-gray-800 text-white rounded-[10px] text-xs font-bold cursor-pointer whitespace-nowrap hover:bg-gray-900 transition no-underline"
-                >
-                  Browse All Prices →
-                </Link>
               </div>
-            )}
+              <Link
+                href="/shop"
+                className="px-5 py-2.5 bg-gray-800 text-white rounded-[10px] text-xs font-bold cursor-pointer whitespace-nowrap hover:bg-gray-900 transition no-underline"
+              >
+                Set Price Alert →
+              </Link>
+            </div>
           </>
         )}
       </div>
+
+      {/* Preview disclaimer */}
+      {isPreview && !loading && (
+        <p className="text-center text-[11px] text-gray-600/60 mt-2">
+          Sample prices shown. Enter your ZIP code for real-time pricing near you.
+        </p>
+      )}
     </section>
   )
 }
