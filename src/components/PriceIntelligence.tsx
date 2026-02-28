@@ -432,6 +432,44 @@ export default function PriceIntelligence() {
   const [locationLabel, setLocationLabel] = useState('')
   const [isPreview, setIsPreview] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<ProductResult | null>(null)
+  const [alertEmail, setAlertEmail] = useState('')
+  const [alertSaved, setAlertSaved] = useState(false)
+  const [alertError, setAlertError] = useState('')
+
+  // Check if alert was already set
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('leefii_price_alert')
+      if (saved) setAlertSaved(true)
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleAlertSignup = () => {
+    const email = alertEmail.trim()
+    if (!email) {
+      setAlertError('Enter your email or phone')
+      return
+    }
+    // Basic validation: must contain @ for email or be digits for phone
+    const isEmail = email.includes('@') && email.includes('.')
+    const isPhone = /^\+?[\d\s()-]{7,}$/.test(email)
+    if (!isEmail && !isPhone) {
+      setAlertError('Enter a valid email or phone number')
+      return
+    }
+    setAlertError('')
+    // Save locally (will be synced to backend when price alerts feature is built)
+    try {
+      localStorage.setItem('leefii_price_alert', JSON.stringify({
+        contact: email,
+        type: isEmail ? 'email' : 'phone',
+        location: locationLabel,
+        threshold: meta?.cheapest || 25,
+        createdAt: new Date().toISOString(),
+      }))
+    } catch { /* ignore */ }
+    setAlertSaved(true)
+  }
 
   const fetchProducts = useCallback(async (lat?: number, lng?: number, zip?: string, category?: string | null, sortBy?: string) => {
     setLoading(true)
@@ -830,20 +868,55 @@ export default function PriceIntelligence() {
             </div>
 
             {/* Price Alert CTA */}
-            <div className="bg-white border-[1.5px] border-dashed border-gray-300 rounded-[14px] p-4 flex items-center justify-between mt-3.5 gap-3 flex-wrap">
-              <div className="flex items-center gap-2.5">
-                <div className="w-[38px] h-[38px] bg-green-100 rounded-[10px] flex items-center justify-center text-lg flex-shrink-0">🔔</div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-gray-900">Get notified when prices drop below $25</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">We check prices daily across every dispensary near you.</p>
+            <div className={`border-[1.5px] rounded-[14px] p-4 mt-3.5 ${
+              alertSaved
+                ? 'bg-green-50 border-green-300'
+                : 'bg-white border-dashed border-gray-300'
+            }`}>
+              {alertSaved ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-[42px] h-[42px] bg-green-100 rounded-full flex items-center justify-center text-xl flex-shrink-0">✅</div>
+                  <div>
+                    <h4 className="text-[14px] font-bold text-green-800">Price alert set!</h4>
+                    <p className="text-[12px] text-green-700 mt-0.5">
+                      We&apos;ll notify you when prices drop below ${meta?.cheapest || 25} near {locationLabel || 'you'}.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Link
-                href="/strains/blue-dream"
-                className="px-5 py-2.5 bg-gray-800 text-white rounded-[10px] text-xs font-bold cursor-pointer whitespace-nowrap hover:bg-gray-900 transition no-underline"
-              >
-                Explore Blue Dream →
-              </Link>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="w-[38px] h-[38px] bg-green-100 rounded-[10px] flex items-center justify-center text-lg flex-shrink-0">🔔</div>
+                    <div>
+                      <h4 className="text-[13px] font-bold text-gray-900">
+                        Get notified when prices drop below ${meta?.cheapest || 25}
+                      </h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">We check prices daily across every dispensary near you.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Email or phone number"
+                      value={alertEmail}
+                      onChange={(e) => { setAlertEmail(e.target.value); setAlertError('') }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAlertSignup()}
+                      className={`flex-1 bg-white border-[1.5px] rounded-[10px] px-3.5 py-2.5 text-sm text-gray-800 outline-none transition font-sans ${
+                        alertError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-green-500'
+                      }`}
+                    />
+                    <button
+                      onClick={handleAlertSignup}
+                      className="px-5 py-2.5 bg-green-600 text-white border-none rounded-[10px] text-xs font-bold cursor-pointer whitespace-nowrap hover:bg-green-700 transition font-sans shadow-md shadow-green-600/20"
+                    >
+                      🔔 Alert Me
+                    </button>
+                  </div>
+                  {alertError && (
+                    <p className="text-[11px] text-red-500 mt-1.5 ml-1">{alertError}</p>
+                  )}
+                </>
+              )}
             </div>
           </>
         )}
