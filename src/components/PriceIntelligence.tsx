@@ -22,6 +22,11 @@ interface ProductResult {
     rating: number
     city: string
     state: string
+    phone: string | null
+    address: string
+    zipCode: string
+    latitude: number
+    longitude: number
     isOpen: boolean
   }
 }
@@ -57,57 +62,43 @@ const STRAIN_COLORS: Record<string, string> = {
   sativa: 'bg-amber-100 text-amber-800',
 }
 
-// Generate a link for a product card — use dispensary page for real data, strain page for samples
-function getProductLink(product: ProductResult): string {
-  if (product.dispensary.slug) {
-    return `/dispensary/${product.dispensary.slug}`
-  }
-  // For sample data, link to the strain page
-  // Extract the base strain name (e.g. "Blue Dream" from "Blue Dream Live Resin Cart")
-  const baseName = product.name
-    .replace(/\s+(gummies|cart|live resin|premium|pre-roll|edible|tincture|topical)\b.*/i, '')
-    .trim()
-  const slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-  return `/strains/${slug}`
-}
-
 // Sample data shown when no real products are available nearby
 const SAMPLE_PRODUCTS: ProductResult[] = [
   {
     id: 'sample-1', name: 'Blue Dream', brand: 'Cookies', category: 'flower',
     price: 25.00, originalPrice: 35.00, weight: '3.5g', thcContent: '24.3%',
     cbdContent: '0.1%', strainType: 'hybrid', isOnSale: true,
-    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, city: 'Orlando', state: 'FL', isOpen: true },
+    dispensary: { name: 'Trulieve', slug: '', distance: 1.2, rating: 4.4, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 545-1234', address: '3251 E Colonial Dr', zipCode: '32803', latitude: 28.5505, longitude: -81.3464 },
   },
   {
     id: 'sample-2', name: 'Blue Dream', brand: 'Trulieve', category: 'flower',
     price: 32.00, originalPrice: null, weight: '3.5g', thcContent: '22.8%',
     cbdContent: '0.2%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, city: 'Orlando', state: 'FL', isOpen: true },
+    dispensary: { name: 'Curaleaf', slug: '', distance: 2.8, rating: 4.2, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 237-0018', address: '4117 S Orange Blossom Trail', zipCode: '32839', latitude: 28.5123, longitude: -81.3992 },
   },
   {
     id: 'sample-3', name: 'Blue Dream Gummies 100mg', brand: 'Wana', category: 'edibles',
     price: 35.00, originalPrice: null, weight: '10pk', thcContent: '100mg total',
     cbdContent: null, strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, city: 'Orlando', state: 'FL', isOpen: false },
+    dispensary: { name: 'Surterra Wellness', slug: '', distance: 3.1, rating: 4.1, city: 'Orlando', state: 'FL', isOpen: false, phone: '(407) 545-5678', address: '551 N Semoran Blvd', zipCode: '32807', latitude: 28.5555, longitude: -81.3076 },
   },
   {
     id: 'sample-4', name: 'Blue Dream Live Resin Cart', brand: 'Select', category: 'vapes',
     price: 40.00, originalPrice: 55.00, weight: '0.5g', thcContent: '85.2%',
     cbdContent: null, strainType: 'hybrid', isOnSale: true,
-    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, city: 'Orlando', state: 'FL', isOpen: true },
+    dispensary: { name: 'MUV', slug: '', distance: 4.2, rating: 4.5, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 613-2800', address: '993 N Semoran Blvd', zipCode: '32807', latitude: 28.5611, longitude: -81.3073 },
   },
   {
     id: 'sample-5', name: 'Blue Dream', brand: 'Fluent', category: 'flower',
     price: 42.00, originalPrice: null, weight: '3.5g', thcContent: '21.5%',
     cbdContent: '0.3%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Fluent Cannabis', slug: '', distance: 5.4, rating: 3.9, city: 'Orlando', state: 'FL', isOpen: true },
+    dispensary: { name: 'Fluent Cannabis', slug: '', distance: 5.4, rating: 3.9, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 988-5420', address: '8015 Turkey Lake Rd', zipCode: '32819', latitude: 28.4698, longitude: -81.4637 },
   },
   {
     id: 'sample-6', name: 'Blue Dream Premium', brand: 'Jungle Boys', category: 'flower',
     price: 48.00, originalPrice: null, weight: '3.5g', thcContent: '28.1%',
     cbdContent: '0.1%', strainType: 'hybrid', isOnSale: false,
-    dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, city: 'Orlando', state: 'FL', isOpen: true },
+    dispensary: { name: 'Rise Orlando', slug: '', distance: 6.1, rating: 4.3, city: 'Orlando', state: 'FL', isOpen: true, phone: '(407) 476-5000', address: '3812 W Colonial Dr', zipCode: '32808', latitude: 28.5484, longitude: -81.4203 },
   },
 ]
 
@@ -124,6 +115,174 @@ const SAMPLE_FILTERS: ApiResponse['filters'] = {
   weights: [],
 }
 
+// ─── Quick-View Drawer ─────────────────────────────────────────────────
+function ProductDrawer({ product, onClose }: { product: ProductResult; onClose: () => void }) {
+  const savings = product.originalPrice && product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : null
+
+  const dispensary = product.dispensary
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${dispensary.latitude},${dispensary.longitude}`
+  const profileUrl = dispensary.slug
+    ? `/dispensary/${dispensary.slug}`
+    : `/dispensaries/${dispensary.state.toLowerCase()}/${dispensary.city.toLowerCase().replace(/\s+/g, '-')}`
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[24px] shadow-2xl max-h-[85vh] overflow-y-auto animate-slideUp">
+        {/* Handle bar */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition z-10"
+        >
+          ✕
+        </button>
+
+        <div className="px-6 pb-8 pt-2">
+          {/* ── Price Hero ── */}
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <span className="text-4xl">{CATEGORY_ICONS[product.category] || '📦'}</span>
+              {product.strainType && (
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${
+                  STRAIN_COLORS[product.strainType.toLowerCase()] || 'bg-gray-100 text-gray-600'
+                }`}>
+                  {product.strainType}
+                </span>
+              )}
+            </div>
+            <h3 className="text-xl font-extrabold text-gray-900 mb-1">{product.name}</h3>
+            {product.brand && (
+              <p className="text-sm text-gray-500">by {product.brand} · {product.category.charAt(0).toUpperCase() + product.category.slice(1)}</p>
+            )}
+
+            {/* Big Price */}
+            <div className="mt-3 flex items-center justify-center gap-3">
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-xl text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+              )}
+              <span className="text-5xl font-black text-green-600 tabular-nums">${product.price.toFixed(2)}</span>
+            </div>
+            {product.weight && (
+              <p className="text-sm text-gray-500 mt-1">per {product.weight}</p>
+            )}
+            {savings && (
+              <div className="inline-block mt-2 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-bold">
+                🎉 You save {savings}% — ${(product.originalPrice! - product.price).toFixed(2)} off
+              </div>
+            )}
+
+            {/* Product specs */}
+            <div className="flex justify-center gap-4 mt-3 flex-wrap">
+              {product.thcContent && (
+                <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">THC: <strong>{product.thcContent}</strong></span>
+              )}
+              {product.cbdContent && (
+                <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">CBD: <strong>{product.cbdContent}</strong></span>
+              )}
+              {product.weight && (
+                <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">Weight: <strong>{product.weight}</strong></span>
+              )}
+            </div>
+          </div>
+
+          {/* ── Dispensary Info Card ── */}
+          <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h4 className="text-base font-bold text-gray-900">{dispensary.name}</h4>
+                <p className="text-sm text-gray-600 mt-0.5">{dispensary.address}</p>
+                <p className="text-sm text-gray-600">{dispensary.city}, {dispensary.state} {dispensary.zipCode}</p>
+              </div>
+              <div className="text-right flex-shrink-0 ml-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-500">★</span>
+                  <span className="text-sm font-bold text-gray-900">{dispensary.rating?.toFixed(1)}</span>
+                </div>
+                <div className="text-xs text-gray-500">{dispensary.distance} mi away</div>
+              </div>
+            </div>
+
+            {/* Open/Closed badge */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              dispensary.isOpen
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${dispensary.isOpen ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              {dispensary.isOpen ? 'Open Now' : 'Closed'}
+            </div>
+          </div>
+
+          {/* ── Action Buttons ── */}
+          <div className="flex gap-3 mb-4">
+            {dispensary.phone && (
+              <a
+                href={`tel:${dispensary.phone.replace(/[^\d+]/g, '')}`}
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-bold text-base hover:bg-green-700 transition no-underline shadow-lg shadow-green-600/20"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                Call Now
+              </a>
+            )}
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-2xl font-bold text-base hover:bg-blue-700 transition no-underline shadow-lg shadow-blue-600/20"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              Get Directions
+            </a>
+          </div>
+
+          {/* ── How to Get This Deal ── */}
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+            <h5 className="text-sm font-bold text-amber-900 mb-1.5">💡 How to get this deal</h5>
+            <p className="text-sm text-amber-800 leading-relaxed">
+              {product.isOnSale
+                ? `Visit ${dispensary.name} and ask your budtender about their ${product.name} special. This product is currently on sale — limited availability.`
+                : `Visit ${dispensary.name} and ask for ${product.name} by ${product.brand || 'name'}. Call ahead to confirm availability.`
+              }
+            </p>
+          </div>
+
+          {/* ── View Dispensary Profile Link ── */}
+          <Link
+            href={profileUrl}
+            className="block text-center text-sm text-green-700 font-semibold hover:text-green-800 transition py-2 no-underline"
+          >
+            View full {dispensary.name} profile →
+          </Link>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
+    </>
+  )
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────
 export default function PriceIntelligence() {
   const [products, setProducts] = useState<ProductResult[]>([])
   const [meta, setMeta] = useState<ApiResponse['meta'] | null>(null)
@@ -134,6 +293,7 @@ export default function PriceIntelligence() {
   const [sort, setSort] = useState('price_asc')
   const [locationLabel, setLocationLabel] = useState('')
   const [isPreview, setIsPreview] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<ProductResult | null>(null)
 
   const fetchProducts = useCallback(async (lat?: number, lng?: number, zip?: string, category?: string | null, sortBy?: string) => {
     setLoading(true)
@@ -396,10 +556,10 @@ export default function PriceIntelligence() {
                 const isHighest = idx === products.length - 1 && products.length > 2
 
                 return (
-                  <Link
+                  <div
                     key={product.id}
-                    href={getProductLink(product)}
-                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative no-underline ${
+                    onClick={() => setSelectedProduct(product)}
+                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative ${
                       isBest
                         ? 'border-green-500 hover:shadow-lg hover:shadow-green-500/10'
                         : 'border-gray-200 hover:border-green-500 hover:shadow-lg hover:shadow-green-500/10'
@@ -478,7 +638,7 @@ export default function PriceIntelligence() {
                         <div className="text-[10px] font-semibold text-red-500 mt-1">92% more than best</div>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
@@ -508,6 +668,14 @@ export default function PriceIntelligence() {
         <p className="text-center text-[11px] text-gray-600/60 mt-2">
           Sample prices shown. Enter your ZIP code for real-time pricing near you.
         </p>
+      )}
+
+      {/* Quick-View Drawer */}
+      {selectedProduct && (
+        <ProductDrawer
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
       )}
     </section>
   )
