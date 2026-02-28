@@ -57,6 +57,20 @@ const STRAIN_COLORS: Record<string, string> = {
   sativa: 'bg-amber-100 text-amber-800',
 }
 
+// Generate a link for a product card — use dispensary page for real data, strain page for samples
+function getProductLink(product: ProductResult): string {
+  if (product.dispensary.slug) {
+    return `/dispensary/${product.dispensary.slug}`
+  }
+  // For sample data, link to the strain page
+  // Extract the base strain name (e.g. "Blue Dream" from "Blue Dream Live Resin Cart")
+  const baseName = product.name
+    .replace(/\s+(gummies|cart|live resin|premium|pre-roll|edible|tincture|topical)\b.*/i, '')
+    .trim()
+  const slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  return `/strains/${slug}`
+}
+
 // Sample data shown when no real products are available nearby
 const SAMPLE_PRODUCTS: ProductResult[] = [
   {
@@ -244,8 +258,8 @@ export default function PriceIntelligence() {
           📊 Price Intelligence
           <span className="text-[9px] font-bold text-white bg-green-500 px-2 py-0.5 rounded tracking-wider uppercase">NEW</span>
         </h2>
-        <Link href="/shop" className="text-sm text-green-700 font-semibold hover:text-green-800 transition">
-          View all prices →
+        <Link href="/strains" className="text-sm text-green-700 font-semibold hover:text-green-800 transition">
+          View all strains →
         </Link>
       </div>
 
@@ -382,9 +396,10 @@ export default function PriceIntelligence() {
                 const isHighest = idx === products.length - 1 && products.length > 2
 
                 return (
-                  <div
+                  <Link
                     key={product.id}
-                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative ${
+                    href={getProductLink(product)}
+                    className={`bg-white border-[1.5px] rounded-[14px] p-4 grid gap-3.5 items-center transition cursor-pointer relative no-underline ${
                       isBest
                         ? 'border-green-500 hover:shadow-lg hover:shadow-green-500/10'
                         : 'border-gray-200 hover:border-green-500 hover:shadow-lg hover:shadow-green-500/10'
@@ -463,7 +478,7 @@ export default function PriceIntelligence() {
                         <div className="text-[10px] font-semibold text-red-500 mt-1">92% more than best</div>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
@@ -478,10 +493,10 @@ export default function PriceIntelligence() {
                 </div>
               </div>
               <Link
-                href="/shop"
+                href="/strains/blue-dream"
                 className="px-5 py-2.5 bg-gray-800 text-white rounded-[10px] text-xs font-bold cursor-pointer whitespace-nowrap hover:bg-gray-900 transition no-underline"
               >
-                Set Price Alert →
+                Explore Blue Dream →
               </Link>
             </div>
           </>
