@@ -29,6 +29,8 @@ interface NearbyResponse {
     lng: number
     city: string | null
     state: string | null
+    stateName: string | null
+    stateSlug: string | null
   }
 }
 
@@ -56,7 +58,7 @@ export default function NearbyDoctors() {
   if (!loading && !data) return null
 
   const locationLabel = data?.location
-    ? [data.location.city, data.location.state].filter(Boolean).join(', ')
+    ? [data.location.city, data.location.stateName || data.location.state].filter(Boolean).join(', ')
     : ''
 
   return (
@@ -189,13 +191,13 @@ export default function NearbyDoctors() {
             ))}
           </div>
 
-          {data.location.state && (
+          {data.location.stateSlug && (
             <div className="mt-4 text-center">
               <Link
-                href={`/doctors/${data.location.state.toLowerCase().replace(/\s+/g, '-')}`}
+                href={`/doctors/${data.location.stateSlug}`}
                 className="text-white/70 hover:text-white text-sm font-medium transition inline-flex items-center gap-1"
               >
-                View all doctors in {data.location.state}
+                View all doctors in {data.location.stateName || data.location.state}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

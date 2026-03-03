@@ -25,9 +25,13 @@ export async function GET(request: NextRequest) {
     const radius = parseFloat(searchParams.get('radius') || '50') // Default 50 miles
     const limit = parseInt(searchParams.get('limit') || '12')
 
+    // Read all headers once
+    const headersList = await headers()
+    const detectedCity = headersList.get('x-vercel-ip-city')
+    const detectedRegion = headersList.get('x-vercel-ip-country-region')
+
     // If no lat/lng provided, try Vercel geo headers
     if (isNaN(lat) || isNaN(lng)) {
-      const headersList = await headers()
       const vercelLat = headersList.get('x-vercel-ip-latitude')
       const vercelLng = headersList.get('x-vercel-ip-longitude')
 
@@ -44,10 +48,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get detected city/state from headers for display
-    const headersList = await headers()
-    const detectedCity = headersList.get('x-vercel-ip-city')
-    const detectedRegion = headersList.get('x-vercel-ip-country-region')
+    // Look up state record to get proper slug and full name
+    let stateSlug: string | null = null
+    let stateName: string | null = null
+    if (detectedRegion) {
+      const stateRecord = await prisma.state.findFirst({
+        where: { abbreviation: detectedRegion },
+        select: { slug: true, name: true },
+      })
+      if (stateRecord) {
+        stateSlug = stateRecord.slug
+        stateName = stateRecord.name
+      }
+    }
 
     // Query all active doctors with coordinates
     const doctors = await prisma.doctor.findMany({
@@ -110,6 +123,8 @@ export async function GET(request: NextRequest) {
         lng,
         city: detectedCity ? decodeURIComponent(detectedCity) : null,
         state: detectedRegion || null,
+        stateName: stateName || null,
+        stateSlug: stateSlug || null,
       },
     })
   } catch (error) {
