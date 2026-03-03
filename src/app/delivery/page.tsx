@@ -39,14 +39,13 @@ const DELIVERY_STATES = [
   { name: 'Vermont', slug: 'vermont', abbr: 'VT' },
   { name: 'Virginia', slug: 'virginia', abbr: 'VA' },
   { name: 'Washington', slug: 'washington', abbr: 'WA' },
-  { name: 'Washington DC', slug: 'washington-dc', abbr: 'DC' },
 ];
 
 const FAQ_ITEMS = [
   {
     question: 'Where can I get weed delivered?',
     answer:
-      'Cannabis delivery is available in states that have legalized recreational or medical marijuana and permit licensed delivery services. Currently, states like California, Michigan, Massachusetts, Arizona, Colorado, Oregon, Nevada, Illinois, Connecticut, Maine, Maryland, Missouri, Montana, New Jersey, New Mexico, New York, Vermont, Virginia, Washington, and Washington DC allow some form of cannabis delivery. Availability depends on your local municipality, as some cities opt out of delivery even in legal states. Use Leefii to check which dispensaries deliver to your specific address.',
+      'Cannabis delivery is available in states that have legalized recreational or medical marijuana and permit licensed delivery services. Currently, states like California, Michigan, Massachusetts, Arizona, Colorado, Oregon, Nevada, Illinois, Connecticut, Maine, Maryland, Missouri, Montana, New Jersey, New Mexico, New York, Vermont, Virginia, and Washington allow some form of cannabis delivery. Availability depends on your local municipality, as some cities opt out of delivery even in legal states. Use Leefii to check which dispensaries deliver to your specific address.',
   },
   {
     question: 'How does cannabis delivery work?',
