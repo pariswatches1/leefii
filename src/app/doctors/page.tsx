@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import NearbyDoctors from '@/components/NearbyDoctors'
 
 export const metadata: Metadata = {
   title: 'Find Cannabis Doctors & MMJ Recommendations Near You',
@@ -226,6 +227,9 @@ export default async function DoctorsPage() {
             </div>
           </div>
         </div>
+
+        {/* Nearby Doctors (client-side, uses Vercel geo headers) */}
+        <NearbyDoctors />
 
         {/* Top Doctors Section */}
         {topDoctors.length > 0 && (
