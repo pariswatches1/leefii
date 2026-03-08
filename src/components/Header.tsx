@@ -93,6 +93,9 @@ export default function Header() {
                   <Link href="/api-docs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
                     API Docs
                   </Link>
+                  <Link href="/contact" className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700" onClick={() => setShowMore(false)}>
+                    Contact Us
+                  </Link>
                   <div className="border-t border-gray-100 my-1"></div>
                   <Link href="/journal" className="block px-4 py-2 text-sm text-indigo-600 font-medium hover:bg-indigo-50" onClick={() => setShowMore(false)}>
                     Journal
@@ -123,6 +126,7 @@ export default function Header() {
                 { href: '/compare', label: 'Compare' },
                 { href: '/marketplace', label: 'Marketplace' },
                 { href: '/quiz', label: 'Quiz' },
+                { href: '/contact', label: 'Contact Us' },
                 { href: '/journal', label: 'Journal', badge: 'New' },
                 { href: '/sell', label: 'Sell on Leefii', highlight: true },
               ]}
