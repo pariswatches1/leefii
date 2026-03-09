@@ -145,6 +145,7 @@ export default function Footer() {
               <li><Link href="/quiz" className="text-sm hover:text-gray-900 transition">Strain Quiz</Link></li>
               <li><Link href="/compare" className="text-sm hover:text-gray-900 transition">Comparisons</Link></li>
               <li><Link href="/medical-card/qualifying-conditions" className="text-sm hover:text-gray-900 transition">Medical Cards</Link></li>
+              <li><Link href="/contact" className="text-sm hover:text-gray-900 transition">Contact Us</Link></li>
             </ul>
           </FooterAccordion>
 
