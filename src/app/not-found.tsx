@@ -4,6 +4,15 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Page Not Found | Leefii',
   description: 'The page you are looking for could not be found.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+  // Override the root layout's canonical — 404 pages must NOT have a canonical
+  // Otherwise Google associates 404 content with the homepage, hurting SEO
+  alternates: {
+    canonical: null,
+  },
 }
 
 export default function NotFound() {
