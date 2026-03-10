@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Map dispensary slugs → production IDs
-      const slugs = [...new Set(rows.map((r) => r.dispensarySlug as string))]
+      const slugs = Array.from(new Set(rows.map((r) => r.dispensarySlug as string)))
       const dispensaries = await prisma.dispensary.findMany({
         where: { slug: { in: slugs } },
         select: { id: true, slug: true },
